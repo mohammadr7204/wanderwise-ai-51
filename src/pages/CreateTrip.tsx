@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { useAuth } from '@/hooks/useAuth';
-import { ArrowLeft, ArrowRight, Compass } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Compass, Crown } from 'lucide-react';
 import { TripBasics } from '@/components/trip-wizard/TripBasics';
 import { DestinationPreferences } from '@/components/trip-wizard/DestinationPreferences';
 import { ActivityPreferences } from '@/components/trip-wizard/ActivityPreferences';
@@ -40,7 +40,7 @@ export interface TripFormData {
 }
 
 const CreateTrip = () => {
-  const { user, loading } = useAuth();
+  const { user, loading, subscriptionInfo } = useAuth();
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(1);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -93,9 +93,25 @@ const CreateTrip = () => {
   const isStepValid = () => {
     switch (currentStep) {
       case 1:
-        return formData.title.trim() && formData.startDate && formData.endDate;
+        if (!formData.title.trim() || !formData.startDate || !formData.endDate) return false;
+        
+        // Check subscription limits
+        const tripDuration = Math.ceil((formData.endDate.getTime() - formData.startDate.getTime()) / (1000 * 60 * 60 * 24));
+        const tier = subscriptionInfo?.subscription_tier || 'free';
+        
+        if (tier === 'free') return false; // Free users can't create trips
+        if (tier === 'basic' && tripDuration > 7) return false;
+        if (tier === 'premium' && tripDuration > 14) return false;
+        
+        return true;
       case 2:
-        return formData.destinationType === 'surprise' || formData.specificDestinations.length > 0;
+        if (formData.destinationType === 'surprise') return true;
+        if (formData.destinationType === 'specific') {
+          const tier = subscriptionInfo?.subscription_tier || 'free';
+          if (tier === 'basic' && formData.specificDestinations.length > 1) return false;
+          return formData.specificDestinations.length > 0;
+        }
+        return false;
       case 3:
         return formData.activityTypes.length > 0;
       case 4:
@@ -210,12 +226,36 @@ const CreateTrip = () => {
             <CardTitle className="flex items-center gap-2">
               <Compass className="h-5 w-5 text-primary" />
               {getStepTitle()}
+              {subscriptionInfo?.subscription_tier === 'luxury' && (
+                <Crown className="h-4 w-4 text-yellow-500" />
+              )}
             </CardTitle>
             <CardDescription>
               {getStepDescription()}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
+            {/* Subscription Warning */}
+            {!subscriptionInfo?.subscribed && (
+              <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
+                <div className="flex items-center gap-2 text-amber-800 font-medium mb-2">
+                  <Crown className="h-4 w-4" />
+                  Subscription Required
+                </div>
+                <p className="text-sm text-amber-700 mb-3">
+                  You need an active subscription to create trip itineraries.
+                </p>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => navigate('/pricing')}
+                  className="border-amber-300 text-amber-800 hover:bg-amber-100"
+                >
+                  View Pricing Plans
+                </Button>
+              </div>
+            )}
+            
             {renderCurrentStep()}
           </CardContent>
         </Card>

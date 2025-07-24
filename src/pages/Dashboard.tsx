@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
-import { Compass, Plus, MapPin, Calendar, Users, DollarSign, LogOut, Settings } from 'lucide-react';
+import { Compass, Plus, MapPin, Calendar, Users, DollarSign, LogOut, Settings, Crown } from 'lucide-react';
 
 interface Trip {
   id: string;
@@ -28,7 +28,7 @@ interface Profile {
 }
 
 const Dashboard = () => {
-  const { user, signOut, loading } = useAuth();
+  const { user, signOut, loading, subscriptionInfo } = useAuth();
   const [trips, setTrips] = useState<Trip[]>([]);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -140,10 +140,14 @@ const Dashboard = () => {
                 <p className="text-sm font-medium text-gray-900">
                   {profile?.first_name} {profile?.last_name}
                 </p>
-                <Badge className={`text-xs ${getTierColor(profile?.subscription_tier || 'free')}`}>
-                  {(profile?.subscription_tier || 'free').toUpperCase()}
+                <Badge className={`text-xs ${getTierColor(subscriptionInfo?.subscription_tier || profile?.subscription_tier || 'free')}`}>
+                  {(subscriptionInfo?.subscription_tier || profile?.subscription_tier || 'free').toUpperCase()}
+                  {subscriptionInfo?.subscription_tier === 'luxury' && <Crown className="h-3 w-3 ml-1" />}
                 </Badge>
               </div>
+              <Button variant="ghost" size="sm" onClick={() => window.location.href = '/pricing'}>
+                <Crown className="h-4 w-4" />
+              </Button>
               <Button variant="ghost" size="sm">
                 <Settings className="h-4 w-4" />
               </Button>
@@ -198,9 +202,15 @@ const Dashboard = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">Plan Status</p>
-                  <p className="text-2xl font-bold text-primary">
-                    {(profile?.subscription_tier || 'free').toUpperCase()}
+                  <p className="text-2xl font-bold text-primary flex items-center gap-2">
+                    {(subscriptionInfo?.subscription_tier || profile?.subscription_tier || 'free').toUpperCase()}
+                    {subscriptionInfo?.subscription_tier === 'luxury' && <Crown className="h-5 w-5 text-yellow-500" />}
                   </p>
+                  {!subscriptionInfo?.subscribed && (
+                    <Button variant="outline" size="sm" className="mt-2" onClick={() => window.location.href = '/pricing'}>
+                      Upgrade Plan
+                    </Button>
+                  )}
                 </div>
                 <Users className="h-8 w-8 text-primary" />
               </div>
@@ -208,28 +218,55 @@ const Dashboard = () => {
           </Card>
         </div>
 
-        {/* Create New Trip */}
-        <Card className="mb-8 bg-gradient-to-r from-adventure-blue to-adventure-teal">
-          <CardContent className="p-8">
-            <div className="flex items-center justify-between text-white">
-              <div>
-                <h2 className="text-2xl font-bold mb-2">Plan Your Next Adventure</h2>
-                <p className="text-white/80 mb-4">
-                  Create a personalized itinerary with our AI-powered travel planner
-                </p>
+        {/* Create New Trip or Subscription Prompt */}
+        {subscriptionInfo?.subscribed ? (
+          <Card className="mb-8 bg-gradient-to-r from-adventure-blue to-adventure-teal">
+            <CardContent className="p-8">
+              <div className="flex items-center justify-between text-white">
+                <div>
+                  <h2 className="text-2xl font-bold mb-2">Plan Your Next Adventure</h2>
+                  <p className="text-white/80 mb-4">
+                    Create a personalized itinerary with our AI-powered travel planner
+                  </p>
+                </div>
+                <Button 
+                  variant="secondary" 
+                  size="lg" 
+                  className="bg-white text-adventure-blue hover:bg-gray-100"
+                  onClick={() => window.location.href = '/create-trip'}
+                >
+                  <Plus className="h-5 w-5 mr-2" />
+                  Create New Trip
+                </Button>
               </div>
-              <Button 
-                variant="secondary" 
-                size="lg" 
-                className="bg-white text-adventure-blue hover:bg-gray-100"
-                onClick={() => window.location.href = '/create-trip'}
-              >
-                <Plus className="h-5 w-5 mr-2" />
-                Create New Trip
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        ) : (
+          <Card className="mb-8 bg-gradient-to-r from-amber-400 to-orange-500">
+            <CardContent className="p-8">
+              <div className="flex items-center justify-between text-white">
+                <div>
+                  <h2 className="text-2xl font-bold mb-2 flex items-center gap-2">
+                    <Crown className="h-6 w-6" />
+                    Unlock AI Travel Planning
+                  </h2>
+                  <p className="text-white/90 mb-4">
+                    Subscribe to start creating personalized itineraries with our AI travel planner
+                  </p>
+                </div>
+                <Button 
+                  variant="secondary" 
+                  size="lg" 
+                  className="bg-white text-orange-600 hover:bg-gray-100"
+                  onClick={() => window.location.href = '/pricing'}
+                >
+                  <Crown className="h-5 w-5 mr-2" />
+                  View Plans
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Recent Trips */}
         <div>
