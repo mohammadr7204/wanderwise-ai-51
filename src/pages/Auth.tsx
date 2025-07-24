@@ -1,217 +1,233 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState } from 'react';
+import { Link, Navigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
-import { Compass, Mail, Lock, User } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
+import { toast } from '@/components/ui/use-toast';
+import { Compass, Mountain, Plane } from 'lucide-react';
 
-export default function Auth() {
+const Auth = () => {
+  const { user, signIn, signUp, loading } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [fullName, setFullName] = useState('');
-  const navigate = useNavigate();
-  const { toast } = useToast();
 
-  useEffect(() => {
-    // Check if user is already logged in
-    const checkUser = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        navigate('/');
-      }
-    };
-    checkUser();
-  }, [navigate]);
+  // Redirect if already authenticated
+  if (user && !loading) {
+    return <Navigate to="/dashboard" replace />;
+  }
 
-  const handleSignUp = async (e: React.FormEvent) => {
+  const handleSignIn = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsLoading(true);
+    
+    const formData = new FormData(e.currentTarget);
+    const email = formData.get('email') as string;
+    const password = formData.get('password') as string;
 
-    try {
-      const { error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          emailRedirectTo: `${window.location.origin}/`,
-          data: {
-            full_name: fullName,
-          }
-        }
-      });
-
-      if (error) throw error;
-
+    const { error } = await signIn(email, password);
+    
+    if (error) {
       toast({
-        title: "Success!",
-        description: "Please check your email to confirm your account.",
-      });
-    } catch (error: any) {
-      toast({
-        title: "Error",
+        title: "Error signing in",
         description: error.message,
         variant: "destructive",
       });
-    } finally {
-      setIsLoading(false);
+    } else {
+      toast({
+        title: "Welcome back!",
+        description: "You've been signed in successfully.",
+      });
     }
+    
+    setIsLoading(false);
   };
 
-  const handleSignIn = async (e: React.FormEvent) => {
+  const handleSignUp = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsLoading(true);
+    
+    const formData = new FormData(e.currentTarget);
+    const email = formData.get('email') as string;
+    const password = formData.get('password') as string;
+    const firstName = formData.get('firstName') as string;
+    const lastName = formData.get('lastName') as string;
 
-    try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (error) throw error;
-
-      navigate('/');
-    } catch (error: any) {
+    const { error } = await signUp(email, password, firstName, lastName);
+    
+    if (error) {
       toast({
-        title: "Error",
+        title: "Error creating account",
         description: error.message,
         variant: "destructive",
       });
-    } finally {
-      setIsLoading(false);
+    } else {
+      toast({
+        title: "Account created!",
+        description: "Check your email to verify your account.",
+      });
     }
+    
+    setIsLoading(false);
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-pulse">
+          <Compass className="h-8 w-8 text-primary" />
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-adventure px-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center space-y-4">
-          <div className="flex justify-center">
-            <div className="p-3 rounded-full bg-gradient-primary">
-              <Compass className="h-8 w-8 text-white" />
-            </div>
-          </div>
-          <div>
-            <CardTitle className="text-2xl font-bold">Welcome to WanderAI</CardTitle>
-            <CardDescription>
-              Your AI-powered travel companion awaits
+    <div className="min-h-screen bg-gradient-to-br from-adventure-blue via-adventure-teal to-adventure-forest flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/20" />
+      
+      {/* Background decorations */}
+      <div className="absolute top-10 left-10 opacity-20">
+        <Mountain className="h-16 w-16 text-white" />
+      </div>
+      <div className="absolute bottom-10 right-10 opacity-20">
+        <Plane className="h-16 w-16 text-white" />
+      </div>
+      
+      <div className="relative z-10 w-full max-w-md">
+        <div className="text-center mb-8">
+          <Link to="/" className="inline-flex items-center gap-2 text-white hover:text-adventure-orange transition-colors">
+            <Compass className="h-8 w-8" />
+            <span className="text-2xl font-bold font-heading">WanderAI</span>
+          </Link>
+          <p className="text-white/80 mt-2">Your AI-powered travel companion</p>
+        </div>
+
+        <Card className="backdrop-blur-sm bg-white/10 border-white/20">
+          <CardHeader className="text-center">
+            <CardTitle className="text-white">Start Your Adventure</CardTitle>
+            <CardDescription className="text-white/80">
+              Sign in or create an account to begin planning your perfect trip
             </CardDescription>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <Tabs defaultValue="signin" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="signin">Sign In</TabsTrigger>
-              <TabsTrigger value="signup">Sign Up</TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="signin">
-              <form onSubmit={handleSignIn} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="signin-email">Email</Label>
-                  <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+          </CardHeader>
+          <CardContent>
+            <Tabs defaultValue="signin" className="w-full">
+              <TabsList className="grid w-full grid-cols-2 bg-white/10">
+                <TabsTrigger value="signin" className="data-[state=active]:bg-white data-[state=active]:text-adventure-blue">
+                  Sign In
+                </TabsTrigger>
+                <TabsTrigger value="signup" className="data-[state=active]:bg-white data-[state=active]:text-adventure-blue">
+                  Sign Up
+                </TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="signin">
+                <form onSubmit={handleSignIn} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="signin-email" className="text-white">Email</Label>
                     <Input
                       id="signin-email"
+                      name="email"
                       type="email"
-                      placeholder="your@email.com"
-                      className="pl-10"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
                       required
+                      className="bg-white/10 border-white/20 text-white placeholder:text-white/60"
+                      placeholder="your@email.com"
                     />
                   </div>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="signin-password">Password</Label>
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                  <div className="space-y-2">
+                    <Label htmlFor="signin-password" className="text-white">Password</Label>
                     <Input
                       id="signin-password"
+                      name="password"
                       type="password"
+                      required
+                      className="bg-white/10 border-white/20 text-white placeholder:text-white/60"
                       placeholder="••••••••"
-                      className="pl-10"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      required
                     />
                   </div>
-                </div>
-                <Button
-                  type="submit"
-                  className="w-full"
-                  variant="adventure"
-                  disabled={isLoading}
-                >
-                  {isLoading ? 'Signing in...' : 'Sign In'}
-                </Button>
-              </form>
-            </TabsContent>
-            
-            <TabsContent value="signup">
-              <form onSubmit={handleSignUp} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="signup-name">Full Name</Label>
-                  <div className="relative">
-                    <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-                    <Input
-                      id="signup-name"
-                      type="text"
-                      placeholder="Your full name"
-                      className="pl-10"
-                      value={fullName}
-                      onChange={(e) => setFullName(e.target.value)}
-                      required
-                    />
+                  <Button 
+                    type="submit" 
+                    className="w-full" 
+                    variant="adventure"
+                    disabled={isLoading}
+                  >
+                    {isLoading ? "Signing in..." : "Sign In"}
+                  </Button>
+                </form>
+              </TabsContent>
+              
+              <TabsContent value="signup">
+                <form onSubmit={handleSignUp} className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="firstName" className="text-white">First Name</Label>
+                      <Input
+                        id="firstName"
+                        name="firstName"
+                        required
+                        className="bg-white/10 border-white/20 text-white placeholder:text-white/60"
+                        placeholder="John"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="lastName" className="text-white">Last Name</Label>
+                      <Input
+                        id="lastName"
+                        name="lastName"
+                        required
+                        className="bg-white/10 border-white/20 text-white placeholder:text-white/60"
+                        placeholder="Doe"
+                      />
+                    </div>
                   </div>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="signup-email">Email</Label>
-                  <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                  <div className="space-y-2">
+                    <Label htmlFor="signup-email" className="text-white">Email</Label>
                     <Input
                       id="signup-email"
+                      name="email"
                       type="email"
-                      placeholder="your@email.com"
-                      className="pl-10"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
                       required
+                      className="bg-white/10 border-white/20 text-white placeholder:text-white/60"
+                      placeholder="your@email.com"
                     />
                   </div>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="signup-password">Password</Label>
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                  <div className="space-y-2">
+                    <Label htmlFor="signup-password" className="text-white">Password</Label>
                     <Input
                       id="signup-password"
+                      name="password"
                       type="password"
-                      placeholder="••••••••"
-                      className="pl-10"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
                       required
                       minLength={6}
+                      className="bg-white/10 border-white/20 text-white placeholder:text-white/60"
+                      placeholder="••••••••"
                     />
                   </div>
-                </div>
-                <Button
-                  type="submit"
-                  className="w-full"
-                  variant="adventure"
-                  disabled={isLoading}
-                >
-                  {isLoading ? 'Creating account...' : 'Create Account'}
-                </Button>
-              </form>
-            </TabsContent>
-          </Tabs>
-        </CardContent>
-      </Card>
+                  <Button 
+                    type="submit" 
+                    className="w-full" 
+                    variant="adventure"
+                    disabled={isLoading}
+                  >
+                    {isLoading ? "Creating account..." : "Create Account"}
+                  </Button>
+                </form>
+              </TabsContent>
+            </Tabs>
+          </CardContent>
+        </Card>
+        
+        <div className="text-center mt-6">
+          <Link 
+            to="/" 
+            className="text-white/80 hover:text-white transition-colors text-sm"
+          >
+            ← Back to Home
+          </Link>
+        </div>
+      </div>
     </div>
   );
-}
+};
+
+export default Auth;
