@@ -218,7 +218,12 @@ const Dashboard = () => {
                   Create a personalized itinerary with our AI-powered travel planner
                 </p>
               </div>
-              <Button variant="secondary" size="lg" className="bg-white text-adventure-blue hover:bg-gray-100">
+              <Button 
+                variant="secondary" 
+                size="lg" 
+                className="bg-white text-adventure-blue hover:bg-gray-100"
+                onClick={() => window.location.href = '/create-trip'}
+              >
                 <Plus className="h-5 w-5 mr-2" />
                 Create New Trip
               </Button>
@@ -243,7 +248,10 @@ const Dashboard = () => {
                 <p className="text-gray-600 mb-6">
                   Start planning your first adventure with WanderAI
                 </p>
-                <Button variant="adventure">
+                <Button 
+                  variant="adventure"
+                  onClick={() => window.location.href = '/create-trip'}
+                >
                   <Plus className="h-4 w-4 mr-2" />
                   Plan Your First Trip
                 </Button>
