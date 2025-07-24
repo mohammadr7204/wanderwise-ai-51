@@ -14,7 +14,132 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      preferences: {
+        Row: {
+          accommodation_type: string | null
+          activity_types: string[] | null
+          budget_preference: string | null
+          climate_preferences: string[] | null
+          created_at: string
+          dietary_restrictions: string[] | null
+          food_adventure_level: number | null
+          id: string
+          transport_preference: string | null
+          travel_radius: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          accommodation_type?: string | null
+          activity_types?: string[] | null
+          budget_preference?: string | null
+          climate_preferences?: string[] | null
+          created_at?: string
+          dietary_restrictions?: string[] | null
+          food_adventure_level?: number | null
+          id?: string
+          transport_preference?: string | null
+          travel_radius?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          accommodation_type?: string | null
+          activity_types?: string[] | null
+          budget_preference?: string | null
+          climate_preferences?: string[] | null
+          created_at?: string
+          dietary_restrictions?: string[] | null
+          food_adventure_level?: number | null
+          id?: string
+          transport_preference?: string | null
+          travel_radius?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          first_name: string | null
+          id: string
+          last_name: string | null
+          subscription_tier: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          first_name?: string | null
+          id?: string
+          last_name?: string | null
+          subscription_tier?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          first_name?: string | null
+          id?: string
+          last_name?: string | null
+          subscription_tier?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      trips: {
+        Row: {
+          budget_max: number | null
+          budget_min: number | null
+          created_at: string
+          destination: string | null
+          end_date: string | null
+          group_size: number | null
+          id: string
+          itinerary_data: Json | null
+          start_date: string | null
+          status: string | null
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          budget_max?: number | null
+          budget_min?: number | null
+          created_at?: string
+          destination?: string | null
+          end_date?: string | null
+          group_size?: number | null
+          id?: string
+          itinerary_data?: Json | null
+          start_date?: string | null
+          status?: string | null
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          budget_max?: number | null
+          budget_min?: number | null
+          created_at?: string
+          destination?: string | null
+          end_date?: string | null
+          group_size?: number | null
+          id?: string
+          itinerary_data?: Json | null
+          start_date?: string | null
+          status?: string | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
