@@ -1,10 +1,33 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, MapPin, Sparkles, Globe, Users, Heart } from "lucide-react";
+import { ArrowRight, MapPin, Sparkles, Globe, Users, Heart, LogOut } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
+import { useToast } from "@/hooks/use-toast";
 import heroImage from "@/assets/hero-adventure.jpg";
 
 const Index = () => {
   const [isHovered, setIsHovered] = useState(false);
+  const { user, loading, signOut } = useAuth();
+  const navigate = useNavigate();
+  const { toast } = useToast();
+
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+      toast({
+        title: "Signed out successfully",
+        description: "Come back soon for more adventures!",
+      });
+      navigate('/auth');
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
 
   const features = [
     {
@@ -45,6 +68,17 @@ const Index = () => {
     }
   ];
 
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-hero">
+        <div className="text-center">
+          <Globe className="h-12 w-12 text-primary-foreground animate-spin mx-auto mb-4" />
+          <p className="text-primary-foreground">Loading your adventure...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background font-adventure">
       {/* Navigation */}
@@ -62,8 +96,26 @@ const Index = () => {
               <a href="#features" className="text-muted-foreground hover:text-foreground transition-colors">Features</a>
               <a href="#pricing" className="text-muted-foreground hover:text-foreground transition-colors">Pricing</a>
               <a href="#about" className="text-muted-foreground hover:text-foreground transition-colors">About</a>
-              <Button variant="outline" size="sm">Sign In</Button>
-              <Button variant="adventure" size="sm">Get Started</Button>
+              {user ? (
+                <div className="flex items-center space-x-4">
+                  <span className="text-sm text-muted-foreground">
+                    Welcome, {user.email}!
+                  </span>
+                  <Button variant="outline" size="sm" onClick={handleSignOut}>
+                    <LogOut className="h-4 w-4 mr-2" />
+                    Sign Out
+                  </Button>
+                </div>
+              ) : (
+                <>
+                  <Link to="/auth">
+                    <Button variant="outline" size="sm">Sign In</Button>
+                  </Link>
+                  <Link to="/auth">
+                    <Button variant="adventure" size="sm">Get Started</Button>
+                  </Link>
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -95,16 +147,31 @@ const Index = () => {
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12">
-              <Button 
-                variant="hero" 
-                size="xl"
-                className="group"
-                onMouseEnter={() => setIsHovered(true)}
-                onMouseLeave={() => setIsHovered(false)}
-              >
-                Start Planning Your Trip
-                <ArrowRight className={`ml-2 h-5 w-5 transition-transform duration-300 ${isHovered ? 'translate-x-1' : ''}`} />
-              </Button>
+              {user ? (
+                <Button 
+                  variant="hero" 
+                  size="xl"
+                  className="group"
+                  onMouseEnter={() => setIsHovered(true)}
+                  onMouseLeave={() => setIsHovered(false)}
+                >
+                  Plan New Adventure
+                  <ArrowRight className={`ml-2 h-5 w-5 transition-transform duration-300 ${isHovered ? 'translate-x-1' : ''}`} />
+                </Button>
+              ) : (
+                <Link to="/auth">
+                  <Button 
+                    variant="hero" 
+                    size="xl"
+                    className="group"
+                    onMouseEnter={() => setIsHovered(true)}
+                    onMouseLeave={() => setIsHovered(false)}
+                  >
+                    Start Planning Your Trip
+                    <ArrowRight className={`ml-2 h-5 w-5 transition-transform duration-300 ${isHovered ? 'translate-x-1' : ''}`} />
+                  </Button>
+                </Link>
+              )}
               <Button variant="outline" size="xl" className="bg-background/80 backdrop-blur-sm">
                 See Example Itinerary
               </Button>
@@ -202,10 +269,19 @@ const Index = () => {
           <p className="text-xl text-primary-foreground/90 mb-8 max-w-2xl mx-auto">
             Let our AI create your perfect itinerary. Start planning your dream trip today.
           </p>
-          <Button variant="hero" size="xl" className="bg-background text-foreground hover:bg-background/90">
-            Start Planning Now
-            <ArrowRight className="ml-2 h-5 w-5" />
-          </Button>
+          {user ? (
+            <Button variant="hero" size="xl" className="bg-background text-foreground hover:bg-background/90">
+              Plan Your Next Trip
+              <ArrowRight className="ml-2 h-5 w-5" />
+            </Button>
+          ) : (
+            <Link to="/auth">
+              <Button variant="hero" size="xl" className="bg-background text-foreground hover:bg-background/90">
+                Start Planning Now
+                <ArrowRight className="ml-2 h-5 w-5" />
+              </Button>
+            </Link>
+          )}
         </div>
       </section>
 
