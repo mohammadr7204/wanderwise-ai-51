@@ -33,16 +33,16 @@ const Dashboard = () => {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Redirect if not authenticated
-  if (!user && !loading) {
-    return <Navigate to="/auth" replace />;
-  }
-
   useEffect(() => {
     if (user) {
       fetchUserData();
     }
   }, [user]);
+
+  // Redirect if not authenticated - moved AFTER all hooks
+  if (!user && !loading) {
+    return <Navigate to="/auth" replace />;
+  }
 
   const fetchUserData = async () => {
     try {
