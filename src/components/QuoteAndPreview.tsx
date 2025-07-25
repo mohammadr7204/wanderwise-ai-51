@@ -100,6 +100,13 @@ const QuoteAndPreview = () => {
     try {
       const pricing = calculateTripPricing(trip.form_data, selectedTier);
       
+      console.log('Updating trip with:', {
+        tier: selectedTier,
+        price_paid: pricing.total,
+        status: 'quoted',
+        tripId: trip.id
+      });
+      
       // Update trip with selected tier and pricing
       const { error: updateError } = await supabase
         .from('trips')
@@ -108,9 +115,13 @@ const QuoteAndPreview = () => {
           price_paid: pricing.total,
           status: 'quoted'
         })
-        .eq('id', trip.id);
+        .eq('id', trip.id)
+        .eq('user_id', user.id); // Add user_id check for RLS
 
-      if (updateError) throw updateError;
+      if (updateError) {
+        console.error('Trip update error:', updateError);
+        throw updateError;
+      }
 
       // Create Stripe checkout session
       const { data, error } = await supabase.functions.invoke('create-checkout', {
