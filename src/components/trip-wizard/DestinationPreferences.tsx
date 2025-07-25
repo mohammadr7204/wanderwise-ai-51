@@ -69,7 +69,7 @@ export const DestinationPreferences = ({ formData, updateFormData }: Destination
               <Sparkles className="h-5 w-5 text-primary" />
               <div>
                 <div className="font-medium">Surprise me with a destination!</div>
-                <div className="text-sm text-gray-500">Let AI pick the perfect place based on your preferences</div>
+                <div className="text-sm text-gray-500">Let our experts pick the perfect place based on your preferences</div>
               </div>
             </Label>
           </div>

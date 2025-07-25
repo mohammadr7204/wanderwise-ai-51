@@ -99,7 +99,7 @@ const Pricing = () => {
       features: [
         '1 destination',
         '7 days maximum',
-        'AI-generated itinerary',
+        'Expert-crafted itinerary',
         'Basic recommendations',
         'Email support'
       ],
@@ -119,7 +119,7 @@ const Pricing = () => {
       features: [
         'Multiple destinations',
         '14 days maximum',
-        'Advanced AI planning',
+        'Advanced expert planning',
         'Restaurant recommendations',
         'Transportation planning',
         '2 free revisions',
@@ -139,7 +139,7 @@ const Pricing = () => {
       features: [
         'Unlimited destinations',
         'Unlimited duration',
-        'Premium AI concierge',
+        'Premium travel concierge',
         'Fine dining recommendations',
         'Luxury accommodation focus',
         'Unlimited revisions',

@@ -49,7 +49,7 @@ export const ReviewAndCreate = ({ formData, isGenerating, setIsGenerating, onCom
           title: formData.title,
           destination: formData.destinationType === 'specific' 
             ? formData.specificDestinations.join(', ') 
-            : 'AI-selected destination',
+            : 'Expert-selected destination',
           start_date: formData.startDate?.toISOString().split('T')[0],
           end_date: formData.endDate?.toISOString().split('T')[0],
           budget_min: formData.budgetMin,
@@ -76,7 +76,7 @@ export const ReviewAndCreate = ({ formData, isGenerating, setIsGenerating, onCom
           food_adventure_level: formData.foodAdventureLevel,
         });
 
-      // Generate AI itinerary
+      // Generate expert itinerary
       const { data: aiResponse, error: aiError } = await supabase.functions.invoke('generate-itinerary', {
         body: {
           tripData: formData,
@@ -149,13 +149,13 @@ export const ReviewAndCreate = ({ formData, isGenerating, setIsGenerating, onCom
             <Sparkles className="h-8 w-8 text-green-600" />
           </div>
           <h3 className="text-2xl font-bold text-gray-900 mb-2">Your Itinerary is Ready!</h3>
-          <p className="text-gray-600 mb-6">AI has created your personalized travel plan</p>
+          <p className="text-gray-600 mb-6">Our experts have created your personalized travel plan</p>
         </div>
 
         <Card>
           <CardHeader>
             <CardTitle>Generated Itinerary</CardTitle>
-            <CardDescription>Your AI-powered travel plan</CardDescription>
+            <CardDescription>Your expertly crafted travel plan</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="prose max-w-none">
@@ -340,7 +340,7 @@ export const ReviewAndCreate = ({ formData, isGenerating, setIsGenerating, onCom
         <div>
           <h3 className="text-xl font-semibold text-gray-900 mb-2">Ready to Generate Your Itinerary?</h3>
           <p className="text-gray-600 mb-6">
-            Our AI will create a personalized travel plan based on your preferences
+            Our travel experts will create a personalized travel plan based on your preferences
           </p>
         </div>
         
@@ -366,7 +366,7 @@ export const ReviewAndCreate = ({ formData, isGenerating, setIsGenerating, onCom
         
         {isGenerating && (
           <p className="text-sm text-gray-500">
-            This may take a few moments while our AI crafts your perfect trip...
+            This may take a few moments while our experts craft your perfect trip...
           </p>
         )}
       </div>

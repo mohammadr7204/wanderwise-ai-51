@@ -143,7 +143,7 @@ const Index = () => {
             </h1>
             
             <p className="text-xl md:text-2xl text-muted-foreground mb-8 leading-relaxed">
-              Create personalized travel itineraries with AI. From hidden gems to bucket-list destinations, 
+              Create personalized travel itineraries with expert curation. From hidden gems to bucket-list destinations, 
               we'll craft your perfect journey in minutes.
             </p>
 
