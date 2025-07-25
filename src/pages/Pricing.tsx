@@ -24,12 +24,6 @@ interface SubscriptionInfo {
 
 const Pricing = () => {
   const { user, loading } = useAuth();
-  
-  // Redirect if not authenticated - moved before other hooks
-  if (!user && !loading) {
-    return <Navigate to="/auth" replace />;
-  }
-  
   const [subscriptionInfo, setSubscriptionInfo] = useState<SubscriptionInfo | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [processingTier, setProcessingTier] = useState<string | null>(null);
@@ -37,6 +31,9 @@ const Pricing = () => {
   useEffect(() => {
     if (user) {
       checkSubscription();
+    } else {
+      // If no user, just stop loading so the page shows
+      setIsLoading(false);
     }
   }, [user]);
 
@@ -53,6 +50,12 @@ const Pricing = () => {
   };
 
   const handleUpgrade = async (tier: string) => {
+    // If user is not authenticated, redirect to auth page
+    if (!user) {
+      window.location.href = '/auth';
+      return;
+    }
+    
     setProcessingTier(tier);
     try {
       const { data, error } = await supabase.functions.invoke('create-checkout', {
@@ -76,6 +79,12 @@ const Pricing = () => {
   };
 
   const handleManageSubscription = async () => {
+    // If user is not authenticated, redirect to auth page
+    if (!user) {
+      window.location.href = '/auth';
+      return;
+    }
+    
     try {
       const { data, error } = await supabase.functions.invoke('customer-portal');
       if (error) throw error;
@@ -188,6 +197,15 @@ const Pricing = () => {
               <Link to="/dashboard">
                 <Button variant="outline">Back to Dashboard</Button>
               </Link>
+              {user ? (
+                <Link to="/dashboard">
+                  <Button variant="outline">Dashboard</Button>
+                </Link>
+              ) : (
+                <Link to="/auth">
+                  <Button variant="outline">Sign In</Button>
+                </Link>
+              )}
               {subscriptionInfo?.subscribed && (
                 <Button variant="outline" onClick={handleManageSubscription}>
                   Manage Subscription
@@ -292,9 +310,14 @@ const Pricing = () => {
                             <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                             Processing...
                           </>
-                        ) : (
+                        ) : user ? (
                           <>
                             Upgrade to {tier.name}
+                            <ArrowRight className="h-4 w-4 ml-2" />
+                          </>
+                        ) : (
+                          <>
+                            Get {tier.name}
                             <ArrowRight className="h-4 w-4 ml-2" />
                           </>
                         )}
