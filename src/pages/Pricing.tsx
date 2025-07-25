@@ -132,11 +132,6 @@ const Pricing = () => {
           </p>
         </div>
 
-        {/* Pricing Calculator */}
-        <div className="mb-16">
-          <PricingCalculator />
-        </div>
-
         {/* Service Tiers Overview */}
         <div className="mb-16">
           <h2 className="text-3xl font-bold text-gray-900 mb-8 text-center">
@@ -287,6 +282,11 @@ const Pricing = () => {
               </CardContent>
             </Card>
           </div>
+        </div>
+
+        {/* Pricing Calculator */}
+        <div className="mb-16">
+          <PricingCalculator />
         </div>
 
         {/* Pricing Factors */}
