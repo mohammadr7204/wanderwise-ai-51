@@ -156,7 +156,10 @@ const QuoteAndPreview = () => {
 
   const pricing = calculateTripPricing(trip.form_data, selectedTier);
   const duration = trip.form_data.startDate && trip.form_data.endDate 
-    ? getTripDuration(new Date(trip.form_data.startDate), new Date(trip.form_data.endDate))
+    ? getTripDuration(
+        new Date(trip.form_data.startDate), 
+        new Date(trip.form_data.endDate)
+      )
     : 0;
 
   return (
