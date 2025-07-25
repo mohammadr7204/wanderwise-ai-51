@@ -42,14 +42,14 @@ export interface TripFormData {
 const CreateTrip = () => {
   const { user, loading, subscriptionInfo } = useAuth();
   const navigate = useNavigate();
-  const [currentStep, setCurrentStep] = useState(1);
-  const [isGenerating, setIsGenerating] = useState(false);
-
-  // Redirect if not authenticated
+  
+  // Redirect if not authenticated - moved before other hooks
   if (!user && !loading) {
     return <Navigate to="/auth" replace />;
   }
-
+  
+  const [currentStep, setCurrentStep] = useState(1);
+  const [isGenerating, setIsGenerating] = useState(false);
   const [formData, setFormData] = useState<TripFormData>({
     title: '',
     startDate: undefined,
