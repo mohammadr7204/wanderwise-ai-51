@@ -142,7 +142,7 @@ const Pricing = () => {
           <h2 className="text-3xl font-bold text-gray-900 mb-8 text-center">
             Choose Your Service Level
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
             {serviceTiers.map((tier) => {
               const IconComponent = tier.icon;
               
@@ -222,6 +222,70 @@ const Pricing = () => {
                 </Card>
               );
             })}
+
+            {/* Executive Concierge */}
+            <Card className="relative overflow-hidden transition-all duration-200 hover:shadow-lg border-2 border-amber-500 bg-gradient-to-br from-amber-50 to-amber-100">
+              <CardHeader>
+                <div className="flex items-center gap-3">
+                  <Crown className="h-8 w-8 text-amber-600" />
+                  <div>
+                    <CardTitle className="text-xl text-amber-800">Executive Concierge</CardTitle>
+                    <CardDescription className="text-amber-700">Ultra-personalized service</CardDescription>
+                  </div>
+                </div>
+                
+                <div className="text-center mt-6">
+                  <div className="text-4xl font-bold text-amber-800">
+                    Custom Quote
+                  </div>
+                  <p className="text-sm text-amber-600 mt-1">Consultation required</p>
+                </div>
+              </CardHeader>
+
+              <CardContent className="space-y-6">
+                {/* Features */}
+                <div>
+                  <h4 className="font-medium text-amber-900 mb-3">What's included:</h4>
+                  <ul className="space-y-2">
+                    <li className="flex items-start gap-2">
+                      <Check className="h-4 w-4 text-amber-600 flex-shrink-0 mt-0.5" />
+                      <span className="text-sm text-amber-800">One-on-one consultation call</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <Check className="h-4 w-4 text-amber-600 flex-shrink-0 mt-0.5" />
+                      <span className="text-sm text-amber-800">Complete trip booking service</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <Check className="h-4 w-4 text-amber-600 flex-shrink-0 mt-0.5" />
+                      <span className="text-sm text-amber-800">All flights, hotels, and transportation</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <Check className="h-4 w-4 text-amber-600 flex-shrink-0 mt-0.5" />
+                      <span className="text-sm text-amber-800">Restaurant reservations and experiences</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <Check className="h-4 w-4 text-amber-600 flex-shrink-0 mt-0.5" />
+                      <span className="text-sm text-amber-800">Dedicated travel coordinator</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <Check className="h-4 w-4 text-amber-600 flex-shrink-0 mt-0.5" />
+                      <span className="text-sm text-amber-800">White-glove service throughout</span>
+                    </li>
+                  </ul>
+                </div>
+
+                {/* CTA Button */}
+                <div className="pt-4">
+                  <Button 
+                    className="w-full bg-amber-600 hover:bg-amber-700 text-white"
+                    onClick={() => window.open('https://calendly.com/your-business', '_blank')}
+                  >
+                    Book Consultation
+                    <ArrowRight className="h-4 w-4 ml-2" />
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </div>
 
@@ -354,15 +418,15 @@ const Pricing = () => {
               <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
                 <span className="text-2xl font-bold text-primary">2</span>
               </div>
-              <h3 className="text-xl font-semibold mb-2">Pay 50%</h3>
-              <p className="text-gray-600">Pay half upfront to start the planning process</p>
+              <h3 className="text-xl font-semibold mb-2">Pay Upfront</h3>
+              <p className="text-gray-600">Pay full amount upfront to start the planning process</p>
             </div>
             <div className="text-center">
               <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
                 <span className="text-2xl font-bold text-primary">3</span>
               </div>
-              <h3 className="text-xl font-semibold mb-2">Final Payment</h3>
-              <p className="text-gray-600">Pay remaining 50% when you approve your itinerary</p>
+              <h3 className="text-xl font-semibold mb-2">Receive Itinerary</h3>
+              <p className="text-gray-600">Get your completed travel plan within 24-48 hours</p>
             </div>
           </div>
         </div>

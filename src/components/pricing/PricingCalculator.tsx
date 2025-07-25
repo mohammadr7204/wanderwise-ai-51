@@ -341,7 +341,7 @@ const PricingCalculator = () => {
                 </Button>
 
                 <p className="text-xs text-gray-500 text-center">
-                  50% due now, 50% on itinerary completion
+                  Full payment due upfront
                 </p>
               </>
             )}
