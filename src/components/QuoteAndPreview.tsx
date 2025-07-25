@@ -112,7 +112,7 @@ const QuoteAndPreview = () => {
         .from('trips')
         .update({ 
           tier: selectedTier,
-          price_paid: pricing.total,
+          price_paid: Number(pricing.total),
           status: 'quoted'
         })
         .eq('id', trip.id)
