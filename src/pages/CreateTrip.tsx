@@ -42,12 +42,6 @@ export interface TripFormData {
 const CreateTrip = () => {
   const { user, loading, subscriptionInfo } = useAuth();
   const navigate = useNavigate();
-  
-  // Redirect if not authenticated - moved before other hooks
-  if (!user && !loading) {
-    return <Navigate to="/auth" replace />;
-  }
-  
   const [currentStep, setCurrentStep] = useState(1);
   const [isGenerating, setIsGenerating] = useState(false);
   const [formData, setFormData] = useState<TripFormData>({
@@ -71,104 +65,7 @@ const CreateTrip = () => {
     specialRequests: '',
   });
 
-  const totalSteps = 5;
-  const progress = (currentStep / totalSteps) * 100;
-
-  const updateFormData = (updates: Partial<TripFormData>) => {
-    setFormData(prev => ({ ...prev, ...updates }));
-  };
-
-  const nextStep = () => {
-    if (currentStep < totalSteps) {
-      setCurrentStep(prev => prev + 1);
-    }
-  };
-
-  const prevStep = () => {
-    if (currentStep > 1) {
-      setCurrentStep(prev => prev - 1);
-    }
-  };
-
-  const isStepValid = () => {
-    switch (currentStep) {
-      case 1:
-        if (!formData.title.trim() || !formData.startDate || !formData.endDate) return false;
-        
-        // Check subscription limits
-        const tripDuration = Math.ceil((formData.endDate.getTime() - formData.startDate.getTime()) / (1000 * 60 * 60 * 24));
-        const tier = subscriptionInfo?.subscription_tier || 'free';
-        
-        if (tier === 'free') return false; // Free users can't create trips
-        if (tier === 'basic' && tripDuration > 7) return false;
-        if (tier === 'premium' && tripDuration > 14) return false;
-        
-        return true;
-      case 2:
-        if (formData.destinationType === 'surprise') return true;
-        if (formData.destinationType === 'specific') {
-          const tier = subscriptionInfo?.subscription_tier || 'free';
-          if (tier === 'basic' && formData.specificDestinations.length > 1) return false;
-          return formData.specificDestinations.length > 0;
-        }
-        return false;
-      case 3:
-        return formData.activityTypes.length > 0;
-      case 4:
-        return formData.transportPreferences.length > 0;
-      case 5:
-        return true;
-      default:
-        return false;
-    }
-  };
-
-  const getStepTitle = () => {
-    switch (currentStep) {
-      case 1: return 'Trip Basics';
-      case 2: return 'Destination Preferences';
-      case 3: return 'Activity Preferences';
-      case 4: return 'Travel Details';
-      case 5: return 'Review & Generate';
-      default: return 'Create Trip';
-    }
-  };
-
-  const getStepDescription = () => {
-    switch (currentStep) {
-      case 1: return 'Let\'s start with the basics of your trip';
-      case 2: return 'Where would you like to go?';
-      case 3: return 'What would you like to do?';
-      case 4: return 'Tell us about your travel preferences';
-      case 5: return 'Review your preferences and generate your itinerary';
-      default: return 'Plan your perfect adventure';
-    }
-  };
-
-  const renderCurrentStep = () => {
-    switch (currentStep) {
-      case 1:
-        return <TripBasics formData={formData} updateFormData={updateFormData} />;
-      case 2:
-        return <DestinationPreferences formData={formData} updateFormData={updateFormData} />;
-      case 3:
-        return <ActivityPreferences formData={formData} updateFormData={updateFormData} />;
-      case 4:
-        return <TravelDetails formData={formData} updateFormData={updateFormData} />;
-      case 5:
-        return (
-          <ReviewAndCreate 
-            formData={formData} 
-            isGenerating={isGenerating}
-            setIsGenerating={setIsGenerating}
-            onComplete={() => navigate('/dashboard')}
-          />
-        );
-      default:
-        return null;
-    }
-  };
-
+  // Handle loading and authentication states
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -177,6 +74,10 @@ const CreateTrip = () => {
         </div>
       </div>
     );
+  }
+
+  if (!user) {
+    return <Navigate to="/auth" replace />;
   }
 
   return (
