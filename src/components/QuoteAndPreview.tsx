@@ -47,6 +47,13 @@ const QuoteAndPreview = () => {
   }, [tripId, user]);
 
   const fetchTrip = async () => {
+    console.log('Fetching trip with ID:', tripId, 'for user:', user?.id);
+    
+    if (!tripId || !user) {
+      console.error('Missing tripId or user:', { tripId, userId: user?.id });
+      return;
+    }
+
     try {
       const { data, error } = await supabase
         .from('trips')
@@ -55,7 +62,19 @@ const QuoteAndPreview = () => {
         .eq('user_id', user?.id)
         .single();
 
-      if (error) throw error;
+      console.log('Trip fetch result:', { data, error });
+
+      if (error) {
+        console.error('Database error:', error);
+        throw error;
+      }
+      
+      if (!data) {
+        console.error('No trip data found');
+        throw new Error('Trip not found');
+      }
+
+      console.log('Setting trip data:', data);
       setTrip({
         ...data,
         form_data: data.form_data as unknown as TripFormData
@@ -64,10 +83,11 @@ const QuoteAndPreview = () => {
       console.error('Error fetching trip:', error);
       toast({
         title: "Error",
-        description: "Failed to load trip details",
+        description: `Failed to load trip details: ${error.message}`,
         variant: "destructive"
       });
-      navigate('/dashboard');
+      // Don't navigate away immediately, let user see the error
+      setTimeout(() => navigate('/dashboard'), 3000);
     } finally {
       setLoading(false);
     }

@@ -44,6 +44,7 @@ export const ReviewAndCreate = ({ formData, isGenerating, setIsGenerating, onCom
     }
 
     setIsGenerating(true);
+    console.log('Creating trip with form data:', formData);
 
     try {
       // Create trip record with form data
@@ -66,10 +67,15 @@ export const ReviewAndCreate = ({ formData, isGenerating, setIsGenerating, onCom
         .select()
         .single();
 
-      if (tripError) throw tripError;
+      if (tripError) {
+        console.error('Trip creation error:', tripError);
+        throw tripError;
+      }
+
+      console.log('Trip created successfully:', trip);
 
       // Save preferences
-      await supabase
+      const { error: prefError } = await supabase
         .from('preferences')
         .upsert({
           user_id: user.id,
@@ -81,6 +87,13 @@ export const ReviewAndCreate = ({ formData, isGenerating, setIsGenerating, onCom
           travel_radius: formData.travelRadius,
           food_adventure_level: formData.foodAdventureLevel,
         });
+
+      if (prefError) {
+        console.error('Preferences save error:', prefError);
+        // Don't throw here, preferences are optional
+      }
+
+      console.log('Navigating to quote page for trip:', trip.id);
 
       toast({
         title: "Trip Created!",
