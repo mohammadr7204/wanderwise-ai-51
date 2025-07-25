@@ -2,7 +2,7 @@ import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
 
-const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
+const anthropicApiKey = Deno.env.get('ANTHROPIC_API_KEY');
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -18,78 +18,82 @@ serve(async (req) => {
   try {
     const { tripData, tripDuration, userId, tripId } = await req.json();
 
-    if (!openAIApiKey) {
-      throw new Error('OpenAI API key not configured');
+    if (!anthropicApiKey) {
+      throw new Error('Anthropic API key not configured');
     }
 
-    // Create a detailed prompt for the AI
-    const prompt = `
-Create a detailed ${tripDuration}-day travel itinerary based on the following preferences:
+    // Create a detailed prompt for Claude
+    const prompt = `Create a comprehensive ${tripDuration}-day travel itinerary based on these preferences:
 
-**Trip Details:**
-- Title: ${tripData.title}
-- Duration: ${tripDuration} days
-- Group Size: ${tripData.groupSize} travelers
-- Budget: $${tripData.budgetMin.toLocaleString()} - $${tripData.budgetMax.toLocaleString()}
-- Dates: ${tripData.startDate ? new Date(tripData.startDate).toLocaleDateString() : 'Flexible'} to ${tripData.endDate ? new Date(tripData.endDate).toLocaleDateString() : 'Flexible'}
+**TRIP OVERVIEW**
+Title: ${tripData.title}
+Duration: ${tripDuration} days
+Travelers: ${tripData.groupSize} people
+Budget: $${tripData.budgetMin.toLocaleString()} - $${tripData.budgetMax.toLocaleString()}
+Travel Dates: ${tripData.startDate ? new Date(tripData.startDate).toLocaleDateString() : 'Flexible'} to ${tripData.endDate ? new Date(tripData.endDate).toLocaleDateString() : 'Flexible'}
 
-**Destination Preferences:**
-- Type: ${tripData.destinationType === 'surprise' ? 'Surprise me with the perfect destination based on my preferences' : `Specific destinations: ${tripData.specificDestinations.join(', ')}`}
-- Travel Radius: ${tripData.travelRadius}
-- Climate Preferences: ${tripData.climatePreferences.length > 0 ? tripData.climatePreferences.join(', ') : 'No specific preference'}
+**DESTINATION PREFERENCES**
+${tripData.destinationType === 'surprise' ? 
+  'SURPRISE DESTINATION: Select the perfect destination based on all preferences below' : 
+  `TARGET DESTINATIONS: ${tripData.specificDestinations.join(', ')}`
+}
+Travel Radius: ${tripData.travelRadius}
+Climate Preferences: ${tripData.climatePreferences.length > 0 ? tripData.climatePreferences.join(', ') : 'No specific preference'}
 
-**Activity Interests:**
-- Activities: ${tripData.activityTypes.join(', ')}
-- Accommodation: ${tripData.accommodationType.replace('-', ' ')}
-- Accommodation Amenities: ${tripData.accommodationAmenities.length > 0 ? tripData.accommodationAmenities.join(', ') : 'Standard amenities'}
+**ACTIVITY INTERESTS**
+Preferred Activities: ${tripData.activityTypes.join(', ')}
+Accommodation Style: ${tripData.accommodationType.replace('-', ' ')}
+Desired Amenities: ${tripData.accommodationAmenities.length > 0 ? tripData.accommodationAmenities.join(', ') : 'Standard amenities'}
 
-**Travel Preferences:**
-- Transportation: ${tripData.transportPreferences.join(', ')}
-- Dietary Restrictions: ${tripData.dietaryRestrictions.length > 0 ? tripData.dietaryRestrictions.join(', ') : 'No restrictions'}
-- Food Adventure Level: ${tripData.foodAdventureLevel}/10
-- Accessibility Needs: ${tripData.accessibilityNeeds || 'None specified'}
-- Special Requests: ${tripData.specialRequests || 'None'}
+**TRAVEL LOGISTICS**
+Transportation: ${tripData.transportPreferences.join(', ')}
+Dietary Requirements: ${tripData.dietaryRestrictions.length > 0 ? tripData.dietaryRestrictions.join(', ') : 'No restrictions'}
+Food Adventure Level: ${tripData.foodAdventureLevel}/10 (1=familiar foods, 10=try everything)
+Accessibility Needs: ${tripData.accessibilityNeeds || 'None specified'}
+Special Requests: ${tripData.specialRequests || 'None'}
 
-Please create a comprehensive itinerary that includes:
+**DELIVERABLE REQUIREMENTS**
+Please provide a complete travel guide including:
 
-1. **Destination Selection** (if surprise option chosen): Choose the perfect destination based on the preferences
-2. **Day-by-Day Schedule**: Detailed activities for each day with timing
-3. **Accommodation Recommendations**: Specific hotels/stays that match preferences and budget
-4. **Restaurant Suggestions**: Meals for breakfast, lunch, and dinner with local specialties
-5. **Transportation**: How to get around and between locations
-6. **Budget Breakdown**: Estimated costs for activities, meals, and accommodation
-7. **Travel Tips**: Local customs, weather considerations, and packing suggestions
-8. **Alternative Options**: Backup plans for weather or other contingencies
+1. **DESTINATION CHOICE** (if surprise): Select and explain the perfect destination
+2. **DAILY ITINERARY**: Hour-by-hour schedule for each day
+3. **ACCOMMODATION**: Specific hotel/lodging recommendations with addresses
+4. **DINING**: Restaurant suggestions for all meals with cuisine types and price ranges
+5. **TRANSPORTATION**: Detailed getting-around instructions
+6. **BUDGET BREAKDOWN**: Estimated costs for activities, meals, accommodation
+7. **PRACTICAL INFO**: Packing tips, local customs, weather considerations
+8. **BACKUP PLANS**: Alternative activities for different weather/circumstances
 
-Format the response in a clear, engaging way that feels like a personalized travel guide. Include specific addresses, websites, and contact information where possible. Make it feel adventurous and exciting while being practical and informative.
-`;
+Make this feel like a personalized travel guide from an expert who knows the traveler's preferences intimately. Include specific addresses, websites, and insider tips. Be detailed but engaging!`;
 
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${openAIApiKey}`,
+        'Authorization': `Bearer ${anthropicApiKey}`,
         'Content-Type': 'application/json',
+        'x-api-key': anthropicApiKey,
+        'anthropic-version': '2023-06-01',
       },
       body: JSON.stringify({
-        model: 'gpt-4.1-2025-04-14',
-        messages: [
-          { 
-            role: 'system', 
-            content: 'You are an expert travel planner with extensive knowledge of destinations worldwide. Create detailed, personalized itineraries that are practical, exciting, and perfectly tailored to each traveler\'s preferences and budget. Be specific with recommendations and include helpful local insights.'
-          },
-          { role: 'user', content: prompt }
-        ],
+        model: 'claude-3-5-sonnet-20241022',
         max_tokens: 4000,
         temperature: 0.7,
+        messages: [
+          {
+            role: 'user',
+            content: prompt
+          }
+        ],
+        system: 'You are an expert travel planner with extensive knowledge of destinations worldwide. Create detailed, personalized itineraries that are practical, exciting, and perfectly tailored to each traveler\'s preferences and budget. Be specific with recommendations and include helpful local insights. Write in an engaging, enthusiastic tone that makes travelers excited about their upcoming adventure.'
       }),
     });
 
     if (!response.ok) {
-      throw new Error(`OpenAI API error: ${response.status}`);
+      throw new Error(`Anthropic API error: ${response.status}`);
     }
 
     const data = await response.json();
-    const generatedItinerary = data.choices[0].message.content;
+    const generatedItinerary = data.content[0].text;
 
     console.log(`Generated itinerary for trip ${tripId} (${generatedItinerary.length} characters)`);
 
