@@ -95,8 +95,8 @@ const Index = () => {
             
             <div className="hidden md:flex items-center space-x-8">
               <a href="#features" className="text-muted-foreground hover:text-foreground transition-colors">Features</a>
-              <a href="#pricing" className="text-muted-foreground hover:text-foreground transition-colors">Pricing</a>
-              <a href="#about" className="text-muted-foreground hover:text-foreground transition-colors">About</a>
+              <Link to="/pricing" className="text-muted-foreground hover:text-foreground transition-colors">Pricing</Link>
+              <Link to="/about" className="text-muted-foreground hover:text-foreground transition-colors">About</Link>
               {user ? (
                 <div className="flex items-center space-x-4">
                   <span className="text-sm text-muted-foreground">
@@ -149,16 +149,18 @@ const Index = () => {
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12">
               {user ? (
-                <Button 
-                  variant="hero" 
-                  size="xl"
-                  className="group"
-                  onMouseEnter={() => setIsHovered(true)}
-                  onMouseLeave={() => setIsHovered(false)}
-                >
-                  Plan New Adventure
-                  <ArrowRight className={`ml-2 h-5 w-5 transition-transform duration-300 ${isHovered ? 'translate-x-1' : ''}`} />
-                </Button>
+                <Link to="/create-trip">
+                  <Button 
+                    variant="hero" 
+                    size="xl"
+                    className="group"
+                    onMouseEnter={() => setIsHovered(true)}
+                    onMouseLeave={() => setIsHovered(false)}
+                  >
+                    Plan New Adventure
+                    <ArrowRight className={`ml-2 h-5 w-5 transition-transform duration-300 ${isHovered ? 'translate-x-1' : ''}`} />
+                  </Button>
+                </Link>
               ) : (
                 <Link to="/auth">
                   <Button 
@@ -271,10 +273,12 @@ const Index = () => {
             Let our travel experts create your perfect itinerary. Start planning your dream trip today.
           </p>
           {user ? (
-            <Button variant="hero" size="xl" className="bg-background text-foreground hover:bg-background/90">
-              Plan Your Next Trip
-              <ArrowRight className="ml-2 h-5 w-5" />
-            </Button>
+            <Link to="/create-trip">
+              <Button variant="hero" size="xl" className="bg-background text-foreground hover:bg-background/90">
+                Plan Your Next Trip
+                <ArrowRight className="ml-2 h-5 w-5" />
+              </Button>
+            </Link>
           ) : (
             <Link to="/auth">
               <Button variant="hero" size="xl" className="bg-background text-foreground hover:bg-background/90">
