@@ -24,14 +24,15 @@ interface SubscriptionInfo {
 
 const Pricing = () => {
   const { user, loading } = useAuth();
-  const [subscriptionInfo, setSubscriptionInfo] = useState<SubscriptionInfo | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [processingTier, setProcessingTier] = useState<string | null>(null);
-
-  // Redirect if not authenticated
+  
+  // Redirect if not authenticated - moved before other hooks
   if (!user && !loading) {
     return <Navigate to="/auth" replace />;
   }
+  
+  const [subscriptionInfo, setSubscriptionInfo] = useState<SubscriptionInfo | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [processingTier, setProcessingTier] = useState<string | null>(null);
 
   useEffect(() => {
     if (user) {
