@@ -78,8 +78,10 @@ export function calculateTripPricing(
   // Duration multiplier
   let durationMultiplier = 1;
   if (formData.startDate && formData.endDate) {
+    const startDate = new Date(formData.startDate);
+    const endDate = new Date(formData.endDate);
     const duration = Math.ceil(
-      (formData.endDate.getTime() - formData.startDate.getTime()) / (1000 * 60 * 60 * 24)
+      (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)
     );
     
     if (duration >= 15) durationMultiplier = 2.0; // +100%
@@ -95,7 +97,8 @@ export function calculateTripPricing(
   // Rush order surcharge (trip starts within 48 hours)
   let rushMultiplier = 1;
   if (formData.startDate) {
-    const hoursUntilTrip = (formData.startDate.getTime() - Date.now()) / (1000 * 60 * 60);
+    const startDate = new Date(formData.startDate);
+    const hoursUntilTrip = (startDate.getTime() - Date.now()) / (1000 * 60 * 60);
     if (hoursUntilTrip <= 48) rushMultiplier = 1.25; // +25%
   }
 
