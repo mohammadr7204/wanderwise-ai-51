@@ -1,11 +1,12 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 import { 
   Calendar, 
   Users, 
@@ -29,33 +30,38 @@ interface ReviewAndCreateProps {
 
 export const ReviewAndCreate = ({ formData, isGenerating, setIsGenerating, onComplete }: ReviewAndCreateProps) => {
   const { user } = useAuth();
-  const [generatedItinerary, setGeneratedItinerary] = useState<string | null>(null);
+  const { toast } = useToast();
+  const navigate = useNavigate();
 
-  const generateItinerary = async () => {
-    if (!user) return;
-    
+  const handleCreateTrip = async () => {
+    if (!user) {
+      toast({
+        title: "Authentication Required",
+        description: "Please log in to create your trip.",
+        variant: "destructive"
+      });
+      return;
+    }
+
     setIsGenerating(true);
-    
-    try {
-      // First, save the trip to database
-      const tripDuration = formData.startDate && formData.endDate 
-        ? Math.ceil((formData.endDate.getTime() - formData.startDate.getTime()) / (1000 * 60 * 60 * 24))
-        : 7;
 
+    try {
+      // Create trip record with form data
       const { data: trip, error: tripError } = await supabase
         .from('trips')
         .insert({
           user_id: user.id,
           title: formData.title,
-          destination: formData.destinationType === 'specific' 
-            ? formData.specificDestinations.join(', ') 
-            : 'Expert-selected destination',
           start_date: formData.startDate?.toISOString().split('T')[0],
           end_date: formData.endDate?.toISOString().split('T')[0],
+          destination: formData.destinationType === 'specific' 
+            ? formData.specificDestinations.join(', ') 
+            : 'Surprise destination',
+          group_size: formData.groupSize,
           budget_min: formData.budgetMin,
           budget_max: formData.budgetMax,
-          group_size: formData.groupSize,
-          status: 'generating',
+          status: 'draft',
+          form_data: formData as any
         })
         .select()
         .single();
@@ -76,43 +82,23 @@ export const ReviewAndCreate = ({ formData, isGenerating, setIsGenerating, onCom
           food_adventure_level: formData.foodAdventureLevel,
         });
 
-      // Generate expert itinerary
-      const { data: aiResponse, error: aiError } = await supabase.functions.invoke('generate-itinerary', {
-        body: {
-          tripData: formData,
-          tripDuration,
-          userId: user.id,
-          tripId: trip.id
-        }
-      });
-
-      if (aiError) throw aiError;
-
-      setGeneratedItinerary(aiResponse.itinerary);
-
-      // Update trip with generated itinerary
-      await supabase
-        .from('trips')
-        .update({
-          status: 'completed',
-          itinerary_data: aiResponse
-        })
-        .eq('id', trip.id);
-
       toast({
-        title: "Itinerary Generated! 🎉",
-        description: "Your personalized travel plan is ready!",
+        title: "Trip Created!",
+        description: "Redirecting to get your quote...",
+        variant: "default"
       });
+
+      // Navigate to quote page
+      navigate(`/trip/${trip.id}/quote`);
 
     } catch (error) {
-      console.error('Error generating itinerary:', error);
-      toast({
-        title: "Error generating itinerary",
-        description: "Please try again or contact support if the issue persists.",
-        variant: "destructive",
-      });
-    } finally {
+      console.error('Error creating trip:', error);
       setIsGenerating(false);
+      toast({
+        title: "Error",
+        description: "Failed to create trip. Please try again.",
+        variant: "destructive"
+      });
     }
   };
 
@@ -141,42 +127,6 @@ export const ReviewAndCreate = ({ formData, isGenerating, setIsGenerating, onCom
     return accommodationMap[formData.accommodationType] || formData.accommodationType;
   };
 
-  if (generatedItinerary) {
-    return (
-      <div className="space-y-6">
-        <div className="text-center">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-green-100 rounded-full mb-4">
-            <Sparkles className="h-8 w-8 text-green-600" />
-          </div>
-          <h3 className="text-2xl font-bold text-gray-900 mb-2">Your Itinerary is Ready!</h3>
-          <p className="text-gray-600 mb-6">Our experts have created your personalized travel plan</p>
-        </div>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Generated Itinerary</CardTitle>
-            <CardDescription>Your expertly crafted travel plan</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="prose max-w-none">
-              <pre className="whitespace-pre-wrap text-sm bg-gray-50 p-4 rounded-lg">
-                {generatedItinerary}
-              </pre>
-            </div>
-          </CardContent>
-        </Card>
-
-        <div className="flex justify-center space-x-4">
-          <Button onClick={onComplete} variant="adventure" size="lg">
-            View in Dashboard
-          </Button>
-          <Button variant="outline" onClick={() => setGeneratedItinerary(null)}>
-            Generate Another
-          </Button>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-6">
@@ -338,14 +288,14 @@ export const ReviewAndCreate = ({ formData, isGenerating, setIsGenerating, onCom
       {/* Generate Button */}
       <div className="text-center space-y-4">
         <div>
-          <h3 className="text-xl font-semibold text-gray-900 mb-2">Ready to Generate Your Itinerary?</h3>
+          <h3 className="text-xl font-semibold text-gray-900 mb-2">Ready to See Your Quote?</h3>
           <p className="text-gray-600 mb-6">
-            Our travel experts will create a personalized travel plan based on your preferences
+            Get pricing and preview your personalized itinerary before you pay
           </p>
         </div>
         
         <Button 
-          onClick={generateItinerary}
+          onClick={handleCreateTrip}
           disabled={isGenerating}
           size="lg"
           variant="adventure"
@@ -354,19 +304,19 @@ export const ReviewAndCreate = ({ formData, isGenerating, setIsGenerating, onCom
           {isGenerating ? (
             <>
               <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-              Generating Your Adventure...
+              Creating Trip...
             </>
           ) : (
             <>
               <Sparkles className="mr-2 h-5 w-5" />
-              Generate My Itinerary
+              Get Quote & Preview
             </>
           )}
         </Button>
         
         {isGenerating && (
           <p className="text-sm text-gray-500">
-            This may take a few moments while our experts craft your perfect trip...
+            Creating your trip and preparing your quote...
           </p>
         )}
       </div>

@@ -14,6 +14,41 @@ export type Database = {
   }
   public: {
     Tables: {
+      itineraries: {
+        Row: {
+          content: Json
+          created_at: string
+          generated_at: string
+          id: string
+          trip_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          content: Json
+          created_at?: string
+          generated_at?: string
+          id?: string
+          trip_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          content?: Json
+          created_at?: string
+          generated_at?: string
+          id?: string
+          trip_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "itineraries_trip_id_fkey"
+            columns: ["trip_id"]
+            isOneToOne: false
+            referencedRelation: "trips"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       payments: {
         Row: {
           amount: number
@@ -173,6 +208,47 @@ export type Database = {
         }
         Relationships: []
       }
+      trip_payments: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          status: string
+          stripe_payment_id: string | null
+          stripe_session_id: string | null
+          trip_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          id?: string
+          status?: string
+          stripe_payment_id?: string | null
+          stripe_session_id?: string | null
+          trip_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          status?: string
+          stripe_payment_id?: string | null
+          stripe_session_id?: string | null
+          trip_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trip_payments_trip_id_fkey"
+            columns: ["trip_id"]
+            isOneToOne: false
+            referencedRelation: "trips"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       trips: {
         Row: {
           budget_max: number | null
@@ -180,11 +256,14 @@ export type Database = {
           created_at: string
           destination: string | null
           end_date: string | null
+          form_data: Json | null
           group_size: number | null
           id: string
           itinerary_data: Json | null
+          price_paid: number | null
           start_date: string | null
           status: string | null
+          tier: string | null
           title: string
           updated_at: string
           user_id: string
@@ -195,11 +274,14 @@ export type Database = {
           created_at?: string
           destination?: string | null
           end_date?: string | null
+          form_data?: Json | null
           group_size?: number | null
           id?: string
           itinerary_data?: Json | null
+          price_paid?: number | null
           start_date?: string | null
           status?: string | null
+          tier?: string | null
           title: string
           updated_at?: string
           user_id: string
@@ -210,11 +292,14 @@ export type Database = {
           created_at?: string
           destination?: string | null
           end_date?: string | null
+          form_data?: Json | null
           group_size?: number | null
           id?: string
           itinerary_data?: Json | null
+          price_paid?: number | null
           start_date?: string | null
           status?: string | null
+          tier?: string | null
           title?: string
           updated_at?: string
           user_id?: string

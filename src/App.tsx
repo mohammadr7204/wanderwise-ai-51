@@ -11,6 +11,9 @@ import Pricing from "./pages/Pricing";
 import About from "./pages/About";
 import Dashboard from "./pages/Dashboard";
 import NotFound from "./pages/NotFound";
+import QuoteAndPreview from "./components/QuoteAndPreview";
+import GenerationStatus from "./components/GenerationStatus";
+import ItineraryView from "./components/ItineraryView";
 
 const queryClient = new QueryClient();
 
@@ -26,6 +29,9 @@ const App = () => (
             <Route path="/auth" element={<Auth />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/create-trip" element={<CreateTrip />} />
+            <Route path="/trip/:tripId/quote" element={<QuoteAndPreview />} />
+            <Route path="/trip/:tripId/generating" element={<GenerationStatus />} />
+            <Route path="/trip/:tripId/itinerary" element={<ItineraryView />} />
             <Route path="/pricing" element={<Pricing />} />
             <Route path="/about" element={<About />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
