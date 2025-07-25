@@ -181,7 +181,7 @@ const Pricing = () => {
           <div className="flex justify-between items-center h-16">
             <Link to="/dashboard" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
               <Compass className="h-6 w-6 text-primary" />
-              <span className="text-lg font-semibold text-primary">WanderAI</span>
+              <span className="text-lg font-semibold text-primary">Atlas</span>
             </Link>
             <div className="flex items-center gap-4">
               <Link to="/dashboard">
@@ -205,7 +205,7 @@ const Pricing = () => {
             Choose Your Adventure Plan
           </h1>
           <p className="text-xl text-gray-600 mb-6">
-            Unlock AI-powered travel planning tailored to your needs
+            Unlock expertly curated travel planning tailored to your needs
           </p>
           
           {subscriptionInfo?.subscribed && (

@@ -33,8 +33,8 @@ const Index = () => {
   const features = [
     {
       icon: <Sparkles className="h-8 w-8" />,
-      title: "AI-Powered Planning",
-      description: "Our advanced AI creates personalized itineraries based on your unique preferences and travel style."
+      title: "Expert Curation",
+      description: "Our travel experts create personalized itineraries based on your unique preferences and travel style."
     },
     {
       icon: <MapPin className="h-8 w-8" />,
@@ -52,13 +52,13 @@ const Index = () => {
     {
       name: "Sarah Chen",
       location: "San Francisco",
-      text: "WanderAI planned the most incredible 2-week Europe trip. Every detail was perfect!",
+      text: "Atlas planned the most incredible 2-week Europe trip. Every detail was perfect!",
       rating: 5
     },
     {
       name: "Michael Torres",
       location: "Austin",
-      text: "The AI understood exactly what I wanted - adventure mixed with culture. Amazing experience!",
+      text: "The experts understood exactly what I wanted - adventure mixed with culture. Amazing experience!",
       rating: 5
     },
     {
@@ -90,7 +90,7 @@ const Index = () => {
               <div className="w-8 h-8 bg-gradient-hero rounded-lg flex items-center justify-center">
                 <Globe className="h-5 w-5 text-primary-foreground" />
               </div>
-              <h1 className="font-elegant font-bold text-2xl text-foreground">WanderAI</h1>
+              <h1 className="font-elegant font-bold text-2xl text-foreground">Atlas</h1>
             </div>
             
             <div className="hidden md:flex items-center space-x-8">
@@ -202,10 +202,10 @@ const Index = () => {
         <div className="container mx-auto px-6">
           <div className="text-center mb-16">
             <h2 className="font-elegant text-4xl md:text-5xl font-bold text-foreground mb-6">
-              Why Choose WanderAI?
+              Why Choose Atlas?
             </h2>
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              Our AI technology combined with travel expertise creates itineraries that are uniquely yours.
+              Our expert travel curation combined with personalized planning creates itineraries that are uniquely yours.
             </p>
           </div>
 
@@ -268,7 +268,7 @@ const Index = () => {
             Ready for Your Next Adventure?
           </h2>
           <p className="text-xl text-primary-foreground/90 mb-8 max-w-2xl mx-auto">
-            Let our AI create your perfect itinerary. Start planning your dream trip today.
+            Let our travel experts create your perfect itinerary. Start planning your dream trip today.
           </p>
           {user ? (
             <Button variant="hero" size="xl" className="bg-background text-foreground hover:bg-background/90">
@@ -294,14 +294,14 @@ const Index = () => {
               <div className="w-6 h-6 bg-gradient-hero rounded-lg flex items-center justify-center">
                 <Globe className="h-4 w-4 text-primary-foreground" />
               </div>
-              <span className="font-elegant font-bold text-xl text-foreground">WanderAI</span>
+              <span className="font-elegant font-bold text-xl text-foreground">Atlas</span>
             </div>
             
             <div className="flex items-center space-x-6 text-sm text-muted-foreground">
               <a href="#privacy" className="hover:text-foreground transition-colors">Privacy</a>
               <a href="#terms" className="hover:text-foreground transition-colors">Terms</a>
               <a href="#contact" className="hover:text-foreground transition-colors">Contact</a>
-              <span>© 2024 WanderAI. All rights reserved.</span>
+              <span>© 2024 Atlas. All rights reserved.</span>
             </div>
           </div>
         </div>

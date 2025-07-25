@@ -133,7 +133,7 @@ const Dashboard = () => {
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center gap-2">
               <Compass className="h-8 w-8 text-primary" />
-              <span className="text-2xl font-bold font-heading text-primary">WanderAI</span>
+              <span className="text-2xl font-bold font-heading text-primary">Atlas</span>
             </div>
             <div className="flex items-center gap-4">
               <div className="text-right">
@@ -226,7 +226,7 @@ const Dashboard = () => {
                 <div>
                   <h2 className="text-2xl font-bold mb-2">Plan Your Next Adventure</h2>
                   <p className="text-white/80 mb-4">
-                    Create a personalized itinerary with our AI-powered travel planner
+                    Create a personalized itinerary with our expert travel curation
                   </p>
                 </div>
                 <Button 
@@ -248,10 +248,10 @@ const Dashboard = () => {
                 <div>
                   <h2 className="text-2xl font-bold mb-2 flex items-center gap-2">
                     <Crown className="h-6 w-6" />
-                    Unlock AI Travel Planning
+                    Unlock Expert Travel Planning
                   </h2>
                   <p className="text-white/90 mb-4">
-                    Subscribe to start creating personalized itineraries with our AI travel planner
+                    Subscribe to start creating personalized itineraries with our expert travel curation
                   </p>
                 </div>
                 <Button 
@@ -283,7 +283,7 @@ const Dashboard = () => {
                 <MapPin className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">No trips yet</h3>
                 <p className="text-gray-600 mb-6">
-                  Start planning your first adventure with WanderAI
+                  Start planning your first adventure with Atlas
                 </p>
                 <Button 
                   variant="adventure"

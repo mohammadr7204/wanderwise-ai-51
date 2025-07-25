@@ -98,9 +98,9 @@ const Auth = () => {
         <div className="text-center mb-8">
           <Link to="/" className="inline-flex items-center gap-2 text-white hover:text-adventure-orange transition-colors">
             <Compass className="h-8 w-8" />
-            <span className="text-2xl font-bold font-heading">WanderAI</span>
+            <span className="text-2xl font-bold font-heading">Atlas</span>
           </Link>
-          <p className="text-white/80 mt-2">Your AI-powered travel companion</p>
+          <p className="text-white/80 mt-2">Your expertly curated travel companion</p>
         </div>
 
         <Card className="backdrop-blur-sm bg-white/10 border-white/20">
