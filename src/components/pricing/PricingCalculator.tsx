@@ -49,9 +49,9 @@ const PricingCalculator = () => {
     };
     
     let basePrice = basePrices[details.serviceTier];
-    let totalMultiplier = 1.0;
+    let additionalCharges = 0;
     
-    // For Executive tier, return consultation-based pricing without multipliers
+    // For Executive tier, return consultation-based pricing without additions
     if (details.serviceTier === 'executive') {
       return {
         basePrice,
@@ -68,48 +68,51 @@ const PricingCalculator = () => {
       };
     }
     
-    // Traveler count multiplier (natural complexity increase)
-    const travelerMultipliers: { [key: number]: number } = {
-      1: 1.0, 2: 1.3, 3: 1.6, 4: 1.6, 
-      5: 2.0, 6: 2.0
+    // Group size: +$3 for each additional person, +$1 for each person after 5
+    if (details.travelerCount > 1) {
+      const additionalPeople = details.travelerCount - 1;
+      if (additionalPeople <= 4) {
+        additionalCharges += additionalPeople * 3; // $3 per person for people 2-5
+      } else {
+        additionalCharges += 4 * 3; // $3 for people 2-5
+        additionalCharges += (additionalPeople - 4) * 1; // $1 for people 6+
+      }
+    }
+    
+    // Duration: +$2 for every 5 days
+    const durationCharges = Math.floor(details.duration / 5) * 2;
+    additionalCharges += durationCharges;
+    
+    // Destinations: +$5-10 for each additional destination
+    if (details.destinationCount > 1) {
+      const additionalDestinations = details.destinationCount - 1;
+      // Average $7.5 per additional destination (between $5-10)
+      additionalCharges += additionalDestinations * 7.5;
+    }
+    
+    // Luxury level adds to base price
+    const luxuryUpcharges = {
+      'budget': 0,
+      'mid-range': 10,
+      'luxury': 25,
+      'ultra-luxury': 50
     };
-    totalMultiplier *= travelerMultipliers[Math.min(details.travelerCount, 6)] || 2.5;
+    additionalCharges += luxuryUpcharges[details.luxuryLevel];
     
-    // Duration multiplier (natural complexity increase)
-    if (details.duration <= 3) totalMultiplier *= 1.0;
-    else if (details.duration <= 7) totalMultiplier *= 1.2;
-    else if (details.duration <= 14) totalMultiplier *= 1.5;
-    else if (details.duration <= 21) totalMultiplier *= 2.0;
-    else totalMultiplier *= 2.5;
-    
-    // Destination complexity (natural boundary)
-    if (details.destinationCount === 1) totalMultiplier *= 1.0;
-    else if (details.destinationCount <= 3) totalMultiplier *= 1.3;
-    else totalMultiplier *= 1.6;
-    
-    // Luxury level (natural service difference)
-    const luxuryMultipliers = {
-      'budget': 1.0,
-      'mid-range': 1.2,
-      'luxury': 1.5,
-      'ultra-luxury': 2.0
+    // Activity level adds to base price
+    const activityUpcharges = {
+      'relaxed': 0,
+      'moderate': 5,
+      'adventure': 15,
+      'exclusive': 30
     };
-    totalMultiplier *= luxuryMultipliers[details.luxuryLevel];
+    additionalCharges += activityUpcharges[details.activityLevel];
     
-    // Activity level (natural complexity)
-    const activityMultipliers = {
-      'relaxed': 1.0,
-      'moderate': 1.1,
-      'adventure': 1.3,
-      'exclusive': 1.5
-    };
-    totalMultiplier *= activityMultipliers[details.activityLevel];
-    
-    const finalPrice = Math.round(basePrice * totalMultiplier);
+    const finalPrice = Math.round(basePrice + additionalCharges);
     
     return {
       basePrice,
-      totalMultiplier,
+      totalMultiplier: (basePrice + additionalCharges) / basePrice,
       finalPrice,
       serviceTier: details.serviceTier,
       breakdown: {
