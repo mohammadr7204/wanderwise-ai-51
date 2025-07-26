@@ -100,21 +100,24 @@ const QuoteAndPreview = () => {
     try {
       const pricing = calculateTripPricing(trip.form_data, selectedTier);
       
-      console.log('Updating trip with:', {
+      const updateData = {
         tier: selectedTier,
-        price_paid: pricing.total,
-        status: 'quoted',
-        tripId: trip.id
+        price_paid: Number(pricing.total),
+        status: 'quoted'
+      };
+      
+      console.log('Updating trip with exact values:', {
+        ...updateData,
+        tripId: trip.id,
+        userId: user.id,
+        pricingTotal: pricing.total,
+        pricingTotalType: typeof pricing.total
       });
       
       // Update trip with selected tier and pricing
       const { error: updateError } = await supabase
         .from('trips')
-        .update({ 
-          tier: selectedTier,
-          price_paid: Number(pricing.total),
-          status: 'quoted'
-        })
+        .update(updateData)
         .eq('id', trip.id)
         .eq('user_id', user.id); // Add user_id check for RLS
 
