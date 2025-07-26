@@ -11,7 +11,7 @@ export interface PricingBreakdown {
 }
 
 export interface ServiceTier {
-  id: 'essential' | 'premium' | 'luxury';
+  id: 'essential' | 'premium' | 'executive';
   name: string;
   basePrice: number;
   description: string;
@@ -21,41 +21,46 @@ export interface ServiceTier {
 export const SERVICE_TIERS: ServiceTier[] = [
   {
     id: 'essential',
-    name: 'Essential',
+    name: 'Essential Plan',
     basePrice: 39,
-    description: 'Perfect for straightforward trips',
+    description: 'Perfect for independent travelers',
     features: [
-      'Day-by-day itinerary',
-      'Restaurant recommendations',
-      'Basic activity suggestions',
-      'PDF download'
+      'Full AI-generated itinerary (unlimited duration)',
+      'Restaurant and activity recommendations with booking links',
+      'Accommodation suggestions with booking links',
+      'Transportation recommendations',
+      'PDF itinerary export',
+      'Email support (48hr response)',
+      'Self-service booking through provided links'
     ]
   },
   {
     id: 'premium',
-    name: 'Premium',
+    name: 'Premium Plan',
     basePrice: 89,
-    description: 'Enhanced planning with insider tips',
+    description: 'Most popular - with booking assistance',
     features: [
-      'Everything in Essential',
-      'Local insider recommendations',
-      'Interactive map',
-      'Booking links & contacts',
-      '1 revision request'
+      'Everything in Essential (same AI quality)',
+      'Human booking assistance for hotels & activities',
+      'Flight booking guidance',
+      'Multiple destination planning',
+      '1 free revision with human review',
+      'Priority email support (24hr response)'
     ]
   },
   {
-    id: 'luxury',
-    name: 'Luxury',
-    basePrice: 249,
-    description: 'VIP experience with exclusive access',
+    id: 'executive',
+    name: 'Executive Concierge',
+    basePrice: 500,
+    description: 'White-glove travel planning service',
     features: [
-      'Everything in Premium',
-      'Exclusive venue access',
-      'Concierge booking assistance',
-      'Private tour recommendations',
+      'One-on-one consultation call',
+      'Complete booking service (flights, hotels, transport)',
+      'Restaurant reservations & exclusive experiences',
+      'Dedicated travel coordinator',
+      '24/7 support during travel',
       'Unlimited revisions',
-      'Priority support'
+      'Travel insurance coordination'
     ]
   }
 ];
@@ -69,13 +74,26 @@ export function calculateTripPricing(
 
   const basePrice = selectedTier.basePrice;
 
-  // Group size multiplier
+  // For Executive tier, return consultation-based pricing
+  if (tier === 'executive') {
+    return {
+      basePrice,
+      groupSizeMultiplier: 1,
+      durationMultiplier: 1,
+      destinationMultiplier: 1,
+      rushMultiplier: 1,
+      subtotal: basePrice,
+      total: basePrice // Starting price for consultation
+    };
+  }
+
+  // Group size multiplier (natural complexity increase)
   let groupSizeMultiplier = 1;
   if (formData.groupSize >= 5) groupSizeMultiplier = 2.0; // +100%
   else if (formData.groupSize >= 3) groupSizeMultiplier = 1.6; // +60%
   else if (formData.groupSize === 2) groupSizeMultiplier = 1.3; // +30%
 
-  // Duration multiplier
+  // Duration multiplier (natural complexity increase)
   let durationMultiplier = 1;
   if (formData.startDate && formData.endDate) {
     const startDate = new Date(formData.startDate);
@@ -89,12 +107,12 @@ export function calculateTripPricing(
     else if (duration >= 4) durationMultiplier = 1.2; // +20%
   }
 
-  // Destination complexity multiplier
+  // Destination complexity multiplier (natural boundary)
   let destinationMultiplier = 1;
   if (formData.travelRadius === 'international') destinationMultiplier += 0.2; // +20%
   if (formData.specificDestinations.length > 1) destinationMultiplier += 0.3; // +30%
 
-  // Rush order surcharge (trip starts within 48 hours)
+  // Rush order surcharge (natural service boundary)
   let rushMultiplier = 1;
   if (formData.startDate) {
     const startDate = new Date(formData.startDate);

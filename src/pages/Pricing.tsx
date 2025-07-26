@@ -26,66 +26,43 @@ const Pricing = () => {
       id: 'essential',
       name: 'Essential Plan',
       price: 39,
-      description: 'Perfect for simple trips',
+      description: 'Perfect for independent travelers',
       icon: Compass,
       features: [
-        'Basic AI-generated itinerary (up to 7 days)',
-        'Activity and restaurant recommendations with links',
-        'Basic accommodation suggestions with booking links',
+        'Full AI-generated itinerary (unlimited duration)',
+        'Restaurant and activity recommendations with booking links',
+        'Accommodation suggestions with booking links',
         'Transportation recommendations',
         'PDF itinerary export',
-        'Email support',
+        'Email support (48hr response)',
         'Self-service booking through provided links'
       ],
       limitations: [
-        'Up to 7 days maximum',
-        'Single destination focus',
-        'No booking assistance',
-        'No revisions included'
+        'Self-service booking only',
+        'No revisions included',
+        'Email support only'
       ]
     },
     {
       id: 'premium',
       name: 'Premium Plan',
       price: 89,
-      description: 'Most popular choice',
+      description: 'Most popular - with booking assistance',
       icon: Star,
       popular: true,
       features: [
-        'Detailed AI itinerary (up to 14 days, multiple destinations)',
-        'Curated restaurant and activity recommendations',
-        'Hotel booking assistance (3-5 options presented)',
-        'Flight booking assistance',
-        'Ground transportation arrangements',
-        '1 free revision',
-        'Priority email support',
-        'Semi-assisted booking (we help you choose and book)'
+        'Everything in Essential (same AI quality)',
+        'Human booking assistance for hotels & activities',
+        'Flight booking guidance',
+        'Multiple destination planning',
+        '1 free revision with human review',
+        'Priority email support (24hr response)'
       ],
       limitations: [
-        'Up to 14 days maximum',
         'Limited to 1 revision',
-        'Business hours support only'
+        'Email support only',
+        'No restaurant reservations'
       ]
-    },
-    {
-      id: 'luxury',
-      name: 'Luxury Concierge',
-      price: 249,
-      description: 'Ultimate travel experience',
-      icon: Crown,
-      features: [
-        'Unlimited duration and destinations',
-        'Full-service booking and reservations',
-        'Premium accommodation focus (4+ star hotels)',
-        'Fine dining reservations',
-        'Exclusive experiences and VIP access',
-        'Personal travel concierge',
-        '24/7 support during trip',
-        'Unlimited revisions',
-        'Travel insurance coordination',
-        'Complete hands-off experience'
-      ],
-      limitations: []
     }
   ];
 
@@ -137,7 +114,7 @@ const Pricing = () => {
           <h2 className="text-3xl font-bold text-gray-900 mb-8 text-center">
             Choose Your Service Level
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {serviceTiers.map((tier) => {
               const IconComponent = tier.icon;
               
@@ -189,7 +166,7 @@ const Pricing = () => {
                     {/* Limitations */}
                     {tier.limitations.length > 0 && (
                       <div>
-                        <h4 className="font-medium text-gray-700 mb-3">Limitations:</h4>
+                        <h4 className="font-medium text-gray-700 mb-3">Service boundaries:</h4>
                         <ul className="space-y-2">
                           {tier.limitations.map((limitation, index) => (
                             <li key={index} className="flex items-start gap-2">
@@ -225,15 +202,15 @@ const Pricing = () => {
                   <Crown className="h-8 w-8 text-amber-600" />
                   <div>
                     <CardTitle className="text-xl text-amber-800">Executive Concierge</CardTitle>
-                    <CardDescription className="text-amber-700">Ultra-personalized service</CardDescription>
+                    <CardDescription className="text-amber-700">White-glove travel planning service</CardDescription>
                   </div>
                 </div>
                 
                 <div className="text-center mt-6">
                   <div className="text-4xl font-bold text-amber-800">
-                    Custom Quote
+                    Consultation Required
                   </div>
-                  <p className="text-sm text-amber-600 mt-1">Consultation required</p>
+                  <p className="text-sm text-amber-600 mt-1">Starting at $500</p>
                 </div>
               </CardHeader>
 
@@ -248,15 +225,11 @@ const Pricing = () => {
                     </li>
                     <li className="flex items-start gap-2">
                       <Check className="h-4 w-4 text-amber-600 flex-shrink-0 mt-0.5" />
-                      <span className="text-sm text-amber-800">Complete trip booking service</span>
+                      <span className="text-sm text-amber-800">Complete booking service (flights, hotels, transport)</span>
                     </li>
                     <li className="flex items-start gap-2">
                       <Check className="h-4 w-4 text-amber-600 flex-shrink-0 mt-0.5" />
-                      <span className="text-sm text-amber-800">All flights, hotels, and transportation</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <Check className="h-4 w-4 text-amber-600 flex-shrink-0 mt-0.5" />
-                      <span className="text-sm text-amber-800">Restaurant reservations and experiences</span>
+                      <span className="text-sm text-amber-800">Restaurant reservations & exclusive experiences</span>
                     </li>
                     <li className="flex items-start gap-2">
                       <Check className="h-4 w-4 text-amber-600 flex-shrink-0 mt-0.5" />
@@ -264,7 +237,11 @@ const Pricing = () => {
                     </li>
                     <li className="flex items-start gap-2">
                       <Check className="h-4 w-4 text-amber-600 flex-shrink-0 mt-0.5" />
-                      <span className="text-sm text-amber-800">White-glove service throughout</span>
+                      <span className="text-sm text-amber-800">24/7 support during travel</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <Check className="h-4 w-4 text-amber-600 flex-shrink-0 mt-0.5" />
+                      <span className="text-sm text-amber-800">Unlimited revisions</span>
                     </li>
                   </ul>
                 </div>
@@ -273,7 +250,7 @@ const Pricing = () => {
                 <div className="pt-4">
                   <Button 
                     className="w-full bg-amber-600 hover:bg-amber-700 text-white"
-                    onClick={() => window.open('https://calendly.com/your-business', '_blank')}
+                    onClick={() => window.open('https://calendly.com/atlas-executive', '_blank')}
                   >
                     Book Consultation
                     <ArrowRight className="h-4 w-4 ml-2" />
@@ -281,6 +258,16 @@ const Pricing = () => {
                 </div>
               </CardContent>
             </Card>
+          </div>
+          
+          {/* Value messaging */}
+          <div className="mt-12 text-center">
+            <p className="text-lg text-gray-600 mb-4">
+              <strong>Same AI Quality for All Tiers</strong> - Our differentiation is based on human service levels, not AI output quality.
+            </p>
+            <p className="text-gray-500">
+              Essential and Premium plans receive identical AI-generated itineraries. The difference is in booking assistance and support.
+            </p>
           </div>
         </div>
 
@@ -362,39 +349,39 @@ const Pricing = () => {
                   <th className="text-left py-3 px-4">Feature</th>
                   <th className="text-center py-3 px-4">Essential</th>
                   <th className="text-center py-3 px-4">Premium</th>
-                  <th className="text-center py-3 px-4">Luxury</th>
+                  <th className="text-center py-3 px-4">Executive</th>
                 </tr>
               </thead>
               <tbody className="text-sm">
                 <tr className="border-b">
-                  <td className="py-3 px-4 font-medium">Trip Duration</td>
-                  <td className="text-center py-3 px-4">Up to 7 days</td>
-                  <td className="text-center py-3 px-4">Up to 14 days</td>
-                  <td className="text-center py-3 px-4">Unlimited</td>
+                  <td className="py-3 px-4 font-medium">AI Itinerary Quality</td>
+                  <td className="text-center py-3 px-4">✅ Full</td>
+                  <td className="text-center py-3 px-4">✅ Full</td>
+                  <td className="text-center py-3 px-4">✅ Full</td>
                 </tr>
                 <tr className="border-b">
-                  <td className="py-3 px-4 font-medium">Destinations</td>
-                  <td className="text-center py-3 px-4">Single focus</td>
-                  <td className="text-center py-3 px-4">Multiple</td>
+                  <td className="py-3 px-4 font-medium">Trip Duration</td>
+                  <td className="text-center py-3 px-4">Unlimited</td>
+                  <td className="text-center py-3 px-4">Unlimited</td>
                   <td className="text-center py-3 px-4">Unlimited</td>
                 </tr>
                 <tr className="border-b">
                   <td className="py-3 px-4 font-medium">Booking Assistance</td>
-                  <td className="text-center py-3 px-4">Links only</td>
-                  <td className="text-center py-3 px-4">Assisted</td>
+                  <td className="text-center py-3 px-4">Self-service</td>
+                  <td className="text-center py-3 px-4">Human help</td>
                   <td className="text-center py-3 px-4">Full service</td>
                 </tr>
                 <tr className="border-b">
                   <td className="py-3 px-4 font-medium">Revisions</td>
                   <td className="text-center py-3 px-4">None</td>
-                  <td className="text-center py-3 px-4">1 free</td>
+                  <td className="text-center py-3 px-4">1 included</td>
                   <td className="text-center py-3 px-4">Unlimited</td>
                 </tr>
                 <tr className="border-b">
                   <td className="py-3 px-4 font-medium">Support</td>
                   <td className="text-center py-3 px-4">Email</td>
                   <td className="text-center py-3 px-4">Priority email</td>
-                  <td className="text-center py-3 px-4">24/7 concierge</td>
+                  <td className="text-center py-3 px-4">24/7 phone + email</td>
                 </tr>
               </tbody>
             </table>

@@ -21,7 +21,7 @@ interface PricingBreakdown {
 }
 
 interface TripDetails {
-  serviceTier: 'essential' | 'premium' | 'luxury';
+  serviceTier: 'essential' | 'premium' | 'executive';
   travelerCount: number;
   duration: number;
   destinationCount: number;
@@ -45,32 +45,49 @@ const PricingCalculator = () => {
     const basePrices = {
       essential: 39,
       premium: 89,
-      luxury: 249
+      executive: 500 // Starting price for consultation
     };
     
     let basePrice = basePrices[details.serviceTier];
     let totalMultiplier = 1.0;
     
-    // Traveler count multiplier
+    // For Executive tier, return consultation-based pricing without multipliers
+    if (details.serviceTier === 'executive') {
+      return {
+        basePrice,
+        totalMultiplier: 1.0,
+        finalPrice: basePrice,
+        serviceTier: details.serviceTier,
+        breakdown: {
+          travelers: details.travelerCount,
+          duration: details.duration,
+          destinations: details.destinationCount,
+          luxuryLevel: details.luxuryLevel,
+          activityLevel: details.activityLevel
+        }
+      };
+    }
+    
+    // Traveler count multiplier (natural complexity increase)
     const travelerMultipliers: { [key: number]: number } = {
       1: 1.0, 2: 1.3, 3: 1.6, 4: 1.6, 
       5: 2.0, 6: 2.0
     };
     totalMultiplier *= travelerMultipliers[Math.min(details.travelerCount, 6)] || 2.5;
     
-    // Duration multiplier
+    // Duration multiplier (natural complexity increase)
     if (details.duration <= 3) totalMultiplier *= 1.0;
     else if (details.duration <= 7) totalMultiplier *= 1.2;
     else if (details.duration <= 14) totalMultiplier *= 1.5;
     else if (details.duration <= 21) totalMultiplier *= 2.0;
     else totalMultiplier *= 2.5;
     
-    // Destination complexity
+    // Destination complexity (natural boundary)
     if (details.destinationCount === 1) totalMultiplier *= 1.0;
     else if (details.destinationCount <= 3) totalMultiplier *= 1.3;
     else totalMultiplier *= 1.6;
     
-    // Luxury level
+    // Luxury level (natural service difference)
     const luxuryMultipliers = {
       'budget': 1.0,
       'mid-range': 1.2,
@@ -79,7 +96,7 @@ const PricingCalculator = () => {
     };
     totalMultiplier *= luxuryMultipliers[details.luxuryLevel];
     
-    // Activity level
+    // Activity level (natural complexity)
     const activityMultipliers = {
       'relaxed': 1.0,
       'moderate': 1.1,
@@ -116,25 +133,26 @@ const PricingCalculator = () => {
   const getServiceFeatures = (tier: string) => {
     const features = {
       essential: [
-        'Basic AI itinerary (up to 7 days)',
-        'Activity & restaurant links',
-        'Basic accommodation suggestions',
+        'Full AI-generated itinerary (unlimited duration)',
+        'Restaurant and activity recommendations with booking links',
+        'Accommodation suggestions with booking links',
         'PDF itinerary export',
-        'Email support'
+        'Email support (48hr response)'
       ],
       premium: [
-        'Detailed AI itinerary (up to 14 days)',
-        'Curated recommendations',
-        'Booking assistance',
-        '1 free revision',
-        'Priority support'
+        'Everything in Essential (same AI quality)',
+        'Human booking assistance for hotels & activities',
+        'Flight booking guidance',
+        '1 free revision with human review',
+        'Priority email support (24hr response)'
       ],
-      luxury: [
-        'Unlimited duration & destinations',
-        'Full-service booking',
-        'Premium accommodations',
-        'Personal travel concierge',
-        '24/7 support & unlimited revisions'
+      executive: [
+        'One-on-one consultation call',
+        'Complete booking service (flights, hotels, transport)',
+        'Restaurant reservations & exclusive experiences',
+        'Dedicated travel coordinator',
+        '24/7 support during travel',
+        'Unlimited revisions'
       ]
     };
     return features[tier as keyof typeof features] || [];
@@ -171,7 +189,7 @@ const PricingCalculator = () => {
                 Service Level
               </label>
               <div className="grid grid-cols-3 gap-2">
-                {['essential', 'premium', 'luxury'].map((tier) => (
+                {['essential', 'premium', 'executive'].map((tier) => (
                   <Button
                     key={tier}
                     variant={tripDetails.serviceTier === tier ? "default" : "outline"}
@@ -335,10 +353,21 @@ const PricingCalculator = () => {
                 </div>
 
                 {/* CTA Button */}
-                <Button className="w-full" size="lg">
-                  Start Planning Your Trip
-                  <ArrowRight className="h-4 w-4 ml-2" />
-                </Button>
+                {pricing.serviceTier === 'executive' ? (
+                  <Button 
+                    className="w-full bg-amber-600 hover:bg-amber-700 text-white" 
+                    size="lg"
+                    onClick={() => window.open('https://calendly.com/atlas-executive', '_blank')}
+                  >
+                    Book Consultation
+                    <ArrowRight className="h-4 w-4 ml-2" />
+                  </Button>
+                ) : (
+                  <Button className="w-full" size="lg">
+                    Start Planning Your Trip
+                    <ArrowRight className="h-4 w-4 ml-2" />
+                  </Button>
+                )}
 
                 <p className="text-xs text-gray-500 text-center">
                   Full payment due upfront
