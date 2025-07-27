@@ -21,7 +21,7 @@ export interface ServiceTier {
 export const SERVICE_TIERS: ServiceTier[] = [
   {
     id: 'essential',
-    name: 'Essential Plan',
+    name: 'Essential Tier',
     basePrice: 39,
     description: 'Perfect for independent travelers',
     features: [
@@ -36,7 +36,7 @@ export const SERVICE_TIERS: ServiceTier[] = [
   },
   {
     id: 'premium',
-    name: 'Premium Plan',
+    name: 'Premium Tier',
     basePrice: 89,
     description: 'Most popular - with booking assistance',
     features: [

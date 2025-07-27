@@ -24,7 +24,7 @@ const Pricing = () => {
   const serviceTiers = [
     {
       id: 'essential',
-      name: 'Essential Plan',
+      name: 'Essential Tier',
       price: 39,
       description: 'Perfect for independent travelers',
       icon: Compass,
@@ -45,7 +45,7 @@ const Pricing = () => {
     },
     {
       id: 'premium',
-      name: 'Premium Plan',
+      name: 'Premium Tier',
       price: 89,
       description: 'Most popular - with booking assistance',
       icon: Star,
@@ -276,65 +276,6 @@ const Pricing = () => {
           <PricingCalculator />
         </div>
 
-        {/* Pricing Factors */}
-        <div className="mb-16">
-          <h2 className="text-3xl font-bold text-gray-900 mb-8 text-center">
-            How Pricing Works
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <Card>
-              <CardHeader className="text-center">
-                <Users className="h-8 w-8 text-primary mx-auto mb-2" />
-                <CardTitle className="text-lg">Group Size</CardTitle>
-              </CardHeader>
-              <CardContent className="text-center text-sm text-gray-600">
-                <p>1 person: Base price</p>
-                <p>2 people: +30%</p>
-                <p>3-4 people: +60%</p>
-                <p>5+ people: +100%+</p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="text-center">
-                <Clock className="h-8 w-8 text-primary mx-auto mb-2" />
-                <CardTitle className="text-lg">Duration</CardTitle>
-              </CardHeader>
-              <CardContent className="text-center text-sm text-gray-600">
-                <p>1-3 days: Base price</p>
-                <p>4-7 days: +20%</p>
-                <p>8-14 days: +50%</p>
-                <p>15+ days: +100%+</p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="text-center">
-                <MapPin className="h-8 w-8 text-primary mx-auto mb-2" />
-                <CardTitle className="text-lg">Destinations</CardTitle>
-              </CardHeader>
-              <CardContent className="text-center text-sm text-gray-600">
-                <p>Single city: Base price</p>
-                <p>Multiple cities: +30%</p>
-                <p>Multiple countries: +60%</p>
-                <p>Remote locations: +80%</p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="text-center">
-                <DollarSign className="h-8 w-8 text-primary mx-auto mb-2" />
-                <CardTitle className="text-lg">Luxury Level</CardTitle>
-              </CardHeader>
-              <CardContent className="text-center text-sm text-gray-600">
-                <p>Budget: Base price</p>
-                <p>Mid-range: +20%</p>
-                <p>Luxury: +50%</p>
-                <p>Ultra-luxury: +100%</p>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
 
         {/* Features Comparison */}
         <div className="bg-white rounded-lg shadow-sm border p-8 mb-16">
