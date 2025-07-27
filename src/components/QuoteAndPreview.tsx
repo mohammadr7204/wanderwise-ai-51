@@ -250,41 +250,107 @@ const QuoteAndPreview = () => {
               </CardContent>
             </Card>
 
-            {/* Itinerary Preview */}
+            {/* Enhanced AI-Powered Preview */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Star className="h-5 w-5 text-primary" />
-                  Your Itinerary Preview
+                  Your AI-Powered Itinerary Preview
                 </CardTitle>
-                <CardDescription>Here's a taste of what you'll receive</CardDescription>
+                <CardDescription>Personalized recommendations based on your preferences</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="bg-blue-50 p-4 rounded-lg">
-                  <h4 className="font-medium text-blue-900 mb-2">
-                    Your {duration}-day {trip.form_data.destinationType === 'surprise' ? 'adventure' : trip.title} will include:
+                <div className="bg-gradient-to-r from-blue-50 to-purple-50 p-4 rounded-lg border-l-4 border-primary">
+                  <h4 className="font-medium text-gray-900 mb-3">
+                    Your {duration}-day {trip.form_data.destinationType === 'surprise' ? 'AI-selected adventure' : trip.title} will feature:
                   </h4>
-                  <ul className="text-sm text-blue-800 space-y-1">
-                    <li>• {Math.ceil(duration * 2.5)} handpicked activities and experiences</li>
-                    <li>• {Math.ceil(duration * 3)} restaurant recommendations</li>
-                    <li>• Local insider tips and hidden gems</li>
-                    <li>• Optimized daily schedules</li>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        <MapPin className="h-4 w-4 text-primary" />
+                        <span className="font-medium">Real-time verified venues</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Calendar className="h-4 w-4 text-primary" />
+                        <span className="font-medium">Weather-adaptive planning</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <DollarSign className="h-4 w-4 text-primary" />
+                        <span className="font-medium">Budget-optimized recommendations</span>
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        <Star className="h-4 w-4 text-primary" />
+                        <span className="font-medium">{Math.ceil(duration * 2.5)} curated experiences</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Users className="h-4 w-4 text-primary" />
+                        <span className="font-medium">Optimized for {trip.form_data.groupSize} traveler{trip.form_data.groupSize !== 1 ? 's' : ''}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <CheckCircle className="h-4 w-4 text-primary" />
+                        <span className="font-medium">Real ratings & current hours</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Personalized Sample Day */}
+                <div className="border-l-4 border-green-500 pl-4 bg-green-50 p-4 rounded-r-lg">
+                  <h5 className="font-medium mb-3 text-green-900">Sample Day Based on Your Preferences:</h5>
+                  
+                  {trip.form_data.activityTypes.includes('adventure') && (
+                    <div className="mb-3">
+                      <p className="text-sm text-green-800 mb-1">
+                        <span className="font-medium">Morning Adventure:</span> Outdoor activity matching your love for adventure sports
+                      </p>
+                      <p className="text-xs text-green-600">• Real local guides with current availability</p>
+                    </div>
+                  )}
+                  
+                  {trip.form_data.activityTypes.includes('cultural') && (
+                    <div className="mb-3">
+                      <p className="text-sm text-green-800 mb-1">
+                        <span className="font-medium">Cultural Immersion:</span> Authentic local experiences beyond tourist traps
+                      </p>
+                      <p className="text-xs text-green-600">• Verified hours and seasonal availability</p>
+                    </div>
+                  )}
+                  
+                  {trip.form_data.foodAdventureLevel > 5 && (
+                    <div className="mb-3">
+                      <p className="text-sm text-green-800 mb-1">
+                        <span className="font-medium">Culinary Adventure:</span> Local specialties matching your adventurous palate
+                      </p>
+                      <p className="text-xs text-green-600">• Real restaurants with current ratings and dietary options</p>
+                    </div>
+                  )}
+                  
+                  <div className="mt-3 p-2 bg-white rounded border border-green-200">
+                    <p className="text-xs text-gray-600">
+                      💡 <strong>AI Personalization:</strong> Every recommendation will be specifically chosen based on your 
+                      preferences for {trip.form_data.activityTypes.join(', ').toLowerCase()}, 
+                      dietary needs, and budget range.
+                    </p>
+                  </div>
+                </div>
+
+                {/* What Makes This Different */}
+                <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
+                  <h5 className="font-medium text-yellow-900 mb-2">What makes this AI-powered:</h5>
+                  <ul className="text-sm text-yellow-800 space-y-1">
+                    <li>• Live weather data influences daily activity planning</li>
+                    <li>• Real restaurant ratings and current operating hours</li>
+                    <li>• Local events happening during your specific travel dates</li>
+                    <li>• Budget calculations using real current pricing</li>
+                    <li>• Transportation times based on actual traffic patterns</li>
                   </ul>
                 </div>
 
-                <div className="border-l-4 border-primary pl-4">
-                  <h5 className="font-medium mb-1">Sample Day: Day 3</h5>
-                  <p className="text-sm text-gray-600 mb-2">
-                    <span className="font-medium">Morning:</span> Historic district walking tour with local guide
-                  </p>
-                  <p className="text-sm text-gray-600">
-                    <span className="font-medium">Afternoon:</span> Cooking class featuring regional specialties
-                  </p>
-                </div>
-
-                <div className="flex items-center gap-2 text-green-600">
+                <div className="flex items-center gap-2 text-green-600 bg-green-50 p-3 rounded-lg">
                   <CheckCircle className="h-4 w-4" />
-                  <span className="text-sm font-medium">100% Satisfaction Guarantee</span>
+                  <span className="text-sm font-medium">AI-Powered Personalization Guarantee</span>
                 </div>
               </CardContent>
             </Card>

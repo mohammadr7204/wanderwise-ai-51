@@ -16,11 +16,12 @@ import {
 } from 'lucide-react';
 
 const GENERATION_STEPS = [
-  { id: 1, title: 'Analyzing preferences', description: 'Understanding your travel style and needs' },
-  { id: 2, title: 'Finding destinations', description: 'Discovering perfect locations for your trip' },
-  { id: 3, title: 'Creating itinerary', description: 'Crafting your personalized day-by-day plan' },
-  { id: 4, title: 'Adding final touches', description: 'Including insider tips and recommendations' },
-  { id: 5, title: 'Ready!', description: 'Your itinerary is complete and ready to view' }
+  { id: 1, title: 'Gathering real-time data', description: 'Checking weather, attractions, and local events' },
+  { id: 2, title: 'AI research & analysis', description: 'Deep-diving into your destination with Claude Sonnet 4' },
+  { id: 3, title: 'Personalizing recommendations', description: 'Matching venues to your exact preferences' },
+  { id: 4, title: 'Optimizing logistics', description: 'Creating realistic schedules with real travel times' },
+  { id: 5, title: 'Final quality check', description: 'Ensuring everything meets your budget and needs' },
+  { id: 6, title: 'Ready!', description: 'Your AI-powered itinerary is complete!' }
 ];
 
 const TRAVEL_FACTS = [
@@ -39,6 +40,7 @@ interface Trip {
   title: string;
   status: string;
   tier: string;
+  form_data: any;
 }
 
 const GenerationStatus = () => {
@@ -50,7 +52,9 @@ const GenerationStatus = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [progress, setProgress] = useState(0);
   const [currentFact, setCurrentFact] = useState(0);
-  const [estimatedTime, setEstimatedTime] = useState(180); // 3 minutes in seconds
+  const [estimatedTime, setEstimatedTime] = useState(240); // 4 minutes for real AI generation
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [currentStepDescription, setCurrentStepDescription] = useState('Initializing AI research...');
 
   useEffect(() => {
     if (tripId && user) {
@@ -65,31 +69,45 @@ const GenerationStatus = () => {
       return;
     }
 
-    // Simulate generation progress
+    // Start real AI generation when trip is loaded
+    if (trip && !isGenerating) {
+      startRealGeneration();
+    }
+
+    // Update progress steps and estimates
     const interval = setInterval(() => {
       setProgress(prev => {
-        const newProgress = prev + Math.random() * 2;
+        const increment = isGenerating ? Math.random() * 1.5 : Math.random() * 0.5;
+        const newProgress = Math.min(prev + increment, isGenerating ? 95 : 30);
         
         // Update current step based on progress
-        if (newProgress >= 90) setCurrentStep(5);
-        else if (newProgress >= 70) setCurrentStep(4);
-        else if (newProgress >= 50) setCurrentStep(3);
-        else if (newProgress >= 20) setCurrentStep(2);
-        
-        if (newProgress >= 100) {
-          clearInterval(interval);
-          // Simulate completion and redirect
-          setTimeout(() => {
-            completeGeneration();
-          }, 2000);
-          return 100;
+        if (newProgress >= 85) {
+          setCurrentStep(6);
+          setCurrentStepDescription('Finalizing your personalized itinerary...');
+        } else if (newProgress >= 70) {
+          setCurrentStep(5);
+          setCurrentStepDescription('Quality checking recommendations against your budget...');
+        } else if (newProgress >= 55) {
+          setCurrentStep(4);
+          setCurrentStepDescription('Optimizing travel times and logistics...');
+        } else if (newProgress >= 35) {
+          setCurrentStep(3);
+          setCurrentStepDescription('Matching venues to your preferences...');
+        } else if (newProgress >= 15) {
+          setCurrentStep(2);
+          setCurrentStepDescription('AI is researching your destination...');
+        } else {
+          setCurrentStep(1);
+          setCurrentStepDescription('Gathering weather and event data...');
         }
         
         return newProgress;
       });
       
-      setEstimatedTime(prev => Math.max(0, prev - 1));
-    }, 1000);
+      if (isGenerating) {
+        setEstimatedTime(prev => Math.max(0, prev - 1));
+      }
+    }, 2000);
 
     // Rotate travel facts every 8 seconds
     const factInterval = setInterval(() => {
@@ -100,13 +118,13 @@ const GenerationStatus = () => {
       clearInterval(interval);
       clearInterval(factInterval);
     };
-  }, [trip]);
+  }, [trip, isGenerating]);
 
   const fetchTrip = async () => {
     try {
       const { data, error } = await supabase
         .from('trips')
-        .select('id, title, status, tier')
+        .select('id, title, status, tier, form_data')
         .eq('id', tripId)
         .eq('user_id', user?.id)
         .single();
@@ -129,55 +147,61 @@ const GenerationStatus = () => {
     }
   };
 
-  const completeGeneration = async () => {
+  const startRealGeneration = async () => {
+    if (!trip?.form_data || isGenerating) return;
+    
+    setIsGenerating(true);
+    setCurrentStepDescription('Initializing AI research with real-time data...');
+    
     try {
-      // Update trip status to completed
-      await supabase
-        .from('trips')
-        .update({ status: 'completed' })
-        .eq('id', tripId);
+      console.log('Starting real AI generation for trip:', tripId);
+      
+      // Calculate trip duration
+      const startDate = new Date(trip.form_data.startDate);
+      const endDate = new Date(trip.form_data.endDate);
+      const tripDuration = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+      
+      setCurrentStepDescription('Calling AI generation service...');
+      
+      // Call the real AI generation function
+      const { data, error } = await supabase.functions.invoke('generate-itinerary', {
+        body: {
+          tripData: trip.form_data,
+          tripDuration,
+          userId: user?.id,
+          tripId: trip.id
+        }
+      });
 
-      // Create mock itinerary data
-      const mockItinerary = {
-        days: Array.from({ length: 7 }, (_, i) => ({
-          day: i + 1,
-          title: `Day ${i + 1}`,
-          activities: [
-            { time: '9:00 AM', title: 'Morning Activity', description: 'Explore local attractions' },
-            { time: '1:00 PM', title: 'Lunch', description: 'Local restaurant recommendation' },
-            { time: '3:00 PM', title: 'Afternoon Experience', description: 'Cultural activity' },
-            { time: '7:00 PM', title: 'Dinner', description: 'Evening dining experience' }
-          ]
-        })),
-        restaurants: Array.from({ length: 10 }, (_, i) => ({
-          name: `Restaurant ${i + 1}`,
-          cuisine: 'Local',
-          priceRange: '$$',
-          rating: 4.5
-        })),
-        tips: [
-          'Book restaurants in advance',
-          'Carry cash for local vendors',
-          'Learn basic local phrases'
-        ]
-      };
+      if (error) {
+        console.error('AI generation error:', error);
+        throw error;
+      }
 
-      // Store itinerary
-      await supabase
-        .from('itineraries')
-        .insert({
-          trip_id: tripId,
-          content: mockItinerary
-        });
-
-      navigate(`/trip/${tripId}/itinerary`);
+      console.log('AI generation response:', data);
+      
+      // Complete progress and redirect
+      setProgress(100);
+      setCurrentStep(6);
+      setCurrentStepDescription('Generation complete! Redirecting...');
+      
+      setTimeout(() => {
+        navigate(`/trip/${tripId}/itinerary`);
+      }, 2000);
+      
     } catch (error) {
-      console.error('Error completing generation:', error);
+      console.error('Error in real generation:', error);
+      setIsGenerating(false);
       toast({
-        title: "Error",
-        description: "Failed to complete itinerary generation",
+        title: "Generation Error",
+        description: error.message || "Failed to generate itinerary. Please try again.",
         variant: "destructive"
       });
+      
+      // Fallback to dashboard after error
+      setTimeout(() => {
+        navigate('/dashboard');
+      }, 3000);
     }
   };
 
@@ -229,7 +253,7 @@ const GenerationStatus = () => {
             <div className="space-y-2">
               <div className="flex justify-between text-sm">
                 <span>{Math.round(progress)}% Complete</span>
-                <Badge variant={currentStep === 5 ? "default" : "secondary"}>
+                <Badge variant={currentStep === 6 ? "default" : "secondary"}>
                   {GENERATION_STEPS[currentStep - 1]?.title}
                 </Badge>
               </div>
@@ -262,7 +286,9 @@ const GenerationStatus = () => {
                     }`}>
                       {step.title}
                     </h4>
-                    <p className="text-sm text-gray-600">{step.description}</p>
+                    <p className="text-sm text-gray-600">
+                      {step.id === currentStep ? currentStepDescription : step.description}
+                    </p>
                   </div>
                 </div>
               ))}
