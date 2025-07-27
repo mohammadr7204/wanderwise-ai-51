@@ -18,34 +18,36 @@ serve(async (req) => {
   );
 
   try {
+    // FIX 1: Accept correct parameters from frontend
+    const { tripId, amount, tierName } = await req.json();
+    
+    if (!tripId || !amount || !tierName) {
+      throw new Error("Missing required parameters: tripId, amount, or tierName");
+    }
+
+    const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", { 
+      apiVersion: "2023-10-16" 
+    });
+
     const authHeader = req.headers.get("Authorization")!;
     const token = authHeader.replace("Bearer ", "");
     const { data } = await supabaseClient.auth.getUser(token);
     const user = data.user;
-    if (!user?.email) throw new Error("User not authenticated or email not available");
-
-    const { tier } = await req.json();
-    if (!tier || !['basic', 'premium', 'luxury'].includes(tier)) {
-      throw new Error("Invalid subscription tier");
+    
+    if (!user?.email) {
+      throw new Error("User not authenticated");
     }
 
-    const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", { apiVersion: "2023-10-16" });
-    
     // Check for existing customer
-    const customers = await stripe.customers.list({ email: user.email, limit: 1 });
+    const customers = await stripe.customers.list({ 
+      email: user.email, 
+      limit: 1 
+    });
+    
     let customerId;
     if (customers.data.length > 0) {
       customerId = customers.data[0].id;
     }
-
-    // Define pricing based on tier
-    const prices = {
-      basic: { amount: 2900, name: "Basic Itinerary" }, // $29
-      premium: { amount: 5900, name: "Premium Itinerary" }, // $59
-      luxury: { amount: 14900, name: "Luxury Package" } // $149
-    };
-
-    const selectedPrice = prices[tier as keyof typeof prices];
 
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
@@ -55,20 +57,27 @@ serve(async (req) => {
           price_data: {
             currency: "usd",
             product_data: { 
-              name: selectedPrice.name,
-              description: `WanderAI ${tier.charAt(0).toUpperCase() + tier.slice(1)} Plan`
+              name: `${tierName} Itinerary`,
+              description: `WanderWise ${tierName} Travel Itinerary`
             },
-            unit_amount: selectedPrice.amount,
-            recurring: { interval: "month" },
+            // FIX 4: Use dynamic pricing from frontend
+            unit_amount: Math.round(amount * 100), // Convert to cents
           },
           quantity: 1,
         },
       ],
-      mode: "subscription",
-      success_url: `${req.headers.get("origin")}/dashboard?payment=success`,
-      cancel_url: `${req.headers.get("origin")}/pricing?payment=cancelled`,
+      // FIX 3: One-time payment, not subscription
+      mode: "payment",
+      // FIX 5: Correct redirect URLs with tripId
+      success_url: `${req.headers.get("origin")}/trip/${tripId}/generating?payment=success`,
+      cancel_url: `${req.headers.get("origin")}/trip/${tripId}/quote?payment=cancelled`,
       allow_promotion_codes: true,
       billing_address_collection: 'required',
+      metadata: {
+        tripId: tripId,
+        tierName: tierName,
+        userId: user.id
+      }
     });
 
     return new Response(JSON.stringify({ url: session.url }), {
