@@ -90,24 +90,6 @@ const PricingCalculator = () => {
       additionalCharges += additionalDestinations * 7.5;
     }
     
-    // Luxury level adds to base price
-    const luxuryUpcharges = {
-      'budget': 0,
-      'mid-range': 10,
-      'luxury': 25,
-      'ultra-luxury': 50
-    };
-    additionalCharges += luxuryUpcharges[details.luxuryLevel];
-    
-    // Activity level adds to base price
-    const activityUpcharges = {
-      'relaxed': 0,
-      'moderate': 5,
-      'adventure': 15,
-      'exclusive': 30
-    };
-    additionalCharges += activityUpcharges[details.activityLevel];
-    
     const finalPrice = Math.round(basePrice + additionalCharges);
     
     return {
