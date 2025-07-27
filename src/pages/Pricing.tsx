@@ -55,13 +55,8 @@ const Pricing = () => {
         'Human booking assistance for hotels & activities',
         'Flight booking guidance',
         'Multiple destination planning',
-        '1 free revision with human review',
+        'Limited revisions with human review (up to 2 changes per itinerary item)',
         'Priority email support (24hr response)'
-      ],
-      limitations: [
-        'Limited to 1 revision',
-        'Email support only',
-        'No restaurant reservations'
       ]
     }
   ];
@@ -163,20 +158,6 @@ const Pricing = () => {
                       </ul>
                     </div>
 
-                    {/* Limitations */}
-                    {tier.limitations.length > 0 && (
-                      <div>
-                        <h4 className="font-medium text-gray-700 mb-3">Service boundaries:</h4>
-                        <ul className="space-y-2">
-                          {tier.limitations.map((limitation, index) => (
-                            <li key={index} className="flex items-start gap-2">
-                              <X className="h-4 w-4 text-gray-400 flex-shrink-0 mt-0.5" />
-                              <span className="text-sm text-gray-500">{limitation}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
 
                     {/* CTA Button */}
                     <div className="pt-4">
@@ -315,7 +296,7 @@ const Pricing = () => {
                 <tr className="border-b">
                   <td className="py-3 px-4 font-medium">Revisions</td>
                   <td className="text-center py-3 px-4">None</td>
-                  <td className="text-center py-3 px-4">1 included</td>
+                  <td className="text-center py-3 px-4">Limited revisions</td>
                   <td className="text-center py-3 px-4">Unlimited</td>
                 </tr>
                 <tr className="border-b">
