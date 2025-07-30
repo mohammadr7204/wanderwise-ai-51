@@ -94,11 +94,39 @@ const QuoteAndPreview = () => {
   };
 
   const handlePayment = async () => {
-    if (!trip || !user) return;
+    if (!trip || !user) {
+      console.error('Payment failed: Missing trip or user data', { trip: !!trip, user: !!user });
+      toast({
+        title: "Payment Error",
+        description: "Missing required data. Please refresh and try again.",
+        variant: "destructive"
+      });
+      return;
+    }
     
     setProcessing(true);
+    
     try {
+      console.log('Starting payment process for:', {
+        tripId: trip.id,
+        userId: user.id,
+        selectedTier,
+        userEmail: user.email
+      });
+
       const pricing = calculateTripPricing(trip.form_data, selectedTier);
+      const tierName = SERVICE_TIERS.find(t => t.id === selectedTier)?.name;
+      
+      if (!tierName) {
+        throw new Error(`Invalid tier selected: ${selectedTier}`);
+      }
+
+      console.log('Calculated pricing:', {
+        basePrice: pricing.basePrice,
+        total: pricing.total,
+        tierName,
+        pricingBreakdown: pricing
+      });
       
       const updateData = {
         tier: selectedTier,
@@ -106,47 +134,96 @@ const QuoteAndPreview = () => {
         status: 'quoted'
       };
       
-      console.log('Updating trip with exact values:', {
-        ...updateData,
-        tripId: trip.id,
-        userId: user.id,
-        pricingTotal: pricing.total,
-        pricingTotalType: typeof pricing.total
-      });
+      console.log('Updating trip with values:', updateData);
       
       // Update trip with selected tier and pricing
       const { error: updateError } = await supabase
         .from('trips')
         .update(updateData)
         .eq('id', trip.id)
-        .eq('user_id', user.id); // Add user_id check for RLS
+        .eq('user_id', user.id);
 
       if (updateError) {
         console.error('Trip update error:', updateError);
-        throw updateError;
+        throw new Error(`Failed to update trip: ${updateError.message}`);
       }
 
-      // Create Stripe checkout session
+      console.log('Trip updated successfully, creating Stripe checkout...');
+
+      // Validate required environment - check by calling a function that will validate
+      const checkoutPayload = {
+        tripId: trip.id,
+        amount: pricing.total,
+        tierName: tierName
+      };
+
+      console.log('Calling create-checkout with payload:', checkoutPayload);
+
+      // Create Stripe checkout session with enhanced error handling
       const { data, error } = await supabase.functions.invoke('create-checkout', {
-        body: {
-          tripId: trip.id,
-          amount: pricing.total,
-          tierName: SERVICE_TIERS.find(t => t.id === selectedTier)?.name
-        }
+        body: checkoutPayload
       });
 
-      if (error) throw error;
+      console.log('Stripe checkout response:', { data, error });
+
+      if (error) {
+        console.error('Stripe checkout error:', error);
+        
+        // Enhanced error messages based on common issues
+        let userMessage = "Failed to create payment session. Please try again.";
+        
+        if (error.message?.includes('STRIPE_SECRET_KEY')) {
+          userMessage = "Payment system configuration error. Please contact support.";
+        } else if (error.message?.includes('authentication')) {
+          userMessage = "Authentication error. Please sign out and sign back in.";
+        } else if (error.message?.includes('Missing required parameters')) {
+          userMessage = "Invalid payment data. Please refresh and try again.";
+        }
+        
+        throw new Error(userMessage);
+      }
+
+      if (!data?.url) {
+        console.error('No checkout URL returned:', data);
+        throw new Error("Invalid payment session created. Please try again.");
+      }
+
+      console.log('Redirecting to Stripe checkout:', data.url);
       
-      // Redirect to Stripe checkout
-      window.open(data.url, '_blank');
+      // Notify user before redirect
+      toast({
+        title: "Redirecting to Payment",
+        description: "Opening Stripe checkout in a new tab...",
+      });
+      
+      // Small delay to show the toast
+      setTimeout(() => {
+        // Redirect to Stripe checkout
+        window.open(data.url, '_blank');
+      }, 500);
       
     } catch (error) {
-      console.error('Payment error:', error);
+      console.error('Payment process error:', error);
+      
+      const errorMessage = error instanceof Error ? error.message : "An unexpected error occurred";
+      
       toast({
         title: "Payment Error",
-        description: "Failed to process payment. Please try again.",
+        description: errorMessage,
         variant: "destructive"
       });
+
+      // Reset trip status if payment setup failed
+      try {
+        await supabase
+          .from('trips')
+          .update({ status: 'draft' })
+          .eq('id', trip.id)
+          .eq('user_id', user.id);
+      } catch (resetError) {
+        console.error('Failed to reset trip status:', resetError);
+      }
+      
     } finally {
       setProcessing(false);
     }

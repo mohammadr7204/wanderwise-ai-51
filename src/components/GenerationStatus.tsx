@@ -63,6 +63,29 @@ const GenerationStatus = () => {
   }, [tripId, user]);
 
   useEffect(() => {
+    // Check URL params for payment status
+    const urlParams = new URLSearchParams(window.location.search);
+    const paymentStatus = urlParams.get('payment');
+    
+    if (paymentStatus === 'success') {
+      console.log('Payment successful, proceeding with generation');
+      toast({
+        title: "Payment Successful!",
+        description: "Your payment was processed. Starting itinerary generation...",
+      });
+    } else if (paymentStatus === 'cancelled') {
+      console.log('Payment cancelled, redirecting to quote');
+      toast({
+        title: "Payment Cancelled",
+        description: "Payment was cancelled. Redirecting back to quote...",
+        variant: "destructive"
+      });
+      setTimeout(() => {
+        navigate(`/trip/${tripId}/quote`);
+      }, 2000);
+      return;
+    }
+
     // Check if itinerary is already complete
     if (trip?.status === 'completed') {
       navigate(`/trip/${tripId}/itinerary`);
