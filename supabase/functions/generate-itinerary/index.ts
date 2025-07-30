@@ -362,7 +362,11 @@ Return ONLY valid JSON. Do not include any text before or after the JSON object.
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     try {
-      await supabase
+      console.log(`Attempting to store itinerary for trip ${tripId}`);
+      console.log('Itinerary content preview:', JSON.stringify(parsedItinerary).substring(0, 200) + '...');
+      console.log('Real-time data keys:', Object.keys(realTimeData));
+      
+      const itineraryResult = await supabase
         .from('itineraries')
         .upsert({
           trip_id: tripId,
@@ -371,15 +375,34 @@ Return ONLY valid JSON. Do not include any text before or after the JSON object.
           real_time_data: realTimeData
         });
       
+      if (itineraryResult.error) {
+        console.error('Itinerary insertion error:', itineraryResult.error);
+        throw new Error(`Failed to store itinerary: ${itineraryResult.error.message}`);
+      }
+      
+      console.log('Itinerary stored successfully, now updating trip status...');
+      
       // Update trip status
-      await supabase
+      const tripUpdateResult = await supabase
         .from('trips')
         .update({ status: 'completed' })
         .eq('id', tripId);
         
-      console.log(`Itinerary stored successfully for trip ${tripId}`);
+      if (tripUpdateResult.error) {
+        console.error('Trip status update error:', tripUpdateResult.error);
+        throw new Error(`Failed to update trip status: ${tripUpdateResult.error.message}`);
+      }
+        
+      console.log(`Itinerary and trip status updated successfully for trip ${tripId}`);
     } catch (dbError) {
-      console.error('Database storage error:', dbError);
+      console.error('Database storage error details:', {
+        message: dbError.message,
+        details: dbError.details,
+        hint: dbError.hint,
+        code: dbError.code,
+        tripId: tripId
+      });
+      throw dbError; // Re-throw to be caught by outer try-catch
     }
 
     return new Response(JSON.stringify({ 
