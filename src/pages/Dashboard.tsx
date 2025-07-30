@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
-import { Compass, Plus, MapPin, Calendar, Users, DollarSign, LogOut, Settings, Crown } from 'lucide-react';
+import { Compass, Plus, MapPin, Calendar, Users, DollarSign, LogOut, Settings, Crown, Eye, Edit, Trash2, CreditCard, MoreVertical } from 'lucide-react';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 interface Trip {
   id: string;
@@ -18,6 +20,8 @@ interface Trip {
   budget_max: number;
   group_size: number;
   status: string;
+  tier: string;
+  price_paid: number;
   created_at: string;
 }
 
@@ -29,6 +33,7 @@ interface Profile {
 
 const Dashboard = () => {
   const { user, signOut, loading, subscriptionInfo } = useAuth();
+  const navigate = useNavigate();
   const [trips, setTrips] = useState<Trip[]>([]);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -76,6 +81,63 @@ const Dashboard = () => {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleViewTrip = (trip: Trip) => {
+    // Check if trip is paid and completed, then redirect accordingly
+    if (trip.status === 'completed') {
+      navigate(`/trip/${trip.id}/itinerary`);
+    } else if (trip.price_paid && trip.price_paid > 0) {
+      // If paid but not completed, redirect to generation status
+      navigate(`/trip/${trip.id}/generating`);
+    } else {
+      // If not paid, redirect to payment
+      navigate(`/trip/${trip.id}/quote`);
+    }
+  };
+
+  const handleDeleteTrip = async (tripId: string) => {
+    try {
+      const { error } = await supabase
+        .from('trips')
+        .delete()
+        .eq('id', tripId)
+        .eq('user_id', user?.id);
+
+      if (error) throw error;
+
+      // Update local state
+      setTrips(trips.filter(trip => trip.id !== tripId));
+      
+      toast({
+        title: "Trip Deleted",
+        description: "Trip has been successfully deleted.",
+      });
+    } catch (error) {
+      console.error('Error deleting trip:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete trip. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleEditTrip = (tripId: string) => {
+    // For now, redirect to create trip with the trip ID (we'll handle editing in create trip page)
+    navigate(`/create-trip?edit=${tripId}`);
+  };
+
+  const getTripActionLabel = (trip: Trip) => {
+    if (trip.status === 'completed') return 'View Itinerary';
+    if (trip.price_paid && trip.price_paid > 0) return 'View Progress';
+    return 'Complete Payment';
+  };
+
+  const getTripActionIcon = (trip: Trip) => {
+    if (trip.status === 'completed') return <Eye className="h-4 w-4" />;
+    if (trip.price_paid && trip.price_paid > 0) return <Eye className="h-4 w-4" />;
+    return <CreditCard className="h-4 w-4" />;
   };
 
   const handleSignOut = async () => {
@@ -297,7 +359,7 @@ const Dashboard = () => {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {trips.map((trip) => (
-                <Card key={trip.id} className="hover:shadow-lg transition-shadow cursor-pointer">
+                <Card key={trip.id} className="hover:shadow-lg transition-shadow">
                   <CardHeader>
                     <div className="flex items-start justify-between">
                       <div>
@@ -307,9 +369,58 @@ const Dashboard = () => {
                           {trip.destination}
                         </CardDescription>
                       </div>
-                      <Badge className={getStatusColor(trip.status)}>
-                        {trip.status}
-                      </Badge>
+                      <div className="flex items-center gap-2">
+                        <Badge className={getStatusColor(trip.status)}>
+                          {trip.status}
+                        </Badge>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="sm">
+                              <MoreVertical className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => handleViewTrip(trip)}>
+                              {getTripActionIcon(trip)}
+                              <span className="ml-2">{getTripActionLabel(trip)}</span>
+                            </DropdownMenuItem>
+                            {trip.status === 'draft' && (
+                              <DropdownMenuItem onClick={() => handleEditTrip(trip.id)}>
+                                <Edit className="h-4 w-4" />
+                                <span className="ml-2">Edit Trip</span>
+                              </DropdownMenuItem>
+                            )}
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <DropdownMenuItem 
+                                  className="text-red-600 focus:text-red-600"
+                                  onSelect={(e) => e.preventDefault()}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                  <span className="ml-2">Delete Trip</span>
+                                </DropdownMenuItem>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Delete Trip</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    Are you sure you want to delete "{trip.title}"? This action cannot be undone.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                  <AlertDialogAction 
+                                    onClick={() => handleDeleteTrip(trip.id)}
+                                    className="bg-red-600 hover:bg-red-700"
+                                  >
+                                    Delete
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
                     </div>
                   </CardHeader>
                   <CardContent>
@@ -332,11 +443,25 @@ const Dashboard = () => {
                           ${trip.budget_min.toLocaleString()} - ${trip.budget_max.toLocaleString()}
                         </div>
                       )}
+                      {trip.tier && (
+                        <div className="flex items-center gap-2 text-sm text-gray-600">
+                          <Crown className="h-4 w-4" />
+                          {trip.tier} tier
+                        </div>
+                      )}
                     </div>
-                    <div className="mt-4 pt-4 border-t border-gray-200">
+                    <div className="mt-4 pt-4 border-t border-gray-200 flex items-center justify-between">
                       <p className="text-xs text-gray-500">
                         Created {formatDate(trip.created_at)}
                       </p>
+                      <Button 
+                        size="sm" 
+                        onClick={() => handleViewTrip(trip)}
+                        className="ml-auto"
+                      >
+                        {getTripActionIcon(trip)}
+                        <span className="ml-2">{getTripActionLabel(trip)}</span>
+                      </Button>
                     </div>
                   </CardContent>
                 </Card>

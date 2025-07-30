@@ -26,14 +26,16 @@ interface ReviewAndCreateProps {
   isGenerating: boolean;
   setIsGenerating: (generating: boolean) => void;
   onComplete: () => void;
+  editTripId?: string;
+  isEditMode?: boolean;
 }
 
-export const ReviewAndCreate = ({ formData, isGenerating, setIsGenerating, onComplete }: ReviewAndCreateProps) => {
+export const ReviewAndCreate = ({ formData, isGenerating, setIsGenerating, onComplete, editTripId, isEditMode }: ReviewAndCreateProps) => {
   const { user } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  const handleCreateTrip = async () => {
+  const handleCreateOrUpdateTrip = async () => {
     if (!user) {
       toast({
         title: "Authentication Required",
@@ -47,25 +49,56 @@ export const ReviewAndCreate = ({ formData, isGenerating, setIsGenerating, onCom
     console.log('Creating trip with form data:', formData);
 
     try {
-      // Create trip record with form data
-      const { data: trip, error: tripError } = await supabase
-        .from('trips')
-        .insert({
-          user_id: user.id,
-          title: formData.title,
-          start_date: formData.startDate?.toISOString().split('T')[0],
-          end_date: formData.endDate?.toISOString().split('T')[0],
-          destination: formData.destinationType === 'specific' 
-            ? formData.specificDestinations.join(', ') 
-            : 'Surprise destination',
-          group_size: formData.groupSize,
-          budget_min: formData.budgetMin,
-          budget_max: formData.budgetMax,
-          status: 'draft',
-          form_data: formData as any
-        })
-        .select()
-        .single();
+      let trip;
+      let tripError;
+
+      if (isEditMode && editTripId) {
+        // Update existing trip
+        const { data, error } = await supabase
+          .from('trips')
+          .update({
+            title: formData.title,
+            start_date: formData.startDate?.toISOString().split('T')[0],
+            end_date: formData.endDate?.toISOString().split('T')[0],
+            destination: formData.destinationType === 'specific' 
+              ? formData.specificDestinations.join(', ') 
+              : 'Surprise destination',
+            group_size: formData.groupSize,
+            budget_min: formData.budgetMin,
+            budget_max: formData.budgetMax,
+            form_data: formData as any
+          })
+          .eq('id', editTripId)
+          .eq('user_id', user.id)
+          .select()
+          .single();
+        
+        trip = data;
+        tripError = error;
+      } else {
+        // Create new trip
+        const { data, error } = await supabase
+          .from('trips')
+          .insert({
+            user_id: user.id,
+            title: formData.title,
+            start_date: formData.startDate?.toISOString().split('T')[0],
+            end_date: formData.endDate?.toISOString().split('T')[0],
+            destination: formData.destinationType === 'specific' 
+              ? formData.specificDestinations.join(', ') 
+              : 'Surprise destination',
+            group_size: formData.groupSize,
+            budget_min: formData.budgetMin,
+            budget_max: formData.budgetMax,
+            status: 'draft',
+            form_data: formData as any
+          })
+          .select()
+          .single();
+        
+        trip = data;
+        tripError = error;
+      }
 
       if (tripError) {
         console.error('Trip creation error:', tripError);
@@ -308,7 +341,7 @@ export const ReviewAndCreate = ({ formData, isGenerating, setIsGenerating, onCom
         </div>
         
         <Button 
-          onClick={handleCreateTrip}
+          onClick={handleCreateOrUpdateTrip}
           disabled={isGenerating}
           size="lg"
           variant="adventure"

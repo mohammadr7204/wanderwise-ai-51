@@ -7,6 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { 
   ArrowLeft, 
   Download, 
@@ -19,7 +20,9 @@ import {
   RefreshCw,
   ExternalLink,
   Calendar,
-  Users
+  Users,
+  Edit,
+  Trash2
 } from 'lucide-react';
 
 interface Trip {
@@ -144,6 +147,46 @@ const ItineraryView = () => {
     });
   };
 
+  const handleDeleteTrip = async () => {
+    try {
+      // Delete itinerary first
+      const { error: itineraryError } = await supabase
+        .from('itineraries')
+        .delete()
+        .eq('trip_id', tripId);
+
+      if (itineraryError) throw itineraryError;
+
+      // Delete trip
+      const { error: tripError } = await supabase
+        .from('trips')
+        .delete()
+        .eq('id', tripId)
+        .eq('user_id', user?.id);
+
+      if (tripError) throw tripError;
+
+      toast({
+        title: "Trip Deleted",
+        description: "Your trip and itinerary have been successfully deleted.",
+      });
+
+      navigate('/dashboard');
+    } catch (error) {
+      console.error('Error deleting trip:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete trip. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleEditTrip = () => {
+    // Navigate to edit mode - we'll implement this in CreateTrip component
+    navigate(`/create-trip?edit=${tripId}`);
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -187,6 +230,35 @@ const ItineraryView = () => {
             </div>
             
             <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm" onClick={handleEditTrip}>
+                <Edit className="h-4 w-4 mr-2" />
+                Edit Trip
+              </Button>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="outline" size="sm" className="text-red-600 hover:text-red-700">
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Delete
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Delete Trip</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Are you sure you want to delete "{trip.title}" and its itinerary? This action cannot be undone.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction 
+                      onClick={handleDeleteTrip}
+                      className="bg-red-600 hover:bg-red-700"
+                    >
+                      Delete Trip
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
               <Button variant="outline" size="sm" onClick={handleShare}>
                 <Share2 className="h-4 w-4 mr-2" />
                 Share

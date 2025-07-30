@@ -1,9 +1,11 @@
-import { useState } from 'react';
-import { Navigate, useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { Navigate, useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft, ArrowRight, Compass, Crown } from 'lucide-react';
 import { TripBasics } from '@/components/trip-wizard/TripBasics';
 import { DestinationPreferences } from '@/components/trip-wizard/DestinationPreferences';
@@ -42,8 +44,14 @@ export interface TripFormData {
 const CreateTrip = () => {
   const { user, loading, subscriptionInfo } = useAuth();
   const navigate = useNavigate();
+  const { toast } = useToast();
+  const [searchParams] = useSearchParams();
+  const editTripId = searchParams.get('edit');
+  const isEditMode = Boolean(editTripId);
+  
   const [currentStep, setCurrentStep] = useState(1);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isLoadingTrip, setIsLoadingTrip] = useState(isEditMode);
   const [formData, setFormData] = useState<TripFormData>({
     title: '',
     startDate: undefined,
@@ -65,8 +73,47 @@ const CreateTrip = () => {
     specialRequests: '',
   });
 
+  // Load existing trip data if in edit mode
+  useEffect(() => {
+    if (isEditMode && editTripId && user) {
+      loadTripForEditing();
+    }
+  }, [isEditMode, editTripId, user]);
+
+  const loadTripForEditing = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('trips')
+        .select('*')
+        .eq('id', editTripId)
+        .eq('user_id', user?.id)
+        .single();
+
+      if (error) throw error;
+
+      if (data && data.form_data) {
+        const tripFormData = data.form_data as unknown as TripFormData;
+        setFormData({
+          ...tripFormData,
+          startDate: tripFormData.startDate ? new Date(tripFormData.startDate) : undefined,
+          endDate: tripFormData.endDate ? new Date(tripFormData.endDate) : undefined,
+        });
+      }
+    } catch (error) {
+      console.error('Error loading trip for editing:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load trip data for editing.",
+        variant: "destructive",
+      });
+      navigate('/dashboard');
+    } finally {
+      setIsLoadingTrip(false);
+    }
+  };
+
   // Handle loading and authentication states
-  if (loading) {
+  if (loading || isLoadingTrip) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-pulse">
@@ -159,6 +206,8 @@ const CreateTrip = () => {
             isGenerating={isGenerating}
             setIsGenerating={setIsGenerating}
             onComplete={() => navigate('/dashboard')}
+            editTripId={editTripId}
+            isEditMode={isEditMode}
           />
         );
       default:
