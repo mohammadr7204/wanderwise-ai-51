@@ -125,6 +125,10 @@ const ItineraryView = () => {
       }
       
       console.log('Itinerary data fetched successfully:', itineraryResponse.data[0]);
+      console.log('Itinerary content structure:', JSON.stringify(itineraryResponse.data[0].content, null, 2));
+      console.log('Content type:', typeof itineraryResponse.data[0].content);
+      console.log('Content keys:', Object.keys(itineraryResponse.data[0].content || {}));
+      
       setItinerary({
         ...itineraryResponse.data[0],
         content: itineraryResponse.data[0].content as Itinerary['content']
