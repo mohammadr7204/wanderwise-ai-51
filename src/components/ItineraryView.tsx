@@ -34,26 +34,75 @@ interface Trip {
   price_paid: number;
 }
 
+// Updated interfaces to match actual data structure
+interface DailyActivity {
+  time: string;
+  activity: string;
+  venue?: string;
+  cost?: string;
+  duration?: string;
+  bookingInfo?: string;
+  weatherBackup?: string;
+}
+
+interface DailyItineraryItem {
+  day: number;
+  date?: string;
+  theme?: string;
+  morning?: DailyActivity;
+  afternoon?: DailyActivity;
+  evening?: DailyActivity;
+}
+
+interface Restaurant {
+  name: string;
+  cuisine: string;
+  priceLevel?: string;
+  priceRange?: string;
+  rating: number | string;
+  location?: string;
+  specialties?: string[];
+}
+
+interface BudgetBreakdown {
+  accommodation?: string;
+  tripTotal?: string;
+  dailyBudget?: string;
+  activities?: string;
+  meals?: string;
+}
+
+interface NewItineraryContent {
+  destination?: string;
+  destinationReason?: string;
+  dailyItinerary?: DailyItineraryItem[];
+  restaurantGuide?: Restaurant[];
+  localInsights?: string[];
+  budgetBreakdown?: BudgetBreakdown;
+}
+
+interface LegacyItineraryContent {
+  days?: Array<{
+    day: number;
+    title: string;
+    activities: Array<{
+      time: string;
+      title: string;
+      description: string;
+    }>;
+  }>;
+  restaurants?: Array<{
+    name: string;
+    cuisine: string;
+    priceRange: string;
+    rating: number;
+  }>;
+  tips?: string[];
+}
+
 interface Itinerary {
   id: string;
-  content: {
-    days: Array<{
-      day: number;
-      title: string;
-      activities: Array<{
-        time: string;
-        title: string;
-        description: string;
-      }>;
-    }>;
-    restaurants: Array<{
-      name: string;
-      cuisine: string;
-      priceRange: string;
-      rating: number;
-    }>;
-    tips: string[];
-  };
+  content: NewItineraryContent & LegacyItineraryContent;
   generated_at: string;
 }
 
@@ -66,6 +115,117 @@ const ItineraryView = () => {
   const [itinerary, setItinerary] = useState<Itinerary | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeDay, setActiveDay] = useState(1);
+
+  // Helper functions to extract data from either new or legacy structure
+  const getDays = () => {
+    if (!itinerary?.content) return [];
+    
+    // Try new structure first
+    if (itinerary.content.dailyItinerary) {
+      return itinerary.content.dailyItinerary.map(day => ({
+        day: day.day,
+        title: day.theme || `Day ${day.day}`,
+        date: day.date,
+        activities: getActivitiesForDay(day)
+      }));
+    }
+    
+    // Fallback to legacy structure
+    return itinerary.content.days || [];
+  };
+
+  const getActivitiesForDay = (day: DailyItineraryItem) => {
+    const activities = [];
+    
+    if (day.morning) {
+      activities.push({
+        time: day.morning.time,
+        title: day.morning.activity,
+        description: [
+          day.morning.venue && `📍 ${day.morning.venue}`,
+          day.morning.cost && `💰 ${day.morning.cost}`,
+          day.morning.duration && `⏱️ ${day.morning.duration}`,
+          day.morning.bookingInfo && `🔗 ${day.morning.bookingInfo}`
+        ].filter(Boolean).join(' • '),
+        venue: day.morning.venue,
+        cost: day.morning.cost,
+        duration: day.morning.duration,
+        bookingInfo: day.morning.bookingInfo
+      });
+    }
+    
+    if (day.afternoon) {
+      activities.push({
+        time: day.afternoon.time,
+        title: day.afternoon.activity,
+        description: [
+          day.afternoon.venue && `📍 ${day.afternoon.venue}`,
+          day.afternoon.cost && `💰 ${day.afternoon.cost}`,
+          day.afternoon.duration && `⏱️ ${day.afternoon.duration}`,
+          day.afternoon.bookingInfo && `🔗 ${day.afternoon.bookingInfo}`
+        ].filter(Boolean).join(' • '),
+        venue: day.afternoon.venue,
+        cost: day.afternoon.cost,
+        duration: day.afternoon.duration,
+        bookingInfo: day.afternoon.bookingInfo
+      });
+    }
+    
+    if (day.evening) {
+      activities.push({
+        time: day.evening.time,
+        title: day.evening.activity,
+        description: [
+          day.evening.venue && `📍 ${day.evening.venue}`,
+          day.evening.cost && `💰 ${day.evening.cost}`,
+          day.evening.duration && `⏱️ ${day.evening.duration}`,
+          day.evening.bookingInfo && `🔗 ${day.evening.bookingInfo}`
+        ].filter(Boolean).join(' • '),
+        venue: day.evening.venue,
+        cost: day.evening.cost,
+        duration: day.evening.duration,
+        bookingInfo: day.evening.bookingInfo
+      });
+    }
+    
+    return activities;
+  };
+
+  const getRestaurants = () => {
+    if (!itinerary?.content) return [];
+    
+    // Try new structure first
+    if (itinerary.content.restaurantGuide) {
+      return itinerary.content.restaurantGuide.map(restaurant => ({
+        name: restaurant.name,
+        cuisine: restaurant.cuisine,
+        priceRange: restaurant.priceLevel || restaurant.priceRange || 'N/A',
+        rating: restaurant.rating,
+        location: restaurant.location,
+        specialties: restaurant.specialties
+      }));
+    }
+    
+    // Fallback to legacy structure
+    return itinerary.content.restaurants || [];
+  };
+
+  const getTips = () => {
+    if (!itinerary?.content) return [];
+    
+    // Try new structure first
+    if (itinerary.content.localInsights) {
+      return itinerary.content.localInsights;
+    }
+    
+    // Fallback to legacy structure
+    return itinerary.content.tips || [];
+  };
+
+  const getTotalActivities = () => {
+    const days = getDays();
+    return days.reduce((acc, day) => acc + (day.activities?.length || 0), 0);
+  };
 
   useEffect(() => {
     if (tripId && user) {
@@ -330,6 +490,23 @@ const ItineraryView = () => {
       </header>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Destination Header */}
+        {itinerary.content?.destination && (
+          <div className="mb-8">
+            <Card>
+              <CardContent className="pt-6">
+                <div className="flex items-center gap-2 mb-2">
+                  <MapPin className="h-5 w-5 text-primary" />
+                  <h2 className="text-xl font-semibold">{itinerary.content.destination}</h2>
+                </div>
+                {itinerary.content.destinationReason && (
+                  <p className="text-gray-600">{itinerary.content.destinationReason}</p>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
         {/* Trip Overview */}
         <div className="grid lg:grid-cols-4 gap-6 mb-8">
           <Card>
@@ -338,7 +515,7 @@ const ItineraryView = () => {
                 <Calendar className="h-4 w-4 text-primary" />
                 <span className="font-medium">Duration</span>
               </div>
-              <p className="text-2xl font-bold">{itinerary.content?.days?.length || 0} Days</p>
+              <p className="text-2xl font-bold">{getDays().length} Days</p>
             </CardContent>
           </Card>
           
@@ -348,7 +525,7 @@ const ItineraryView = () => {
                 <Users className="h-4 w-4 text-primary" />
                 <span className="font-medium">Group Size</span>
               </div>
-              <p className="text-2xl font-bold">{trip.form_data.groupSize}</p>
+              <p className="text-2xl font-bold">{trip.form_data?.groupSize || 'N/A'}</p>
             </CardContent>
           </Card>
           
@@ -358,9 +535,7 @@ const ItineraryView = () => {
                 <Camera className="h-4 w-4 text-primary" />
                 <span className="font-medium">Activities</span>
               </div>
-              <p className="text-2xl font-bold">
-                {itinerary.content?.days?.reduce((acc, day) => acc + (day.activities?.length || 0), 0) || 0}
-              </p>
+              <p className="text-2xl font-bold">{getTotalActivities()}</p>
             </CardContent>
           </Card>
           
@@ -370,10 +545,49 @@ const ItineraryView = () => {
                 <Utensils className="h-4 w-4 text-primary" />
                 <span className="font-medium">Restaurants</span>
               </div>
-              <p className="text-2xl font-bold">{itinerary.content?.restaurants?.length || 0}</p>
+              <p className="text-2xl font-bold">{getRestaurants().length}</p>
             </CardContent>
           </Card>
         </div>
+
+        {/* Budget Breakdown */}
+        {itinerary.content?.budgetBreakdown && (
+          <div className="mb-8">
+            <Card>
+              <CardHeader>
+                <CardTitle>Budget Breakdown</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  {itinerary.content.budgetBreakdown.accommodation && (
+                    <div>
+                      <p className="text-sm text-gray-600">Accommodation</p>
+                      <p className="font-semibold">{itinerary.content.budgetBreakdown.accommodation}</p>
+                    </div>
+                  )}
+                  {itinerary.content.budgetBreakdown.tripTotal && (
+                    <div>
+                      <p className="text-sm text-gray-600">Trip Total</p>
+                      <p className="font-semibold">{itinerary.content.budgetBreakdown.tripTotal}</p>
+                    </div>
+                  )}
+                  {itinerary.content.budgetBreakdown.dailyBudget && (
+                    <div>
+                      <p className="text-sm text-gray-600">Daily Budget</p>
+                      <p className="font-semibold">{itinerary.content.budgetBreakdown.dailyBudget}</p>
+                    </div>
+                  )}
+                  {itinerary.content.budgetBreakdown.activities && (
+                    <div>
+                      <p className="text-sm text-gray-600">Activities</p>
+                      <p className="font-semibold">{itinerary.content.budgetBreakdown.activities}</p>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
 
         {/* Main Content */}
         <Tabs value="itinerary" className="space-y-6">
@@ -392,14 +606,17 @@ const ItineraryView = () => {
                     <CardTitle className="text-sm">Days</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-2">
-                    {itinerary.content?.days?.map((day) => (
+                    {getDays().map((day) => (
                       <Button
                         key={day.day}
                         variant={activeDay === day.day ? "default" : "ghost"}
                         className="w-full justify-start"
                         onClick={() => setActiveDay(day.day)}
                       >
-                        Day {day.day}
+                        <div className="text-left">
+                          <div className="font-medium">Day {day.day}</div>
+                          {day.date && <div className="text-xs opacity-70">{day.date}</div>}
+                        </div>
                       </Button>
                     ))}
                   </CardContent>
@@ -408,7 +625,7 @@ const ItineraryView = () => {
 
               {/* Day Content */}
               <div className="lg:col-span-3">
-                {itinerary.content?.days?.map((day) => (
+                {getDays().map((day) => (
                   activeDay === day.day && (
                     <Card key={day.day}>
                       <CardHeader>
@@ -416,24 +633,54 @@ const ItineraryView = () => {
                           <MapPin className="h-5 w-5 text-primary" />
                           {day.title}
                         </CardTitle>
-                        <CardDescription>
-                          {day.activities?.length || 0} activities planned
-                        </CardDescription>
+                        {day.date && (
+                          <CardDescription className="flex items-center gap-2">
+                            <Calendar className="h-4 w-4" />
+                            {day.date} • {day.activities?.length || 0} activities planned
+                          </CardDescription>
+                        )}
+                        {!day.date && (
+                          <CardDescription>
+                            {day.activities?.length || 0} activities planned
+                          </CardDescription>
+                        )}
                       </CardHeader>
                       <CardContent className="space-y-4">
                         {day.activities?.map((activity, index) => (
-                          <div key={index} className="flex gap-4 p-4 bg-gray-50 rounded-lg">
-                            <div className="flex items-center gap-2 min-w-20">
-                              <Clock className="h-4 w-4 text-gray-500" />
-                              <span className="text-sm font-medium">{activity.time}</span>
-                            </div>
-                            <div className="flex-1">
-                              <h4 className="font-medium mb-1">{activity.title}</h4>
-                              <p className="text-gray-600 text-sm">{activity.description}</p>
-                              <Button variant="link" size="sm" className="h-auto p-0 mt-2">
-                                <ExternalLink className="h-3 w-3 mr-1" />
-                                Book now
-                              </Button>
+                          <div key={index} className="p-4 bg-gray-50 rounded-lg">
+                            <div className="flex gap-4">
+                              <div className="flex items-center gap-2 min-w-20">
+                                <Clock className="h-4 w-4 text-gray-500" />
+                                <span className="text-sm font-medium">{activity.time}</span>
+                              </div>
+                              <div className="flex-1">
+                                <h4 className="font-medium mb-1">{activity.title}</h4>
+                                <p className="text-gray-600 text-sm mb-3">{activity.description}</p>
+                                
+                                {/* Enhanced activity details for new structure */}
+                                {activity.venue && (
+                                  <div className="flex items-center gap-2 text-sm text-gray-600 mb-1">
+                                    <MapPin className="h-3 w-3" />
+                                    <span>{activity.venue}</span>
+                                  </div>
+                                )}
+                                
+                                <div className="flex flex-wrap gap-4 text-sm">
+                                  {activity.cost && (
+                                    <span className="text-green-600 font-medium">{activity.cost}</span>
+                                  )}
+                                  {activity.duration && (
+                                    <span className="text-blue-600">{activity.duration}</span>
+                                  )}
+                                </div>
+                                
+                                {activity.bookingInfo && (
+                                  <Button variant="link" size="sm" className="h-auto p-0 mt-2">
+                                    <ExternalLink className="h-3 w-3 mr-1" />
+                                    {activity.bookingInfo.includes('http') ? 'Book online' : activity.bookingInfo}
+                                  </Button>
+                                )}
+                              </div>
                             </div>
                           </div>
                         ))}
@@ -447,7 +694,7 @@ const ItineraryView = () => {
 
           <TabsContent value="restaurants" className="space-y-6">
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {itinerary.content?.restaurants?.map((restaurant, index) => (
+              {getRestaurants().map((restaurant, index) => (
                 <Card key={index}>
                   <CardContent className="pt-6">
                     <div className="flex justify-between items-start mb-2">
@@ -455,10 +702,28 @@ const ItineraryView = () => {
                       <Badge variant="outline">{restaurant.priceRange}</Badge>
                     </div>
                     <p className="text-sm text-gray-600 mb-2">{restaurant.cuisine}</p>
+                    {restaurant.location && (
+                      <div className="flex items-center gap-1 mb-2">
+                        <MapPin className="h-3 w-3 text-gray-500" />
+                        <span className="text-xs text-gray-500">{restaurant.location}</span>
+                      </div>
+                    )}
                     <div className="flex items-center gap-1 mb-3">
                       <Star className="h-4 w-4 text-yellow-500 fill-current" />
                       <span className="text-sm font-medium">{restaurant.rating}</span>
                     </div>
+                    {restaurant.specialties && restaurant.specialties.length > 0 && (
+                      <div className="mb-3">
+                        <p className="text-xs text-gray-500 mb-1">Specialties:</p>
+                        <div className="flex flex-wrap gap-1">
+                          {restaurant.specialties.slice(0, 3).map((specialty, idx) => (
+                            <Badge key={idx} variant="secondary" className="text-xs">
+                              {specialty}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                     <Button variant="outline" size="sm" className="w-full">
                       <ExternalLink className="h-3 w-3 mr-2" />
                       View Details
@@ -474,7 +739,7 @@ const ItineraryView = () => {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Star className="h-5 w-5 text-primary" />
-                  Insider Tips & Recommendations
+                  Insider Tips & Local Insights
                 </CardTitle>
                 <CardDescription>
                   Local insights to make your trip unforgettable
@@ -482,7 +747,7 @@ const ItineraryView = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {itinerary.content?.tips?.map((tip, index) => (
+                  {getTips().map((tip, index) => (
                     <div key={index} className="flex gap-3 p-4 bg-blue-50 rounded-lg">
                       <div className="flex-shrink-0 w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-sm font-medium">
                         {index + 1}
