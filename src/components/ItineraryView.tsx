@@ -75,7 +75,16 @@ const ItineraryView = () => {
 
   const fetchTripAndItinerary = async () => {
     try {
+      console.log('Fetching trip and itinerary for tripId:', tripId);
+      console.log('Current user:', user?.id);
+      console.log('User authenticated:', !!user);
+      
+      // Check authentication first
+      const { data: { session } } = await supabase.auth.getSession();
+      console.log('Current session:', !!session);
+      
       // Fetch trip details
+      console.log('Fetching trip data...');
       const { data: tripData, error: tripError } = await supabase
         .from('trips')
         .select('*')
@@ -83,27 +92,65 @@ const ItineraryView = () => {
         .eq('user_id', user?.id)
         .single();
 
-      if (tripError) throw tripError;
+      if (tripError) {
+        console.error('Trip fetch error:', tripError);
+        throw tripError;
+      }
+      
+      console.log('Trip data fetched successfully:', tripData);
       setTrip(tripData);
 
-      // Fetch itinerary
-      const { data: itineraryData, error: itineraryError } = await supabase
+      // Fetch itinerary with detailed error logging
+      console.log('Fetching itinerary data...');
+      const itineraryResponse = await supabase
         .from('itineraries')
         .select('*')
-        .eq('trip_id', tripId)
-        .single();
-
-      if (itineraryError) throw itineraryError;
+        .eq('trip_id', tripId);
+        
+      console.log('Itinerary response:', itineraryResponse);
+      
+      if (itineraryResponse.error) {
+        console.error('Itinerary fetch error details:', {
+          message: itineraryResponse.error.message,
+          details: itineraryResponse.error.details,
+          hint: itineraryResponse.error.hint,
+          code: itineraryResponse.error.code
+        });
+        throw itineraryResponse.error;
+      }
+      
+      if (!itineraryResponse.data || itineraryResponse.data.length === 0) {
+        console.log('No itinerary found for trip:', tripId);
+        throw new Error('No itinerary found for this trip');
+      }
+      
+      console.log('Itinerary data fetched successfully:', itineraryResponse.data[0]);
       setItinerary({
-        ...itineraryData,
-        content: itineraryData.content as Itinerary['content']
+        ...itineraryResponse.data[0],
+        content: itineraryResponse.data[0].content as Itinerary['content']
       });
 
-    } catch (error) {
-      console.error('Error fetching data:', error);
+    } catch (error: any) {
+      console.error('Detailed error information:', {
+        message: error.message,
+        details: error.details,
+        hint: error.hint,
+        code: error.code,
+        status: error.status,
+        statusText: error.statusText,
+        fullError: error
+      });
+      
+      let errorMessage = "Failed to load itinerary";
+      if (error.code === 'PGRST116') {
+        errorMessage = "No itinerary found for this trip";
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
       toast({
         title: "Error",
-        description: "Failed to load itinerary",
+        description: errorMessage,
         variant: "destructive"
       });
       navigate('/dashboard');
