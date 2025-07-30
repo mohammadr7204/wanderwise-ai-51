@@ -334,7 +334,7 @@ const ItineraryView = () => {
                 <Calendar className="h-4 w-4 text-primary" />
                 <span className="font-medium">Duration</span>
               </div>
-              <p className="text-2xl font-bold">{itinerary.content.days.length} Days</p>
+              <p className="text-2xl font-bold">{itinerary.content?.days?.length || 0} Days</p>
             </CardContent>
           </Card>
           
@@ -355,7 +355,7 @@ const ItineraryView = () => {
                 <span className="font-medium">Activities</span>
               </div>
               <p className="text-2xl font-bold">
-                {itinerary.content.days.reduce((acc, day) => acc + day.activities.length, 0)}
+                {itinerary.content?.days?.reduce((acc, day) => acc + (day.activities?.length || 0), 0) || 0}
               </p>
             </CardContent>
           </Card>
@@ -366,7 +366,7 @@ const ItineraryView = () => {
                 <Utensils className="h-4 w-4 text-primary" />
                 <span className="font-medium">Restaurants</span>
               </div>
-              <p className="text-2xl font-bold">{itinerary.content.restaurants.length}</p>
+              <p className="text-2xl font-bold">{itinerary.content?.restaurants?.length || 0}</p>
             </CardContent>
           </Card>
         </div>
@@ -388,7 +388,7 @@ const ItineraryView = () => {
                     <CardTitle className="text-sm">Days</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-2">
-                    {itinerary.content.days.map((day) => (
+                    {itinerary.content?.days?.map((day) => (
                       <Button
                         key={day.day}
                         variant={activeDay === day.day ? "default" : "ghost"}
@@ -404,7 +404,7 @@ const ItineraryView = () => {
 
               {/* Day Content */}
               <div className="lg:col-span-3">
-                {itinerary.content.days.map((day) => (
+                {itinerary.content?.days?.map((day) => (
                   activeDay === day.day && (
                     <Card key={day.day}>
                       <CardHeader>
@@ -413,11 +413,11 @@ const ItineraryView = () => {
                           {day.title}
                         </CardTitle>
                         <CardDescription>
-                          {day.activities.length} activities planned
+                          {day.activities?.length || 0} activities planned
                         </CardDescription>
                       </CardHeader>
                       <CardContent className="space-y-4">
-                        {day.activities.map((activity, index) => (
+                        {day.activities?.map((activity, index) => (
                           <div key={index} className="flex gap-4 p-4 bg-gray-50 rounded-lg">
                             <div className="flex items-center gap-2 min-w-20">
                               <Clock className="h-4 w-4 text-gray-500" />
@@ -443,7 +443,7 @@ const ItineraryView = () => {
 
           <TabsContent value="restaurants" className="space-y-6">
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {itinerary.content.restaurants.map((restaurant, index) => (
+              {itinerary.content?.restaurants?.map((restaurant, index) => (
                 <Card key={index}>
                   <CardContent className="pt-6">
                     <div className="flex justify-between items-start mb-2">
@@ -478,7 +478,7 @@ const ItineraryView = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {itinerary.content.tips.map((tip, index) => (
+                  {itinerary.content?.tips?.map((tip, index) => (
                     <div key={index} className="flex gap-3 p-4 bg-blue-50 rounded-lg">
                       <div className="flex-shrink-0 w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-sm font-medium">
                         {index + 1}
