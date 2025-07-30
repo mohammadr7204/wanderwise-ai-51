@@ -263,25 +263,44 @@ const Dashboard = () => {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">Plan Status</p>
-                  <p className="text-2xl font-bold text-primary flex items-center gap-2">
-                    {(subscriptionInfo?.subscription_tier || profile?.subscription_tier || 'free').toUpperCase()}
-                    {subscriptionInfo?.subscription_tier === 'luxury' && <Crown className="h-5 w-5 text-yellow-500" />}
+                  <p className="text-sm font-medium text-gray-600">Total Budget</p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    ${trips.reduce((total, trip) => total + (trip.budget_max || 0), 0).toLocaleString()}
                   </p>
-                  {!subscriptionInfo?.subscribed && (
-                    <Button variant="outline" size="sm" className="mt-2" onClick={() => window.location.href = '/pricing'}>
-                      Upgrade Plan
-                    </Button>
-                  )}
                 </div>
-                <Users className="h-8 w-8 text-primary" />
+                <DollarSign className="h-8 w-8 text-green-600" />
               </div>
             </CardContent>
           </Card>
         </div>
 
-        {/* Create New Trip or Subscription Prompt */}
-        {subscriptionInfo?.subscribed ? (
+        {/* Upgrade Tier Prompt */}
+        {trips.length > 0 && trips.some(trip => trip.tier === 'basic' || trip.tier === 'essential') ? (
+          <Card className="mb-8 bg-gradient-to-r from-amber-400 to-orange-500">
+            <CardContent className="p-8">
+              <div className="flex items-center justify-between text-white">
+                <div>
+                  <h2 className="text-2xl font-bold mb-2 flex items-center gap-2">
+                    <Crown className="h-6 w-6" />
+                    Upgrade Your Travel Experience
+                  </h2>
+                  <p className="text-white/90 mb-4">
+                    Unlock premium features like luxury accommodations, exclusive experiences, and concierge-level planning
+                  </p>
+                </div>
+                <Button 
+                  variant="secondary" 
+                  size="lg" 
+                  className="bg-white text-orange-600 hover:bg-gray-100"
+                  onClick={() => window.location.href = '/create-trip'}
+                >
+                  <Crown className="h-5 w-5 mr-2" />
+                  Upgrade Next Trip
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        ) : (
           <Card className="mb-8 bg-gradient-to-r from-adventure-blue to-adventure-teal">
             <CardContent className="p-8">
               <div className="flex items-center justify-between text-white">
@@ -299,31 +318,6 @@ const Dashboard = () => {
                 >
                   <Plus className="h-5 w-5 mr-2" />
                   Create New Trip
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        ) : (
-          <Card className="mb-8 bg-gradient-to-r from-amber-400 to-orange-500">
-            <CardContent className="p-8">
-              <div className="flex items-center justify-between text-white">
-                <div>
-                  <h2 className="text-2xl font-bold mb-2 flex items-center gap-2">
-                    <Crown className="h-6 w-6" />
-                    Unlock Expert Travel Planning
-                  </h2>
-                  <p className="text-white/90 mb-4">
-                    Subscribe to start creating personalized itineraries with our expert travel curation
-                  </p>
-                </div>
-                <Button 
-                  variant="secondary" 
-                  size="lg" 
-                  className="bg-white text-orange-600 hover:bg-gray-100"
-                  onClick={() => window.location.href = '/pricing'}
-                >
-                  <Crown className="h-5 w-5 mr-2" />
-                  View Plans
                 </Button>
               </div>
             </CardContent>
