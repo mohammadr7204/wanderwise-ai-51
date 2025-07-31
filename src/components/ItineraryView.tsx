@@ -194,9 +194,13 @@ const ItineraryView = () => {
   const getRestaurants = () => {
     if (!itinerary?.content) return [];
     
+    console.log('Getting restaurants, content:', itinerary.content);
+    console.log('Restaurant guide:', itinerary.content.restaurantGuide);
+    console.log('Legacy restaurants:', itinerary.content.restaurants);
+    
     // Try new structure first
-    if (itinerary.content.restaurantGuide) {
-      return itinerary.content.restaurantGuide.map(restaurant => ({
+    if (itinerary.content.restaurantGuide && Array.isArray(itinerary.content.restaurantGuide)) {
+      const mappedRestaurants = itinerary.content.restaurantGuide.map(restaurant => ({
         name: restaurant.name,
         cuisine: restaurant.cuisine,
         priceRange: restaurant.priceLevel || restaurant.priceRange || 'N/A',
@@ -204,22 +208,42 @@ const ItineraryView = () => {
         location: restaurant.location,
         specialties: restaurant.specialties
       }));
+      console.log('Mapped restaurants from restaurantGuide:', mappedRestaurants);
+      return mappedRestaurants;
     }
     
     // Fallback to legacy structure
-    return itinerary.content.restaurants || [];
+    if (itinerary.content.restaurants && Array.isArray(itinerary.content.restaurants)) {
+      console.log('Using legacy restaurants:', itinerary.content.restaurants);
+      return itinerary.content.restaurants;
+    }
+    
+    // If no structured restaurant data, try to extract from raw content
+    console.log('No structured restaurant data found, checking raw content');
+    return [];
   };
 
   const getTips = () => {
     if (!itinerary?.content) return [];
     
+    console.log('Getting tips, content:', itinerary.content);
+    console.log('Local insights:', itinerary.content.localInsights);
+    console.log('Legacy tips:', itinerary.content.tips);
+    
     // Try new structure first
-    if (itinerary.content.localInsights) {
+    if (itinerary.content.localInsights && Array.isArray(itinerary.content.localInsights)) {
+      console.log('Using localInsights:', itinerary.content.localInsights);
       return itinerary.content.localInsights;
     }
     
     // Fallback to legacy structure
-    return itinerary.content.tips || [];
+    if (itinerary.content.tips && Array.isArray(itinerary.content.tips)) {
+      console.log('Using legacy tips:', itinerary.content.tips);
+      return itinerary.content.tips;
+    }
+    
+    console.log('No tips data found');
+    return [];
   };
 
   const getTotalActivities = () => {
@@ -693,71 +717,109 @@ const ItineraryView = () => {
           </TabsContent>
 
           <TabsContent value="restaurants" className="space-y-6">
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {getRestaurants().map((restaurant, index) => (
-                <Card key={index}>
-                  <CardContent className="pt-6">
-                    <div className="flex justify-between items-start mb-2">
-                      <h4 className="font-medium">{restaurant.name}</h4>
-                      <Badge variant="outline">{restaurant.priceRange}</Badge>
-                    </div>
-                    <p className="text-sm text-gray-600 mb-2">{restaurant.cuisine}</p>
-                    {restaurant.location && (
-                      <div className="flex items-center gap-1 mb-2">
-                        <MapPin className="h-3 w-3 text-gray-500" />
-                        <span className="text-xs text-gray-500">{restaurant.location}</span>
+            {getRestaurants().length > 0 ? (
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {getRestaurants().map((restaurant, index) => (
+                  <Card key={index}>
+                    <CardContent className="pt-6">
+                      <div className="flex justify-between items-start mb-2">
+                        <h4 className="font-medium">{restaurant.name}</h4>
+                        <Badge variant="outline">{restaurant.priceRange}</Badge>
                       </div>
-                    )}
-                    <div className="flex items-center gap-1 mb-3">
-                      <Star className="h-4 w-4 text-yellow-500 fill-current" />
-                      <span className="text-sm font-medium">{restaurant.rating}</span>
-                    </div>
-                    {restaurant.specialties && restaurant.specialties.length > 0 && (
-                      <div className="mb-3">
-                        <p className="text-xs text-gray-500 mb-1">Specialties:</p>
-                        <div className="flex flex-wrap gap-1">
-                          {restaurant.specialties.slice(0, 3).map((specialty, idx) => (
-                            <Badge key={idx} variant="secondary" className="text-xs">
-                              {specialty}
-                            </Badge>
-                          ))}
+                      <p className="text-sm text-gray-600 mb-2">{restaurant.cuisine}</p>
+                      {restaurant.location && (
+                        <div className="flex items-center gap-1 mb-2">
+                          <MapPin className="h-3 w-3 text-gray-500" />
+                          <span className="text-xs text-gray-500">{restaurant.location}</span>
                         </div>
+                      )}
+                      <div className="flex items-center gap-1 mb-3">
+                        <Star className="h-4 w-4 text-yellow-500 fill-current" />
+                        <span className="text-sm font-medium">{restaurant.rating}</span>
                       </div>
-                    )}
-                    <Button variant="outline" size="sm" className="w-full">
-                      <ExternalLink className="h-3 w-3 mr-2" />
-                      View Details
+                      {restaurant.specialties && restaurant.specialties.length > 0 && (
+                        <div className="mb-3">
+                          <p className="text-xs text-gray-500 mb-1">Specialties:</p>
+                          <div className="flex flex-wrap gap-1">
+                            {restaurant.specialties.slice(0, 3).map((specialty, idx) => (
+                              <Badge key={idx} variant="secondary" className="text-xs">
+                                {specialty}
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      <Button variant="outline" size="sm" className="w-full">
+                        <ExternalLink className="h-3 w-3 mr-2" />
+                        View Details
+                      </Button>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            ) : (
+              <Card>
+                <CardContent className="pt-6 text-center">
+                  <Utensils className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">No Restaurant Recommendations Found</h3>
+                  <p className="text-gray-600 mb-4">
+                    It looks like restaurant recommendations weren't generated for this itinerary. 
+                    You can request a revision to add restaurant suggestions.
+                  </p>
+                  {canRequestRevision && (
+                    <Button variant="outline" onClick={handleRequestRevision}>
+                      <RefreshCw className="h-4 w-4 mr-2" />
+                      Request Restaurant Recommendations
                     </Button>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+                  )}
+                </CardContent>
+              </Card>
+            )}
           </TabsContent>
 
           <TabsContent value="tips" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Star className="h-5 w-5 text-primary" />
-                  Insider Tips & Local Insights
-                </CardTitle>
-                <CardDescription>
-                  Local insights to make your trip unforgettable
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {getTips().map((tip, index) => (
-                    <div key={index} className="flex gap-3 p-4 bg-blue-50 rounded-lg">
-                      <div className="flex-shrink-0 w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-sm font-medium">
-                        {index + 1}
+            {getTips().length > 0 ? (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Star className="h-5 w-5 text-primary" />
+                    Insider Tips & Local Insights
+                  </CardTitle>
+                  <CardDescription>
+                    Local insights to make your trip unforgettable
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {getTips().map((tip, index) => (
+                      <div key={index} className="flex gap-3 p-4 bg-blue-50 rounded-lg">
+                        <div className="flex-shrink-0 w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-sm font-medium">
+                          {index + 1}
+                        </div>
+                        <p className="text-gray-800">{tip}</p>
                       </div>
-                      <p className="text-gray-800">{tip}</p>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            ) : (
+              <Card>
+                <CardContent className="pt-6 text-center">
+                  <Star className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">No Insider Tips Found</h3>
+                  <p className="text-gray-600 mb-4">
+                    It looks like local insights weren't generated for this itinerary. 
+                    You can request a revision to add insider tips and local recommendations.
+                  </p>
+                  {canRequestRevision && (
+                    <Button variant="outline" onClick={handleRequestRevision}>
+                      <RefreshCw className="h-4 w-4 mr-2" />
+                      Request Local Insights
+                    </Button>
+                  )}
+                </CardContent>
+              </Card>
+            )}
           </TabsContent>
         </Tabs>
       </div>
