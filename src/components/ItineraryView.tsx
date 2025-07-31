@@ -717,6 +717,10 @@ const ItineraryView = () => {
           </TabsContent>
 
           <TabsContent value="restaurants" className="space-y-6">
+            <div className="space-y-4">
+              <h2 className="text-2xl font-bold">Restaurant Recommendations</h2>
+              <p className="text-gray-600">Discover amazing dining options for your trip</p>
+            </div>
             {getRestaurants().length > 0 ? (
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {getRestaurants().map((restaurant, index) => (
@@ -778,6 +782,10 @@ const ItineraryView = () => {
           </TabsContent>
 
           <TabsContent value="tips" className="space-y-6">
+            <div className="space-y-4">
+              <h2 className="text-2xl font-bold">Insider Tips & Local Insights</h2>
+              <p className="text-gray-600">Essential local knowledge for your journey</p>
+            </div>
             {getTips().length > 0 ? (
               <Card>
                 <CardHeader>
