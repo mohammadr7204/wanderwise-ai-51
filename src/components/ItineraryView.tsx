@@ -61,7 +61,9 @@ interface Restaurant {
   priceRange?: string;
   rating: number | string;
   location?: string;
+  address?: string;
   specialties?: string[];
+  mealType?: string;
 }
 
 interface BudgetBreakdown {
@@ -77,6 +79,12 @@ interface NewItineraryContent {
   destinationReason?: string;
   dailyItinerary?: DailyItineraryItem[];
   restaurantGuide?: Restaurant[];
+  dailyRestaurantRecommendations?: Array<{
+    day: number;
+    breakfast?: Restaurant[];
+    lunch?: Restaurant[];
+    dinner?: Restaurant[];
+  }>;
   localInsights?: string[];
   budgetBreakdown?: BudgetBreakdown;
 }
@@ -197,31 +205,49 @@ const ItineraryView = () => {
     
     console.log('Getting restaurants, content:', itinerary.content);
     console.log('Restaurant guide:', itinerary.content.restaurantGuide);
+    console.log('Daily restaurant recommendations:', itinerary.content.dailyRestaurantRecommendations);
     console.log('Legacy restaurants:', itinerary.content.restaurants);
     
-    // Try new structure first
+    let allRestaurants: any[] = [];
+    
+    // First check the new dailyRestaurantRecommendations structure (3 per meal per day)
+    if (itinerary.content.dailyRestaurantRecommendations && Array.isArray(itinerary.content.dailyRestaurantRecommendations)) {
+      console.log('Processing daily restaurant recommendations...');
+      itinerary.content.dailyRestaurantRecommendations.forEach((dayRecs: any) => {
+        if (dayRecs.breakfast) allRestaurants.push(...dayRecs.breakfast.map((r: any) => ({ ...r, mealType: 'breakfast' })));
+        if (dayRecs.lunch) allRestaurants.push(...dayRecs.lunch.map((r: any) => ({ ...r, mealType: 'lunch' })));
+        if (dayRecs.dinner) allRestaurants.push(...dayRecs.dinner.map((r: any) => ({ ...r, mealType: 'dinner' })));
+      });
+    }
+    
+    // Then check the existing restaurantGuide
     if (itinerary.content.restaurantGuide && Array.isArray(itinerary.content.restaurantGuide)) {
       const mappedRestaurants = itinerary.content.restaurantGuide.map(restaurant => ({
         name: restaurant.name,
         cuisine: restaurant.cuisine,
         priceRange: restaurant.priceLevel || restaurant.priceRange || 'N/A',
         rating: restaurant.rating,
-        location: restaurant.location,
-        specialties: restaurant.specialties
+        location: restaurant.address || restaurant.location,
+        specialties: restaurant.specialties,
+        mealType: restaurant.mealType || 'general'
       }));
+      allRestaurants.push(...mappedRestaurants);
       console.log('Mapped restaurants from restaurantGuide:', mappedRestaurants);
-      return mappedRestaurants;
     }
     
     // Fallback to legacy structure
     if (itinerary.content.restaurants && Array.isArray(itinerary.content.restaurants)) {
       console.log('Using legacy restaurants:', itinerary.content.restaurants);
-      return itinerary.content.restaurants;
+      allRestaurants.push(...itinerary.content.restaurants.map((r: any) => ({ ...r, mealType: 'general' })));
     }
     
-    // If no structured restaurant data, try to extract from raw content
-    console.log('No structured restaurant data found, checking raw content');
-    return [];
+    // Remove duplicates based on name
+    const uniqueRestaurants = allRestaurants.filter((restaurant, index, self) => 
+      index === self.findIndex(r => r.name === restaurant.name)
+    );
+    
+    console.log('Final unique restaurants count:', uniqueRestaurants.length);
+    return uniqueRestaurants;
   };
 
   const getTips = () => {
@@ -726,44 +752,102 @@ const ItineraryView = () => {
               <p className="text-gray-600">Discover amazing dining options for your trip</p>
             </div>
             {getRestaurants().length > 0 ? (
-              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {getRestaurants().map((restaurant, index) => (
-                  <Card key={index}>
-                    <CardContent className="pt-6">
-                      <div className="flex justify-between items-start mb-2">
-                        <h4 className="font-medium">{restaurant.name}</h4>
-                        <Badge variant="outline">{restaurant.priceRange}</Badge>
+              <div className="space-y-8">
+                {/* Organize restaurants by meal type if available */}
+                {['breakfast', 'lunch', 'dinner', 'general'].map(mealType => {
+                  const mealRestaurants = getRestaurants().filter(r => r.mealType === mealType);
+                  if (mealRestaurants.length === 0) return null;
+                  
+                  return (
+                    <div key={mealType} className="space-y-4">
+                      <h3 className="text-xl font-semibold capitalize">
+                        {mealType === 'general' ? 'Additional Recommendations' : `${mealType} Options`}
+                      </h3>
+                      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {mealRestaurants.map((restaurant, index) => (
+                          <Card key={`${mealType}-${index}`}>
+                            <CardContent className="pt-6">
+                              <div className="flex justify-between items-start mb-2">
+                                <h4 className="font-medium">{restaurant.name}</h4>
+                                <Badge variant="outline">{restaurant.priceRange || restaurant.priceLevel}</Badge>
+                              </div>
+                              <p className="text-sm text-gray-600 mb-2">{restaurant.cuisine}</p>
+                              {(restaurant.location || restaurant.address) && (
+                                <div className="flex items-center gap-1 mb-2">
+                                  <MapPin className="h-3 w-3 text-gray-500" />
+                                  <span className="text-xs text-gray-500">{restaurant.location || restaurant.address}</span>
+                                </div>
+                              )}
+                              <div className="flex items-center gap-1 mb-3">
+                                <Star className="h-4 w-4 text-yellow-500 fill-current" />
+                                <span className="text-sm font-medium">{restaurant.rating}</span>
+                              </div>
+                              {restaurant.specialties && restaurant.specialties.length > 0 && (
+                                <div className="mb-3">
+                                  <p className="text-xs text-gray-500 mb-1">Specialties:</p>
+                                  <div className="flex flex-wrap gap-1">
+                                    {restaurant.specialties.slice(0, 3).map((specialty, idx) => (
+                                      <Badge key={idx} variant="secondary" className="text-xs">
+                                        {specialty}
+                                      </Badge>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                              <Button variant="outline" size="sm" className="w-full">
+                                <ExternalLink className="h-3 w-3 mr-2" />
+                                View Details
+                              </Button>
+                            </CardContent>
+                          </Card>
+                        ))}
                       </div>
-                      <p className="text-sm text-gray-600 mb-2">{restaurant.cuisine}</p>
-                      {restaurant.location && (
-                        <div className="flex items-center gap-1 mb-2">
-                          <MapPin className="h-3 w-3 text-gray-500" />
-                          <span className="text-xs text-gray-500">{restaurant.location}</span>
-                        </div>
-                      )}
-                      <div className="flex items-center gap-1 mb-3">
-                        <Star className="h-4 w-4 text-yellow-500 fill-current" />
-                        <span className="text-sm font-medium">{restaurant.rating}</span>
-                      </div>
-                      {restaurant.specialties && restaurant.specialties.length > 0 && (
-                        <div className="mb-3">
-                          <p className="text-xs text-gray-500 mb-1">Specialties:</p>
-                          <div className="flex flex-wrap gap-1">
-                            {restaurant.specialties.slice(0, 3).map((specialty, idx) => (
-                              <Badge key={idx} variant="secondary" className="text-xs">
-                                {specialty}
-                              </Badge>
-                            ))}
+                    </div>
+                  );
+                })}
+                
+                {/* If no meal types found, show all restaurants in one grid */}
+                {getRestaurants().every(r => !r.mealType || r.mealType === 'general') && (
+                  <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {getRestaurants().map((restaurant, index) => (
+                      <Card key={index}>
+                        <CardContent className="pt-6">
+                          <div className="flex justify-between items-start mb-2">
+                            <h4 className="font-medium">{restaurant.name}</h4>
+                            <Badge variant="outline">{restaurant.priceRange || restaurant.priceLevel}</Badge>
                           </div>
-                        </div>
-                      )}
-                      <Button variant="outline" size="sm" className="w-full">
-                        <ExternalLink className="h-3 w-3 mr-2" />
-                        View Details
-                      </Button>
-                    </CardContent>
-                  </Card>
-                ))}
+                          <p className="text-sm text-gray-600 mb-2">{restaurant.cuisine}</p>
+                          {(restaurant.location || restaurant.address) && (
+                            <div className="flex items-center gap-1 mb-2">
+                              <MapPin className="h-3 w-3 text-gray-500" />
+                              <span className="text-xs text-gray-500">{restaurant.location || restaurant.address}</span>
+                            </div>
+                          )}
+                          <div className="flex items-center gap-1 mb-3">
+                            <Star className="h-4 w-4 text-yellow-500 fill-current" />
+                            <span className="text-sm font-medium">{restaurant.rating}</span>
+                          </div>
+                          {restaurant.specialties && restaurant.specialties.length > 0 && (
+                            <div className="mb-3">
+                              <p className="text-xs text-gray-500 mb-1">Specialties:</p>
+                              <div className="flex flex-wrap gap-1">
+                                {restaurant.specialties.slice(0, 3).map((specialty, idx) => (
+                                  <Badge key={idx} variant="secondary" className="text-xs">
+                                    {specialty}
+                                  </Badge>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                          <Button variant="outline" size="sm" className="w-full">
+                            <ExternalLink className="h-3 w-3 mr-2" />
+                            View Details
+                          </Button>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                )}
               </div>
             ) : (
               <Card>

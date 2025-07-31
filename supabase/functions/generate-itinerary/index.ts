@@ -202,12 +202,15 @@ REAL RESTAURANTS WITH RATINGS:
 ${realTimeData.restaurants.map(r => 
   `- ${r.name} (${r.rating}/5 stars) at ${r.address}${r.priceLevel ? ` - Price level: ${r.priceLevel}/4` : ''}`
 ).join('\n')}` : ''}
-
+ 
 ${realTimeData.events.length > 0 ? `
 CURRENT LOCAL EVENTS:
 ${realTimeData.events.map(e => 
   `- ${e.name} on ${new Date(e.startDate).toLocaleDateString()} at ${e.venue}${e.isFree ? ' (FREE)' : ''}`
 ).join('\n')}` : ''}
+
+**RESTAURANT REQUIREMENTS**
+CRITICAL: Provide exactly 3 restaurant options for each meal (breakfast, lunch, dinner) for each day of the trip. This means if it's a 5-day trip, you need 45 total restaurant recommendations (3 breakfast + 3 lunch + 3 dinner × 5 days). Mix the real restaurants from the data above with additional researched options to reach this requirement.
 
 **ADVANCED REQUIREMENTS**
 1. **WEATHER-ADAPTIVE PLANNING**: Use the real weather forecast to suggest appropriate activities for each day
@@ -255,19 +258,40 @@ Return a detailed JSON object with:
       "bookingTip": "Best booking platform or time"
     }
   ],
-  "restaurantGuide": [
-    {
-      "name": "Restaurant name from real data",
-      "cuisine": "Cuisine type",
-      "priceLevel": "$ to $$$$",
-      "rating": "4.5/5",
-      "address": "Full address",
-      "specialties": ["dish1", "dish2"],
-      "dietaryOptions": "Accommodates their restrictions",
-      "reservationRequired": true,
-      "bestTime": "When to visit"
-    }
-  ],
+   "restaurantGuide": [
+     {
+       "name": "Restaurant name from real data",
+       "cuisine": "Cuisine type",
+       "priceLevel": "$ to $$$$",
+       "rating": "4.5/5",
+       "address": "Full address",
+       "specialties": ["dish1", "dish2"],
+       "dietaryOptions": "Accommodates their restrictions",
+       "reservationRequired": true,
+       "bestTime": "When to visit",
+       "mealType": "breakfast/lunch/dinner"
+     }
+   ],
+   "dailyRestaurantRecommendations": [
+     {
+       "day": 1,
+       "breakfast": [
+         { /* 3 restaurant options with same structure as restaurantGuide */ },
+         { /* restaurant option 2 */ },
+         { /* restaurant option 3 */ }
+       ],
+       "lunch": [
+         { /* 3 restaurant options */ },
+         { /* restaurant option 2 */ },
+         { /* restaurant option 3 */ }
+       ],
+       "dinner": [
+         { /* 3 restaurant options */ },
+         { /* restaurant option 2 */ },
+         { /* restaurant option 3 */ }
+       ]
+     }
+   ],
   "budgetBreakdown": {
     "accommodation": "$X per night",
     "meals": "$X per day",
