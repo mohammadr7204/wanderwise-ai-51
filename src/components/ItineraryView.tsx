@@ -615,7 +615,10 @@ const ItineraryView = () => {
         )}
 
         {/* Main Content */}
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+        <Tabs value={activeTab} onValueChange={(value) => {
+          console.log('Tab changed to:', value);
+          setActiveTab(value);
+        }} className="space-y-6">
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="itinerary">Day-by-Day Itinerary</TabsTrigger>
             <TabsTrigger value="restaurants">Restaurants</TabsTrigger>
