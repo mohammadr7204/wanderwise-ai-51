@@ -42,6 +42,7 @@ interface DailyActivity {
   cost?: string;
   duration?: string;
   bookingInfo?: string;
+  bookingUrl?: string;
   weatherBackup?: string;
 }
 
@@ -64,6 +65,7 @@ interface Restaurant {
   address?: string;
   specialties?: string[];
   mealType?: string;
+  bookingUrl?: string;
 }
 
 interface BudgetBreakdown {
@@ -88,6 +90,7 @@ interface Accommodation {
   amenities: string[];
   whyPerfect: string;
   bookingTip: string;
+  bookingUrl?: string;
   rating?: string;
   isPrimary?: boolean;
 }
@@ -756,10 +759,21 @@ const ItineraryView = () => {
                                   )}
                                 </div>
                                 
-                                {activity.bookingInfo && (
-                                  <Button variant="link" size="sm" className="h-auto p-0 mt-2">
-                                    <ExternalLink className="h-3 w-3 mr-1" />
-                                    {activity.bookingInfo.includes('http') ? 'Book online' : activity.bookingInfo}
+                                {(activity.bookingInfo || activity.bookingUrl) && (
+                                  <Button 
+                                    variant="link" 
+                                    size="sm" 
+                                    className="h-auto p-0 mt-2"
+                                    asChild
+                                  >
+                                    <a 
+                                      href={activity.bookingUrl || (activity.bookingInfo?.includes('http') ? activity.bookingInfo : `https://www.google.com/search?q=${encodeURIComponent(activity.activity + ' ' + (activity.venue || ''))}`)} 
+                                      target="_blank" 
+                                      rel="noopener noreferrer"
+                                    >
+                                      <ExternalLink className="h-3 w-3 mr-1" />
+                                      {activity.bookingUrl || activity.bookingInfo?.includes('http') ? 'Book Online' : activity.bookingInfo}
+                                    </a>
                                   </Button>
                                 )}
                               </div>
@@ -837,9 +851,15 @@ const ItineraryView = () => {
                           <p className="text-sm text-muted-foreground">{accommodation.bookingTip}</p>
                         </div>
                         
-                        <Button className="w-full">
-                          <ExternalLink className="h-4 w-4 mr-2" />
-                          Book Now
+                        <Button className="w-full" asChild>
+                          <a 
+                            href={accommodation.bookingUrl || `https://www.booking.com/search.html?ss=${encodeURIComponent(accommodation.name + ' ' + accommodation.address)}`} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                          >
+                            <ExternalLink className="h-4 w-4 mr-2" />
+                            Book Now
+                          </a>
                         </Button>
                       </CardContent>
                     </Card>
@@ -884,9 +904,15 @@ const ItineraryView = () => {
                             
                             <p className="text-sm text-muted-foreground">{accommodation.whyPerfect}</p>
                             
-                            <Button variant="outline" className="w-full">
-                              <ExternalLink className="h-4 w-4 mr-2" />
-                              View Details
+                            <Button variant="outline" className="w-full" asChild>
+                              <a 
+                                href={accommodation.bookingUrl || `https://www.booking.com/search.html?ss=${encodeURIComponent(accommodation.name + ' ' + accommodation.address)}`} 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                              >
+                                <ExternalLink className="h-4 w-4 mr-2" />
+                                View Details
+                              </a>
                             </Button>
                           </CardContent>
                         </Card>
@@ -963,9 +989,15 @@ const ItineraryView = () => {
                                   </div>
                                 </div>
                               )}
-                              <Button variant="outline" size="sm" className="w-full">
-                                <ExternalLink className="h-3 w-3 mr-2" />
-                                View Details
+                              <Button variant="outline" size="sm" className="w-full" asChild>
+                                <a 
+                                  href={restaurant.bookingUrl || `https://www.google.com/search?q=${encodeURIComponent(restaurant.name + ' restaurant ' + (restaurant.location || restaurant.address || ''))}`} 
+                                  target="_blank" 
+                                  rel="noopener noreferrer"
+                                >
+                                  <ExternalLink className="h-3 w-3 mr-2" />
+                                  View Details
+                                </a>
                               </Button>
                             </CardContent>
                           </Card>
@@ -1008,9 +1040,15 @@ const ItineraryView = () => {
                               </div>
                             </div>
                           )}
-                          <Button variant="outline" size="sm" className="w-full">
-                            <ExternalLink className="h-3 w-3 mr-2" />
-                            View Details
+                          <Button variant="outline" size="sm" className="w-full" asChild>
+                            <a 
+                              href={restaurant.bookingUrl || `https://www.google.com/search?q=${encodeURIComponent(restaurant.name + ' restaurant ' + (restaurant.location || restaurant.address || ''))}`} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                            >
+                              <ExternalLink className="h-3 w-3 mr-2" />
+                              View Details
+                            </a>
                           </Button>
                         </CardContent>
                       </Card>

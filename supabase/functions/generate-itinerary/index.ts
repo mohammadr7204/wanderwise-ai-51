@@ -221,6 +221,7 @@ CRITICAL: Provide exactly 3 restaurant options for each meal (breakfast, lunch, 
 6. **INSIDER KNOWLEDGE**: Research current local trends, seasonal highlights, and hidden gems
 7. **PRACTICAL LOGISTICS**: Include real operating hours, booking requirements, and transportation times
 8. **BACKUP STRATEGIES**: Provide weather-dependent alternatives and Plan B options
+9. **FUNCTIONAL BOOKING LINKS**: Generate REAL, WORKING booking URLs for all activities, accommodations, and restaurants. Use services like Viator, Booking.com, OpenTable, or create proper Google search URLs with encoded parameters
 
 **OUTPUT STRUCTURE**
 Return a detailed JSON object with:
@@ -241,6 +242,7 @@ Return a detailed JSON object with:
         "cost": "$25",
         "whyRecommended": "How this connects to their preferences",
         "bookingInfo": "Website or phone number",
+        "bookingUrl": "https://actual-booking-url.com or search URL",
         "weatherBackup": "Alternative if weather changes"
       },
       "afternoon": { /* same structure */ },
@@ -256,6 +258,7 @@ Return a detailed JSON object with:
       "amenities": ["wifi", "pool"],
       "whyPerfect": "Why it matches their style perfectly",
       "bookingTip": "Best booking platform or time",
+      "bookingUrl": "https://booking.com/search-url or direct hotel website",
       "rating": "4.5/5",
       "isPrimary": true
     },
@@ -267,6 +270,7 @@ Return a detailed JSON object with:
       "amenities": ["wifi", "gym"],
       "whyPerfect": "Alternative benefits",
       "bookingTip": "Booking advice",
+      "bookingUrl": "https://booking.com/search-url or direct hotel website",
       "rating": "4.3/5",
       "isPrimary": false
     },
@@ -278,6 +282,7 @@ Return a detailed JSON object with:
       "amenities": ["spa", "restaurant"],
       "whyPerfect": "Different value proposition",
       "bookingTip": "Booking strategy",
+      "bookingUrl": "https://booking.com/search-url or direct hotel website",
       "rating": "4.7/5",
       "isPrimary": false
     }
@@ -293,7 +298,8 @@ Return a detailed JSON object with:
        "dietaryOptions": "Accommodates their restrictions",
        "reservationRequired": true,
        "bestTime": "When to visit",
-       "mealType": "breakfast/lunch/dinner"
+       "mealType": "breakfast/lunch/dinner",
+       "bookingUrl": "https://www.opentable.com/search-url or Google search URL"
      }
    ],
    "dailyRestaurantRecommendations": [
