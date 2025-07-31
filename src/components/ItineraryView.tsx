@@ -115,6 +115,7 @@ const ItineraryView = () => {
   const [itinerary, setItinerary] = useState<Itinerary | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeDay, setActiveDay] = useState(1);
+  const [activeTab, setActiveTab] = useState<string>("itinerary");
 
   // Helper functions to extract data from either new or legacy structure
   const getDays = () => {
@@ -614,7 +615,7 @@ const ItineraryView = () => {
         )}
 
         {/* Main Content */}
-        <Tabs value="itinerary" className="space-y-6">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="itinerary">Day-by-Day Itinerary</TabsTrigger>
             <TabsTrigger value="restaurants">Restaurants</TabsTrigger>
