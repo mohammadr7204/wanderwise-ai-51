@@ -249,13 +249,37 @@ Return a detailed JSON object with:
   ],
   "accommodationRecommendations": [
     {
-      "name": "Hotel name",
+      "name": "Primary hotel recommendation",
       "type": "Matches their accommodation preference",
       "address": "Full address",
       "priceRange": "$150-200/night",
       "amenities": ["wifi", "pool"],
-      "whyPerfect": "Why it matches their style",
-      "bookingTip": "Best booking platform or time"
+      "whyPerfect": "Why it matches their style perfectly",
+      "bookingTip": "Best booking platform or time",
+      "rating": "4.5/5",
+      "isPrimary": true
+    },
+    {
+      "name": "Alternative option 1",
+      "type": "Alternative accommodation type",
+      "address": "Full address",
+      "priceRange": "$120-150/night",
+      "amenities": ["wifi", "gym"],
+      "whyPerfect": "Alternative benefits",
+      "bookingTip": "Booking advice",
+      "rating": "4.3/5",
+      "isPrimary": false
+    },
+    {
+      "name": "Alternative option 2",
+      "type": "Budget/luxury alternative",
+      "address": "Full address",
+      "priceRange": "$200-250/night",
+      "amenities": ["spa", "restaurant"],
+      "whyPerfect": "Different value proposition",
+      "bookingTip": "Booking strategy",
+      "rating": "4.7/5",
+      "isPrimary": false
     }
   ],
    "restaurantGuide": [

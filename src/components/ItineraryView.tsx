@@ -80,6 +80,18 @@ interface InsiderTip {
   description: string;
 }
 
+interface Accommodation {
+  name: string;
+  type: string;
+  address: string;
+  priceRange: string;
+  amenities: string[];
+  whyPerfect: string;
+  bookingTip: string;
+  rating?: string;
+  isPrimary?: boolean;
+}
+
 interface NewItineraryContent {
   destination?: string;
   destinationReason?: string;
@@ -93,6 +105,7 @@ interface NewItineraryContent {
   }>;
   localInsights?: string[];
   insiderTips?: InsiderTip[];
+  accommodationRecommendations?: Accommodation[];
   budgetBreakdown?: BudgetBreakdown;
 }
 
@@ -659,8 +672,9 @@ const ItineraryView = () => {
           console.log('Tab changed to:', value);
           setActiveTab(value);
         }} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="itinerary">Day-by-Day Itinerary</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-4">
+            <TabsTrigger value="itinerary">Day-by-Day</TabsTrigger>
+            <TabsTrigger value="accommodations">Where to Stay</TabsTrigger>
             <TabsTrigger value="restaurants">Restaurants</TabsTrigger>
             <TabsTrigger value="tips">Insider Tips</TabsTrigger>
           </TabsList>
@@ -758,6 +772,147 @@ const ItineraryView = () => {
                 ))}
               </div>
             </div>
+          </TabsContent>
+
+          <TabsContent value="accommodations" className="space-y-6">
+            <div className="space-y-4">
+              <h2 className="text-2xl font-bold">Where to Stay</h2>
+              <p className="text-gray-600">Carefully selected accommodation options for your trip</p>
+            </div>
+            {itinerary.content?.accommodationRecommendations && itinerary.content.accommodationRecommendations.length > 0 ? (
+              <div className="space-y-6">
+                {/* Primary recommendation first */}
+                {itinerary.content.accommodationRecommendations
+                  .filter(acc => acc.isPrimary)
+                  .map((accommodation, index) => (
+                    <Card key={`primary-${index}`} className="border-2 border-primary">
+                      <CardHeader>
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <CardTitle className="flex items-center gap-2">
+                              <MapPin className="h-5 w-5 text-primary" />
+                              {accommodation.name}
+                              <Badge variant="default" className="ml-2">Recommended</Badge>
+                            </CardTitle>
+                            <CardDescription>{accommodation.type}</CardDescription>
+                          </div>
+                          {accommodation.rating && (
+                            <div className="flex items-center gap-1">
+                              <Star className="h-4 w-4 text-yellow-500 fill-current" />
+                              <span className="font-medium">{accommodation.rating}</span>
+                            </div>
+                          )}
+                        </div>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        <div className="grid md:grid-cols-2 gap-4">
+                          <div>
+                            <h4 className="font-medium mb-2">Location</h4>
+                            <p className="text-sm text-muted-foreground">{accommodation.address}</p>
+                          </div>
+                          <div>
+                            <h4 className="font-medium mb-2">Price Range</h4>
+                            <p className="text-sm font-medium text-green-600">{accommodation.priceRange}</p>
+                          </div>
+                        </div>
+                        
+                        <div>
+                          <h4 className="font-medium mb-2">Amenities</h4>
+                          <div className="flex flex-wrap gap-2">
+                            {accommodation.amenities.map((amenity, idx) => (
+                              <Badge key={idx} variant="secondary" className="text-xs">
+                                {amenity}
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+                        
+                        <div>
+                          <h4 className="font-medium mb-2">Why Perfect for You</h4>
+                          <p className="text-sm text-muted-foreground">{accommodation.whyPerfect}</p>
+                        </div>
+                        
+                        <div>
+                          <h4 className="font-medium mb-2">Booking Tip</h4>
+                          <p className="text-sm text-muted-foreground">{accommodation.bookingTip}</p>
+                        </div>
+                        
+                        <Button className="w-full">
+                          <ExternalLink className="h-4 w-4 mr-2" />
+                          Book Now
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  ))
+                }
+                
+                {/* Alternative options */}
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold">Alternative Options</h3>
+                  <div className="grid md:grid-cols-2 gap-6">
+                    {itinerary.content.accommodationRecommendations
+                      .filter(acc => !acc.isPrimary)
+                      .map((accommodation, index) => (
+                        <Card key={`alt-${index}`}>
+                          <CardHeader>
+                            <div className="flex justify-between items-start">
+                              <div>
+                                <CardTitle className="flex items-center gap-2">
+                                  <MapPin className="h-5 w-5 text-primary" />
+                                  {accommodation.name}
+                                </CardTitle>
+                                <CardDescription>{accommodation.type}</CardDescription>
+                              </div>
+                              {accommodation.rating && (
+                                <div className="flex items-center gap-1">
+                                  <Star className="h-4 w-4 text-yellow-500 fill-current" />
+                                  <span className="font-medium">{accommodation.rating}</span>
+                                </div>
+                              )}
+                            </div>
+                          </CardHeader>
+                          <CardContent className="space-y-3">
+                            <div className="flex justify-between text-sm">
+                              <span className="text-muted-foreground">Price:</span>
+                              <span className="font-medium text-green-600">{accommodation.priceRange}</span>
+                            </div>
+                            
+                            <div>
+                              <span className="text-sm text-muted-foreground">Amenities: </span>
+                              <span className="text-sm">{accommodation.amenities.join(', ')}</span>
+                            </div>
+                            
+                            <p className="text-sm text-muted-foreground">{accommodation.whyPerfect}</p>
+                            
+                            <Button variant="outline" className="w-full">
+                              <ExternalLink className="h-4 w-4 mr-2" />
+                              View Details
+                            </Button>
+                          </CardContent>
+                        </Card>
+                      ))
+                    }
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <Card>
+                <CardContent className="pt-6 text-center">
+                  <MapPin className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">No Accommodation Recommendations Found</h3>
+                  <p className="text-gray-600 mb-4">
+                    It looks like accommodation recommendations weren't generated for this itinerary. 
+                    You can request a revision to add accommodation suggestions.
+                  </p>
+                  {canRequestRevision && (
+                    <Button variant="outline" onClick={handleRequestRevision}>
+                      <RefreshCw className="h-4 w-4 mr-2" />
+                      Request Accommodation Recommendations
+                    </Button>
+                  )}
+                </CardContent>
+              </Card>
+            )}
           </TabsContent>
 
           <TabsContent value="restaurants" className="space-y-6">
