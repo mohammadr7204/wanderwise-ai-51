@@ -74,6 +74,12 @@ interface BudgetBreakdown {
   meals?: string;
 }
 
+interface InsiderTip {
+  category: string;
+  tip: string;
+  description: string;
+}
+
 interface NewItineraryContent {
   destination?: string;
   destinationReason?: string;
@@ -86,6 +92,7 @@ interface NewItineraryContent {
     dinner?: Restaurant[];
   }>;
   localInsights?: string[];
+  insiderTips?: InsiderTip[];
   budgetBreakdown?: BudgetBreakdown;
 }
 
@@ -254,19 +261,26 @@ const ItineraryView = () => {
     if (!itinerary?.content) return [];
     
     console.log('Getting tips, content:', itinerary.content);
+    console.log('Insider tips:', itinerary.content.insiderTips);
     console.log('Local insights:', itinerary.content.localInsights);
     console.log('Legacy tips:', itinerary.content.tips);
     
-    // Try new structure first
+    // Try new structured insider tips first
+    if (itinerary.content.insiderTips && Array.isArray(itinerary.content.insiderTips)) {
+      console.log('Using structured insiderTips:', itinerary.content.insiderTips);
+      return itinerary.content.insiderTips;
+    }
+    
+    // Fallback to localInsights
     if (itinerary.content.localInsights && Array.isArray(itinerary.content.localInsights)) {
       console.log('Using localInsights:', itinerary.content.localInsights);
-      return itinerary.content.localInsights;
+      return itinerary.content.localInsights.map(insight => ({ tip: insight, isLegacy: true }));
     }
     
     // Fallback to legacy structure
     if (itinerary.content.tips && Array.isArray(itinerary.content.tips)) {
       console.log('Using legacy tips:', itinerary.content.tips);
-      return itinerary.content.tips;
+      return itinerary.content.tips.map(tip => ({ tip, isLegacy: true }));
     }
     
     console.log('No tips data found');
@@ -885,18 +899,34 @@ const ItineraryView = () => {
                     Local insights to make your trip unforgettable
                   </CardDescription>
                 </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {getTips().map((tip, index) => (
-                      <div key={index} className="flex gap-3 p-4 bg-blue-50 rounded-lg">
-                        <div className="flex-shrink-0 w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-sm font-medium">
-                          {index + 1}
-                        </div>
-                        <p className="text-gray-800">{tip}</p>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
+                 <CardContent>
+                   <div className="space-y-4">
+                     {getTips().map((tip, index) => (
+                       <div key={index} className="p-6 border-l-4 border-l-primary bg-muted/50 rounded-lg">
+                         {tip.category ? (
+                           // New structured format
+                           <div className="space-y-2">
+                             <div className="flex items-center gap-2">
+                               <Badge variant="secondary" className="text-xs">
+                                 {tip.category}
+                               </Badge>
+                             </div>
+                             <h4 className="font-semibold text-foreground">{tip.tip}</h4>
+                             <p className="text-sm text-muted-foreground">{tip.description}</p>
+                           </div>
+                         ) : (
+                           // Legacy format
+                           <div className="flex gap-3">
+                             <div className="flex-shrink-0 w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-sm font-medium">
+                               {index + 1}
+                             </div>
+                             <p className="text-gray-800">{tip.tip || tip}</p>
+                           </div>
+                         )}
+                       </div>
+                     ))}
+                   </div>
+                 </CardContent>
               </Card>
             ) : (
               <Card>

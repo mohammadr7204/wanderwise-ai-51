@@ -300,11 +300,38 @@ Return a detailed JSON object with:
     "dailyTotal": "$X",
     "tripTotal": "$X"
   },
-  "localInsights": [
-    "Current local tip #1",
-    "Seasonal highlight #2",
-    "Hidden gem #3"
-  ],
+   "insiderTips": [
+     {
+       "category": "Local Knowledge",
+       "tip": "What locals actually do/avoid",
+       "description": "Detailed insider information"
+     },
+     {
+       "category": "Safety Tips",
+       "tip": "Specific safety advice for this destination",
+       "description": "Practical safety recommendations"
+     },
+     {
+       "category": "Fun Enhancers",
+       "tip": "Things that make the trip more enjoyable",
+       "description": "Activities or experiences that add joy"
+     },
+     {
+       "category": "Traveler Secrets",
+       "tip": "What previous travelers wish they knew",
+       "description": "Lessons learned from other visitors"
+     },
+     {
+       "category": "Money Saving",
+       "tip": "How to save money like a local",
+       "description": "Practical cost-cutting advice"
+     },
+     {
+       "category": "Cultural Etiquette",
+       "tip": "Local customs and manners",
+       "description": "How to respect local culture"
+     }
+   ],
   "packingList": ["Weather-appropriate items based on forecast"],
   "emergencyInfo": {
     "localEmergency": "Phone numbers",
