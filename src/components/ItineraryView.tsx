@@ -33,6 +33,8 @@ import FlightAnalysis from './itinerary/FlightAnalysis';
 import BudgetBreakdown from './itinerary/BudgetBreakdown';
 import PackingList from './itinerary/PackingList';
 import LocalExperiences from './itinerary/LocalExperiences';
+import SafetyGuide from './itinerary/SafetyGuide';
+import EmergencyPlan from './itinerary/EmergencyPlan';
 
 interface Trip {
   id: string;
@@ -1157,31 +1159,11 @@ const ItineraryView = () => {
           </TabsContent>
 
           <TabsContent value="safety" className="space-y-6">
-            <div className="space-y-4">
-              <h2 className="text-2xl font-bold">Safety & Scam Prevention</h2>
-              <p className="text-muted-foreground">Stay safe and avoid common tourist traps</p>
-            </div>
-            <Card>
-              <CardContent className="pt-6 text-center">
-                <Shield className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-medium mb-2">Safety Guide Coming Soon</h3>
-                <p className="text-muted-foreground">This feature will be available in the next update!</p>
-              </CardContent>
-            </Card>
+            <SafetyGuide tripData={trip} />
           </TabsContent>
 
           <TabsContent value="emergency" className="space-y-6">
-            <div className="space-y-4">
-              <h2 className="text-2xl font-bold">Emergency Plan</h2>
-              <p className="text-muted-foreground">Essential emergency contacts and procedures</p>
-            </div>
-            <Card>
-              <CardContent className="pt-6 text-center">
-                <AlertTriangle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-medium mb-2">Emergency Plan Coming Soon</h3>
-                <p className="text-muted-foreground">This feature will be available in the next update!</p>
-              </CardContent>
-            </Card>
+            <EmergencyPlan tripData={trip} />
           </TabsContent>
         </Tabs>
       </div>
