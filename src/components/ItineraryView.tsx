@@ -22,8 +22,15 @@ import {
   Calendar,
   Users,
   Edit,
-  Trash2
+  Trash2,
+  Plane,
+  Home,
+  Luggage,
+  Shield,
+  AlertTriangle
 } from 'lucide-react';
+import FlightAnalysis from './itinerary/FlightAnalysis';
+import BudgetBreakdown from './itinerary/BudgetBreakdown';
 
 interface Trip {
   id: string;
@@ -631,55 +638,49 @@ const ItineraryView = () => {
           </Card>
         </div>
 
-        {/* Budget Breakdown */}
-        {itinerary.content?.budgetBreakdown && (
-          <div className="mb-8">
-            <Card>
-              <CardHeader>
-                <CardTitle>Budget Breakdown</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
-                  {itinerary.content.budgetBreakdown.accommodation && (
-                    <div>
-                      <p className="text-sm text-gray-600">Accommodation</p>
-                      <p className="font-semibold">{itinerary.content.budgetBreakdown.accommodation}</p>
-                    </div>
-                  )}
-                  {itinerary.content.budgetBreakdown.tripTotal && (
-                    <div>
-                      <p className="text-sm text-gray-600">Trip Total</p>
-                      <p className="font-semibold">{itinerary.content.budgetBreakdown.tripTotal}</p>
-                    </div>
-                  )}
-                  {itinerary.content.budgetBreakdown.dailyBudget && (
-                    <div>
-                      <p className="text-sm text-gray-600">Daily Budget</p>
-                      <p className="font-semibold">{itinerary.content.budgetBreakdown.dailyBudget}</p>
-                    </div>
-                  )}
-                  {itinerary.content.budgetBreakdown.activities && (
-                    <div>
-                      <p className="text-sm text-gray-600">Activities</p>
-                      <p className="font-semibold">{itinerary.content.budgetBreakdown.activities}</p>
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        )}
+        {/* Enhanced Budget Overview */}
+        <div className="mb-8">
+          <BudgetBreakdown tripData={trip} existingBudget={itinerary.content?.budgetBreakdown} />
+        </div>
 
         {/* Main Content */}
         <Tabs value={activeTab} onValueChange={(value) => {
           console.log('Tab changed to:', value);
           setActiveTab(value);
         }} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="itinerary">Day-by-Day</TabsTrigger>
-            <TabsTrigger value="accommodations">Where to Stay</TabsTrigger>
-            <TabsTrigger value="restaurants">Restaurants</TabsTrigger>
-            <TabsTrigger value="tips">Insider Tips</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-8">
+            <TabsTrigger value="itinerary" className="flex items-center gap-1">
+              <Calendar className="h-3 w-3" />
+              <span className="hidden sm:inline">Day-by-Day</span>
+            </TabsTrigger>
+            <TabsTrigger value="flights" className="flex items-center gap-1">
+              <Plane className="h-3 w-3" />
+              <span className="hidden sm:inline">Flights</span>
+            </TabsTrigger>
+            <TabsTrigger value="accommodations" className="flex items-center gap-1">
+              <Home className="h-3 w-3" />
+              <span className="hidden sm:inline">Stay</span>
+            </TabsTrigger>
+            <TabsTrigger value="restaurants" className="flex items-center gap-1">
+              <Utensils className="h-3 w-3" />
+              <span className="hidden sm:inline">Food</span>
+            </TabsTrigger>
+            <TabsTrigger value="packing" className="flex items-center gap-1">
+              <Luggage className="h-3 w-3" />
+              <span className="hidden sm:inline">Packing</span>
+            </TabsTrigger>
+            <TabsTrigger value="experiences" className="flex items-center gap-1">
+              <Users className="h-3 w-3" />
+              <span className="hidden sm:inline">Local Life</span>
+            </TabsTrigger>
+            <TabsTrigger value="safety" className="flex items-center gap-1">
+              <Shield className="h-3 w-3" />
+              <span className="hidden sm:inline">Safety</span>
+            </TabsTrigger>
+            <TabsTrigger value="emergency" className="flex items-center gap-1">
+              <AlertTriangle className="h-3 w-3" />
+              <span className="hidden sm:inline">Emergency</span>
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="itinerary" className="space-y-6">
@@ -786,6 +787,10 @@ const ItineraryView = () => {
                 ))}
               </div>
             </div>
+          </TabsContent>
+
+          <TabsContent value="flights" className="space-y-6">
+            <FlightAnalysis tripData={trip} />
           </TabsContent>
 
           <TabsContent value="accommodations" className="space-y-6">
@@ -1139,6 +1144,62 @@ const ItineraryView = () => {
                 </CardContent>
               </Card>
             )}
+          </TabsContent>
+
+          <TabsContent value="packing" className="space-y-6">
+            <div className="space-y-4">
+              <h2 className="text-2xl font-bold">Packing List</h2>
+              <p className="text-muted-foreground">Smart packing recommendations for your trip</p>
+            </div>
+            <Card>
+              <CardContent className="pt-6 text-center">
+                <Luggage className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-lg font-medium mb-2">Packing List Coming Soon</h3>
+                <p className="text-muted-foreground">This feature will be available in the next update!</p>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="experiences" className="space-y-6">
+            <div className="space-y-4">
+              <h2 className="text-2xl font-bold">Local Experiences</h2>
+              <p className="text-muted-foreground">Discover authentic local life and hidden gems</p>
+            </div>
+            <Card>
+              <CardContent className="pt-6 text-center">
+                <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-lg font-medium mb-2">Local Experiences Coming Soon</h3>
+                <p className="text-muted-foreground">This feature will be available in the next update!</p>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="safety" className="space-y-6">
+            <div className="space-y-4">
+              <h2 className="text-2xl font-bold">Safety & Scam Prevention</h2>
+              <p className="text-muted-foreground">Stay safe and avoid common tourist traps</p>
+            </div>
+            <Card>
+              <CardContent className="pt-6 text-center">
+                <Shield className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-lg font-medium mb-2">Safety Guide Coming Soon</h3>
+                <p className="text-muted-foreground">This feature will be available in the next update!</p>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="emergency" className="space-y-6">
+            <div className="space-y-4">
+              <h2 className="text-2xl font-bold">Emergency Plan</h2>
+              <p className="text-muted-foreground">Essential emergency contacts and procedures</p>
+            </div>
+            <Card>
+              <CardContent className="pt-6 text-center">
+                <AlertTriangle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-lg font-medium mb-2">Emergency Plan Coming Soon</h3>
+                <p className="text-muted-foreground">This feature will be available in the next update!</p>
+              </CardContent>
+            </Card>
           </TabsContent>
         </Tabs>
       </div>
