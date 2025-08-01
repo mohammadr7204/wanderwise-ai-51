@@ -31,6 +31,8 @@ import {
 } from 'lucide-react';
 import FlightAnalysis from './itinerary/FlightAnalysis';
 import BudgetBreakdown from './itinerary/BudgetBreakdown';
+import PackingList from './itinerary/PackingList';
+import LocalExperiences from './itinerary/LocalExperiences';
 
 interface Trip {
   id: string;
@@ -1147,31 +1149,11 @@ const ItineraryView = () => {
           </TabsContent>
 
           <TabsContent value="packing" className="space-y-6">
-            <div className="space-y-4">
-              <h2 className="text-2xl font-bold">Packing List</h2>
-              <p className="text-muted-foreground">Smart packing recommendations for your trip</p>
-            </div>
-            <Card>
-              <CardContent className="pt-6 text-center">
-                <Luggage className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-medium mb-2">Packing List Coming Soon</h3>
-                <p className="text-muted-foreground">This feature will be available in the next update!</p>
-              </CardContent>
-            </Card>
+            <PackingList tripData={trip} />
           </TabsContent>
 
           <TabsContent value="experiences" className="space-y-6">
-            <div className="space-y-4">
-              <h2 className="text-2xl font-bold">Local Experiences</h2>
-              <p className="text-muted-foreground">Discover authentic local life and hidden gems</p>
-            </div>
-            <Card>
-              <CardContent className="pt-6 text-center">
-                <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-medium mb-2">Local Experiences Coming Soon</h3>
-                <p className="text-muted-foreground">This feature will be available in the next update!</p>
-              </CardContent>
-            </Card>
+            <LocalExperiences tripData={trip} />
           </TabsContent>
 
           <TabsContent value="safety" className="space-y-6">
