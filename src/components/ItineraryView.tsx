@@ -35,6 +35,7 @@ import PackingList from './itinerary/PackingList';
 import LocalExperiences from './itinerary/LocalExperiences';
 import SafetyGuide from './itinerary/SafetyGuide';
 import EmergencyPlan from './itinerary/EmergencyPlan';
+import RouteOptimizer from './itinerary/RouteOptimizer';
 
 interface Trip {
   id: string;
@@ -652,10 +653,14 @@ const ItineraryView = () => {
           console.log('Tab changed to:', value);
           setActiveTab(value);
         }} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-8">
+          <TabsList className="grid w-full grid-cols-9">
             <TabsTrigger value="itinerary" className="flex items-center gap-1">
               <Calendar className="h-3 w-3" />
               <span className="hidden sm:inline">Day-by-Day</span>
+            </TabsTrigger>
+            <TabsTrigger value="routes" className="flex items-center gap-1">
+              <MapPin className="h-3 w-3" />
+              <span className="hidden sm:inline">Routes</span>
             </TabsTrigger>
             <TabsTrigger value="flights" className="flex items-center gap-1">
               <Plane className="h-3 w-3" />
@@ -791,6 +796,10 @@ const ItineraryView = () => {
                 ))}
               </div>
             </div>
+          </TabsContent>
+
+          <TabsContent value="routes" className="space-y-6">
+            <RouteOptimizer tripData={trip} />
           </TabsContent>
 
           <TabsContent value="flights" className="space-y-6">
