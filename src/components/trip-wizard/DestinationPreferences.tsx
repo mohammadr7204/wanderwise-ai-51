@@ -4,7 +4,9 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Sparkles, MapPin, Globe, Thermometer, X } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Sparkles, MapPin, Globe, Thermometer, X, Plane, Clock, Star } from 'lucide-react';
 import { useState } from 'react';
 import type { TripFormData } from '@/pages/CreateTrip';
 
@@ -192,11 +194,94 @@ export const DestinationPreferences = ({ formData, updateFormData }: Destination
         </div>
       </div>
 
+      {/* Flight Analysis Options */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <div className="space-y-1">
+            <Label className="flex items-center gap-2">
+              <Plane className="h-4 w-4" />
+              Include Flight Analysis
+            </Label>
+            <p className="text-sm text-gray-500">Get flight recommendations and pricing analysis</p>
+          </div>
+          <Switch
+            checked={formData.includeFlightAnalysis}
+            onCheckedChange={(checked) => updateFormData({ includeFlightAnalysis: checked })}
+          />
+        </div>
+
+        {formData.includeFlightAnalysis && (
+          <div className="space-y-4 pl-6 border-l-2 border-primary/20">
+            {/* Departure Time Preference */}
+            <div className="space-y-2">
+              <Label className="flex items-center gap-2">
+                <Clock className="h-4 w-4" />
+                Preferred Departure Time
+              </Label>
+              <Select
+                value={formData.preferredDepartureTime}
+                onValueChange={(value: 'early-morning' | 'morning' | 'afternoon' | 'evening' | 'late-night' | 'flexible') => 
+                  updateFormData({ preferredDepartureTime: value })
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select departure time preference" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="flexible">Flexible (Any time)</SelectItem>
+                  <SelectItem value="early-morning">Early Morning (5:00 - 8:00 AM)</SelectItem>
+                  <SelectItem value="morning">Morning (8:00 - 12:00 PM)</SelectItem>
+                  <SelectItem value="afternoon">Afternoon (12:00 - 6:00 PM)</SelectItem>
+                  <SelectItem value="evening">Evening (6:00 - 10:00 PM)</SelectItem>
+                  <SelectItem value="late-night">Late Night (10:00 PM - 5:00 AM)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Flight Class Preference */}
+            <div className="space-y-2">
+              <Label className="flex items-center gap-2">
+                <Star className="h-4 w-4" />
+                Flight Class Preference
+              </Label>
+              <Select
+                value={formData.flightClass}
+                onValueChange={(value: 'economy' | 'premium-economy' | 'business' | 'first') => 
+                  updateFormData({ flightClass: value })
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select flight class" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="economy">Economy</SelectItem>
+                  <SelectItem value="premium-economy">Premium Economy</SelectItem>
+                  <SelectItem value="business">Business</SelectItem>
+                  <SelectItem value="first">First Class</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Direct Flights Preference */}
+            <div className="flex items-center justify-between">
+              <div className="space-y-1">
+                <Label className="text-sm font-medium">Prefer Direct Flights</Label>
+                <p className="text-xs text-gray-500">Prioritize non-stop flights over connections</p>
+              </div>
+              <Switch
+                checked={formData.directFlightsOnly}
+                onCheckedChange={(checked) => updateFormData({ directFlightsOnly: checked })}
+              />
+            </div>
+          </div>
+        )}
+      </div>
+
       {/* Summary */}
       {(formData.destinationType === 'specific' && formData.specificDestinations.length > 0) ||
        formData.climatePreferences.length > 0 && (
         <div className="p-4 bg-green-50 rounded-lg">
-          <h4 className="font-medium text-green-800 mb-2">Your destination preferences:</h4>
+          <h4 className="font-medium text-green-800 mb-2">Your preferences:</h4>
           <ul className="text-sm text-green-700 space-y-1">
             {formData.destinationType === 'surprise' && (
               <li>• Surprise destination based on your preferences</li>
@@ -207,6 +292,14 @@ export const DestinationPreferences = ({ formData, updateFormData }: Destination
             <li>• Travel radius: {formData.travelRadius}</li>
             {formData.climatePreferences.length > 0 && (
               <li>• Preferred climates: {formData.climatePreferences.join(', ')}</li>
+            )}
+            {formData.includeFlightAnalysis && (
+              <>
+                <li>• Flight analysis: Enabled</li>
+                <li>• Departure time: {formData.preferredDepartureTime.replace('-', ' ')}</li>
+                <li>• Flight class: {formData.flightClass.replace('-', ' ')}</li>
+                {formData.directFlightsOnly && <li>• Direct flights preferred</li>}
+              </>
             )}
           </ul>
         </div>

@@ -16,6 +16,7 @@ import { ReviewAndCreate } from '@/components/trip-wizard/ReviewAndCreate';
 export interface TripFormData {
   // Basic trip info
   title: string;
+  startingLocation: string;
   startDate: Date | undefined;
   endDate: Date | undefined;
   groupSize: number;
@@ -27,6 +28,12 @@ export interface TripFormData {
   specificDestinations: string[];
   travelRadius: 'local' | 'national' | 'international';
   climatePreferences: string[];
+  
+  // Flight analysis preferences
+  includeFlightAnalysis: boolean;
+  preferredDepartureTime: 'early-morning' | 'morning' | 'afternoon' | 'evening' | 'late-night' | 'flexible';
+  flightClass: 'economy' | 'premium-economy' | 'business' | 'first';
+  directFlightsOnly: boolean;
   
   // Activity preferences
   activityTypes: string[];
@@ -54,6 +61,7 @@ const CreateTrip = () => {
   const [isLoadingTrip, setIsLoadingTrip] = useState(isEditMode);
   const [formData, setFormData] = useState<TripFormData>({
     title: '',
+    startingLocation: '',
     startDate: undefined,
     endDate: undefined,
     groupSize: 1,
@@ -63,6 +71,10 @@ const CreateTrip = () => {
     specificDestinations: [],
     travelRadius: 'national',
     climatePreferences: [],
+    includeFlightAnalysis: true,
+    preferredDepartureTime: 'flexible',
+    flightClass: 'economy',
+    directFlightsOnly: false,
     activityTypes: [],
     accommodationType: 'mid-range-hotels',
     accommodationAmenities: [],
@@ -149,7 +161,7 @@ const CreateTrip = () => {
   const isStepValid = () => {
     switch (currentStep) {
       case 1:
-        return formData.title.trim() && formData.startDate && formData.endDate;
+        return formData.title.trim() && formData.startingLocation.trim() && formData.startDate && formData.endDate;
       case 2:
         if (formData.destinationType === 'surprise') return true;
         if (formData.destinationType === 'specific') {

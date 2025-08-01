@@ -5,7 +5,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Slider } from '@/components/ui/slider';
 import { format } from 'date-fns';
-import { Calendar as CalendarIcon, Users, DollarSign } from 'lucide-react';
+import { Calendar as CalendarIcon, Users, DollarSign, MapPin, Plane } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { TripFormData } from '@/pages/CreateTrip';
 
@@ -28,6 +28,22 @@ export const TripBasics = ({ formData, updateFormData }: TripBasicsProps) => {
           className="text-base"
         />
         <p className="text-sm text-gray-500">Give your trip a memorable name</p>
+      </div>
+
+      {/* Starting Location */}
+      <div className="space-y-2">
+        <Label htmlFor="startingLocation" className="flex items-center gap-2">
+          <Plane className="h-4 w-4" />
+          Starting Location (Origin)
+        </Label>
+        <Input
+          id="startingLocation"
+          placeholder="e.g., New York, JFK Airport, Los Angeles"
+          value={formData.startingLocation}
+          onChange={(e) => updateFormData({ startingLocation: e.target.value })}
+          className="text-base"
+        />
+        <p className="text-sm text-gray-500">Enter your departure city or airport for flight analysis</p>
       </div>
 
       {/* Date Range */}
