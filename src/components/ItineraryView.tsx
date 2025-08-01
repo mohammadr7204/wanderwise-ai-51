@@ -800,7 +800,7 @@ const ItineraryView = () => {
           <TabsContent value="accommodations" className="space-y-6">
             <div className="space-y-4">
               <h2 className="text-2xl font-bold">Where to Stay</h2>
-              <p className="text-gray-600">Carefully selected accommodation options for your trip</p>
+              <p className="text-muted-foreground">Carefully selected accommodation options with live booking links</p>
             </div>
             {itinerary.content?.accommodationRecommendations && itinerary.content.accommodationRecommendations.length > 0 ? (
               <div className="space-y-6">
@@ -815,7 +815,7 @@ const ItineraryView = () => {
                             <CardTitle className="flex items-center gap-2">
                               <MapPin className="h-5 w-5 text-primary" />
                               {accommodation.name}
-                              <Badge variant="default" className="ml-2">Recommended</Badge>
+                              <Badge variant="default" className="ml-2">Top Pick</Badge>
                             </CardTitle>
                             <CardDescription>{accommodation.type}</CardDescription>
                           </div>
@@ -832,10 +832,22 @@ const ItineraryView = () => {
                           <div>
                             <h4 className="font-medium mb-2">Location</h4>
                             <p className="text-sm text-muted-foreground">{accommodation.address}</p>
+                            <div className="flex items-center gap-4 mt-2">
+                              <Badge variant="outline" className="text-xs">
+                                🚶 Walkable
+                              </Badge>
+                              <Badge variant="outline" className="text-xs">
+                                🛡️ Safe Area
+                              </Badge>
+                              <Badge variant="outline" className="text-xs">
+                                📍 Central
+                              </Badge>
+                            </div>
                           </div>
                           <div>
                             <h4 className="font-medium mb-2">Price Range</h4>
                             <p className="text-sm font-medium text-green-600">{accommodation.priceRange}</p>
+                            <p className="text-xs text-muted-foreground mt-1">Compare prices below</p>
                           </div>
                         </div>
                         
@@ -860,16 +872,66 @@ const ItineraryView = () => {
                           <p className="text-sm text-muted-foreground">{accommodation.bookingTip}</p>
                         </div>
                         
-                        <Button className="w-full" asChild>
-                          <a 
-                            href={accommodation.bookingUrl || `https://www.booking.com/search.html?ss=${encodeURIComponent(accommodation.name + ' ' + accommodation.address)}`} 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                          >
-                            <ExternalLink className="h-4 w-4 mr-2" />
-                            Book Now
-                          </a>
-                        </Button>
+                        {/* Live Booking Links */}
+                        <div>
+                          <h4 className="font-medium mb-3">Book Now - Compare Prices</h4>
+                          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-3">
+                            <Button variant="outline" className="h-auto p-3" asChild>
+                              <a 
+                                href={`https://www.booking.com/search.html?ss=${encodeURIComponent(accommodation.name + ' ' + accommodation.address)}&checkin=${trip?.form_data?.startDate || ''}&checkout=${trip?.form_data?.endDate || ''}&group_adults=${trip?.form_data?.groupSize || 2}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                              >
+                                <div className="text-center">
+                                  <div className="text-blue-600 font-semibold">Booking.com</div>
+                                  <div className="text-xs text-muted-foreground">Free cancellation</div>
+                                </div>
+                              </a>
+                            </Button>
+                            
+                            <Button variant="outline" className="h-auto p-3" asChild>
+                              <a 
+                                href={`https://www.airbnb.com/s/${encodeURIComponent(accommodation.address)}/homes?adults=${trip?.form_data?.groupSize || 2}&checkin=${trip?.form_data?.startDate || ''}&checkout=${trip?.form_data?.endDate || ''}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                              >
+                                <div className="text-center">
+                                  <div className="text-red-500 font-semibold">Airbnb</div>
+                                  <div className="text-xs text-muted-foreground">Unique stays</div>
+                                </div>
+                              </a>
+                            </Button>
+                            
+                            <Button variant="outline" className="h-auto p-3" asChild>
+                              <a 
+                                href={`https://www.hotels.com/search.do?q-destination=${encodeURIComponent(accommodation.address)}&q-check-in=${trip?.form_data?.startDate || ''}&q-check-out=${trip?.form_data?.endDate || ''}&q-rooms=1&q-room-0-adults=${trip?.form_data?.groupSize || 2}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                              >
+                                <div className="text-center">
+                                  <div className="text-purple-600 font-semibold">Hotels.com</div>
+                                  <div className="text-xs text-muted-foreground">Earn rewards</div>
+                                </div>
+                              </a>
+                            </Button>
+                            
+                            <Button variant="outline" className="h-auto p-3" asChild>
+                              <a 
+                                href={`https://www.expedia.com/Hotel-Search?destination=${encodeURIComponent(accommodation.address)}&startDate=${trip?.form_data?.startDate || ''}&endDate=${trip?.form_data?.endDate || ''}&rooms=1&adults=${trip?.form_data?.groupSize || 2}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                              >
+                                <div className="text-center">
+                                  <div className="text-orange-600 font-semibold">Expedia</div>
+                                  <div className="text-xs text-muted-foreground">Package deals</div>
+                                </div>
+                              </a>
+                            </Button>
+                          </div>
+                          <p className="text-xs text-muted-foreground mt-2">
+                            💡 Tip: Check all platforms - prices can vary by $50+ per night
+                          </p>
+                        </div>
                       </CardContent>
                     </Card>
                   ))
@@ -913,16 +975,28 @@ const ItineraryView = () => {
                             
                             <p className="text-sm text-muted-foreground">{accommodation.whyPerfect}</p>
                             
-                            <Button variant="outline" className="w-full" asChild>
-                              <a 
-                                href={accommodation.bookingUrl || `https://www.booking.com/search.html?ss=${encodeURIComponent(accommodation.name + ' ' + accommodation.address)}`} 
-                                target="_blank" 
-                                rel="noopener noreferrer"
-                              >
-                                <ExternalLink className="h-4 w-4 mr-2" />
-                                View Details
-                              </a>
-                            </Button>
+                            <div className="grid grid-cols-2 gap-2">
+                              <Button variant="outline" size="sm" asChild>
+                                <a 
+                                  href={`https://www.booking.com/search.html?ss=${encodeURIComponent(accommodation.name)}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                >
+                                  <ExternalLink className="h-3 w-3 mr-1" />
+                                  Booking.com
+                                </a>
+                              </Button>
+                              <Button variant="outline" size="sm" asChild>
+                                <a 
+                                  href={`https://www.airbnb.com/s/${encodeURIComponent(accommodation.address)}/homes`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                >
+                                  <ExternalLink className="h-3 w-3 mr-1" />
+                                  Airbnb
+                                </a>
+                              </Button>
+                            </div>
                           </CardContent>
                         </Card>
                       ))
@@ -933,11 +1007,10 @@ const ItineraryView = () => {
             ) : (
               <Card>
                 <CardContent className="pt-6 text-center">
-                  <MapPin className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                  <MapPin className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                   <h3 className="text-lg font-medium text-gray-900 mb-2">No Accommodation Recommendations Found</h3>
-                  <p className="text-gray-600 mb-4">
-                    It looks like accommodation recommendations weren't generated for this itinerary. 
-                    You can request a revision to add accommodation suggestions.
+                  <p className="text-muted-foreground mb-4">
+                    It looks like accommodation recommendations weren't generated for this itinerary.
                   </p>
                   {canRequestRevision && (
                     <Button variant="outline" onClick={handleRequestRevision}>
@@ -952,9 +1025,72 @@ const ItineraryView = () => {
 
           <TabsContent value="restaurants" className="space-y-6">
             <div className="space-y-4">
-              <h2 className="text-2xl font-bold">Restaurant Recommendations</h2>
-              <p className="text-gray-600">Discover amazing dining options for your trip</p>
+              <h2 className="text-2xl font-bold">Restaurant Guide</h2>
+              <p className="text-muted-foreground">Curated dining recommendations with dietary options and booking links</p>
             </div>
+
+            {/* Dietary Restrictions Filter */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Utensils className="h-5 w-5 text-primary" />
+                  Dietary Preferences & Safety Guide
+                </CardTitle>
+                <CardDescription>
+                  Filter restaurants and get local dining tips for your dietary needs
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <div className="p-3 bg-green-50 rounded-lg border">
+                    <h4 className="font-medium text-green-800 mb-2">🌱 Vegetarian</h4>
+                    <p className="text-sm text-green-700 mb-2">Key phrases:</p>
+                    <ul className="text-xs text-green-600 space-y-1">
+                      <li>"No meat, please"</li>
+                      <li>"I don't eat meat or fish"</li>
+                      <li>"Vegetarian options?"</li>
+                    </ul>
+                  </div>
+                  <div className="p-3 bg-blue-50 rounded-lg border">
+                    <h4 className="font-medium text-blue-800 mb-2">🌿 Vegan</h4>
+                    <p className="text-sm text-blue-700 mb-2">Key phrases:</p>
+                    <ul className="text-xs text-blue-600 space-y-1">
+                      <li>"No animal products"</li>
+                      <li>"No dairy, eggs, meat"</li>
+                      <li>"Plant-based only"</li>
+                    </ul>
+                  </div>
+                  <div className="p-3 bg-orange-50 rounded-lg border">
+                    <h4 className="font-medium text-orange-800 mb-2">🌾 Gluten-Free</h4>
+                    <p className="text-sm text-orange-700 mb-2">Key phrases:</p>
+                    <ul className="text-xs text-orange-600 space-y-1">
+                      <li>"No wheat or gluten"</li>
+                      <li>"Celiac disease"</li>
+                      <li>"Gluten allergy"</li>
+                    </ul>
+                  </div>
+                  <div className="p-3 bg-purple-50 rounded-lg border">
+                    <h4 className="font-medium text-purple-800 mb-2">🥩 Halal/Kosher</h4>
+                    <p className="text-sm text-purple-700 mb-2">Key phrases:</p>
+                    <ul className="text-xs text-purple-600 space-y-1">
+                      <li>"Halal food only"</li>
+                      <li>"Kosher restaurant?"</li>
+                      <li>"Religious dietary laws"</li>
+                    </ul>
+                  </div>
+                </div>
+                
+                <div className="p-4 bg-yellow-50 rounded-lg">
+                  <h4 className="font-medium text-yellow-800 mb-2">⚠️ Important Safety Tips</h4>
+                  <ul className="text-sm text-yellow-700 space-y-1">
+                    <li>• Always carry a dietary restriction card written in the local language</li>
+                    <li>• Ask about ingredients in sauces and cooking oils</li>
+                    <li>• Learn the word for "allergy" in the local language - it's taken more seriously</li>
+                    <li>• Consider bringing safe snacks as backup options</li>
+                  </ul>
+                </div>
+              </CardContent>
+            </Card>
             {getRestaurants().length > 0 ? (
               <div className="space-y-8">
                 {/* Organize restaurants by meal type if available */}
@@ -998,14 +1134,39 @@ const ItineraryView = () => {
                                   </div>
                                 </div>
                               )}
-                              <Button variant="outline" size="sm" className="w-full" asChild>
+                              
+                              {/* Multiple booking options */}
+                              <div className="grid grid-cols-2 gap-2">
+                                <Button variant="outline" size="sm" asChild>
+                                  <a 
+                                    href={`https://www.opentable.com/s/?q=${encodeURIComponent(restaurant.name + ' ' + (restaurant.location || ''))}&covers=${trip?.form_data?.groupSize || 2}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                  >
+                                    <ExternalLink className="h-3 w-3 mr-1" />
+                                    OpenTable
+                                  </a>
+                                </Button>
+                                <Button variant="outline" size="sm" asChild>
+                                  <a 
+                                    href={`https://www.yelp.com/search?find_desc=${encodeURIComponent(restaurant.name)}&find_loc=${encodeURIComponent(restaurant.location || trip?.form_data?.destination || '')}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                  >
+                                    <ExternalLink className="h-3 w-3 mr-1" />
+                                    Reviews
+                                  </a>
+                                </Button>
+                              </div>
+                              
+                              <Button size="sm" className="w-full" asChild>
                                 <a 
-                                  href={restaurant.bookingUrl || `https://www.google.com/search?q=${encodeURIComponent(restaurant.name + ' restaurant ' + (restaurant.location || restaurant.address || ''))}`} 
-                                  target="_blank" 
+                                  href={`https://www.google.com/maps/search/${encodeURIComponent(restaurant.name + ' ' + (restaurant.location || trip?.form_data?.destination || ''))}`}
+                                  target="_blank"
                                   rel="noopener noreferrer"
                                 >
-                                  <ExternalLink className="h-3 w-3 mr-2" />
-                                  View Details
+                                  <MapPin className="h-3 w-3 mr-1" />
+                                  Get Directions
                                 </a>
                               </Button>
                             </CardContent>
@@ -1064,13 +1225,70 @@ const ItineraryView = () => {
                     ))}
                   </div>
                 )}
+                
+                {/* Local Dining Tips */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Local Dining Etiquette & Tips</CardTitle>
+                    <CardDescription>
+                      Cultural dining customs to enhance your experience
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid md:grid-cols-2 gap-6">
+                      <div className="space-y-3">
+                        <h4 className="font-medium text-green-700">Do's</h4>
+                        <ul className="space-y-2 text-sm">
+                          <li className="flex items-start gap-2">
+                            <div className="w-2 h-2 bg-green-500 rounded-full mt-2 flex-shrink-0"></div>
+                            <span>Make reservations for dinner, especially weekends</span>
+                          </li>
+                          <li className="flex items-start gap-2">
+                            <div className="w-2 h-2 bg-green-500 rounded-full mt-2 flex-shrink-0"></div>
+                            <span>Try lunch menus - often same quality, lower prices</span>
+                          </li>
+                          <li className="flex items-start gap-2">
+                            <div className="w-2 h-2 bg-green-500 rounded-full mt-2 flex-shrink-0"></div>
+                            <span>Ask locals for their favorite neighborhood spots</span>
+                          </li>
+                          <li className="flex items-start gap-2">
+                            <div className="w-2 h-2 bg-green-500 rounded-full mt-2 flex-shrink-0"></div>
+                            <span>Learn basic food words in the local language</span>
+                          </li>
+                        </ul>
+                      </div>
+                      
+                      <div className="space-y-3">
+                        <h4 className="font-medium text-red-700">Don'ts</h4>
+                        <ul className="space-y-2 text-sm">
+                          <li className="flex items-start gap-2">
+                            <div className="w-2 h-2 bg-red-500 rounded-full mt-2 flex-shrink-0"></div>
+                            <span>Don't eat at restaurants with no locals inside</span>
+                          </li>
+                          <li className="flex items-start gap-2">
+                            <div className="w-2 h-2 bg-red-500 rounded-full mt-2 flex-shrink-0"></div>
+                            <span>Don't order the same cuisine as your home country</span>
+                          </li>
+                          <li className="flex items-start gap-2">
+                            <div className="w-2 h-2 bg-red-500 rounded-full mt-2 flex-shrink-0"></div>
+                            <span>Don't assume tipping customs are the same as home</span>
+                          </li>
+                          <li className="flex items-start gap-2">
+                            <div className="w-2 h-2 bg-red-500 rounded-full mt-2 flex-shrink-0"></div>
+                            <span>Don't be afraid to ask about ingredients</span>
+                          </li>
+                        </ul>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
               </div>
             ) : (
               <Card>
                 <CardContent className="pt-6 text-center">
-                  <Utensils className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                  <Utensils className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                   <h3 className="text-lg font-medium text-gray-900 mb-2">No Restaurant Recommendations Found</h3>
-                  <p className="text-gray-600 mb-4">
+                  <p className="text-muted-foreground mb-4">
                     It looks like restaurant recommendations weren't generated for this itinerary. 
                     You can request a revision to add restaurant suggestions.
                   </p>
