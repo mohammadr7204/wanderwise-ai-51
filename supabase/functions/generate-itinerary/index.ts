@@ -382,7 +382,7 @@ Make this the most personalized, data-driven itinerary possible. Every single re
       },
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
-        max_tokens: 8000,
+        max_tokens: 20000,
         temperature: 0.3,
         messages: [
           {
