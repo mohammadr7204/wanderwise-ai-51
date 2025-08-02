@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Navigate, useNavigate } from 'react-router-dom';
+import { Navigate, useNavigate, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -193,26 +193,28 @@ const Dashboard = () => {
       <header className="bg-white border-b border-gray-200 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
-            <div className="flex items-center gap-2">
+            <Link to="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
               <Compass className="h-8 w-8 text-primary" />
               <span className="text-2xl font-bold font-heading text-primary">Atlas</span>
-            </div>
+            </Link>
             <div className="flex items-center gap-4">
+              <Link to="/#features">
+                <Button variant="ghost">Features</Button>
+              </Link>
+              <Link to="/pricing">
+                <Button variant="ghost">Pricing</Button>
+              </Link>
+              <Link to="/about">
+                <Button variant="ghost">About</Button>
+              </Link>
+              <Link to="/dashboard">
+                <Button variant="ghost" className="text-primary font-medium">Dashboard</Button>
+              </Link>
               <div className="text-right">
                 <p className="text-sm font-medium text-gray-900">
                   {profile?.first_name} {profile?.last_name}
                 </p>
-                <Badge className={`text-xs ${getTierColor(subscriptionInfo?.subscription_tier || profile?.subscription_tier || 'free')}`}>
-                  {(subscriptionInfo?.subscription_tier || profile?.subscription_tier || 'free').toUpperCase()}
-                  {subscriptionInfo?.subscription_tier === 'luxury' && <Crown className="h-3 w-3 ml-1" />}
-                </Badge>
               </div>
-              <Button variant="ghost" size="sm" onClick={() => window.location.href = '/pricing'}>
-                <Crown className="h-4 w-4" />
-              </Button>
-              <Button variant="ghost" size="sm">
-                <Settings className="h-4 w-4" />
-              </Button>
               <Button variant="ghost" size="sm" onClick={handleSignOut}>
                 <LogOut className="h-4 w-4" />
               </Button>
@@ -274,55 +276,28 @@ const Dashboard = () => {
           </Card>
         </div>
 
-        {/* Upgrade Tier Prompt */}
-        {trips.length > 0 && trips.some(trip => trip.tier === 'basic' || trip.tier === 'essential') ? (
-          <Card className="mb-8 bg-gradient-to-r from-amber-400 to-orange-500">
-            <CardContent className="p-8">
-              <div className="flex items-center justify-between text-white">
-                <div>
-                  <h2 className="text-2xl font-bold mb-2 flex items-center gap-2">
-                    <Crown className="h-6 w-6" />
-                    Upgrade Your Travel Experience
-                  </h2>
-                  <p className="text-white/90 mb-4">
-                    Unlock premium features like luxury accommodations, exclusive experiences, and concierge-level planning
-                  </p>
-                </div>
-                <Button 
-                  variant="secondary" 
-                  size="lg" 
-                  className="bg-white text-orange-600 hover:bg-gray-100"
-                  onClick={() => window.location.href = '/create-trip'}
-                >
-                  <Crown className="h-5 w-5 mr-2" />
-                  Upgrade Next Trip
-                </Button>
+        {/* Create New Trip Prompt */}
+        <Card className="mb-8 bg-gradient-to-r from-adventure-blue to-adventure-teal">
+          <CardContent className="p-8">
+            <div className="flex items-center justify-between text-white">
+              <div>
+                <h2 className="text-2xl font-bold mb-2">Plan Your Next Adventure</h2>
+                <p className="text-white/80 mb-4">
+                  Create a personalized itinerary with our expert travel curation
+                </p>
               </div>
-            </CardContent>
-          </Card>
-        ) : (
-          <Card className="mb-8 bg-gradient-to-r from-adventure-blue to-adventure-teal">
-            <CardContent className="p-8">
-              <div className="flex items-center justify-between text-white">
-                <div>
-                  <h2 className="text-2xl font-bold mb-2">Plan Your Next Adventure</h2>
-                  <p className="text-white/80 mb-4">
-                    Create a personalized itinerary with our expert travel curation
-                  </p>
-                </div>
-                <Button 
-                  variant="secondary" 
-                  size="lg" 
-                  className="bg-white text-adventure-blue hover:bg-gray-100"
-                  onClick={() => window.location.href = '/create-trip'}
-                >
-                  <Plus className="h-5 w-5 mr-2" />
-                  Create New Trip
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        )}
+              <Button 
+                variant="secondary" 
+                size="lg" 
+                className="bg-white text-adventure-blue hover:bg-gray-100"
+                onClick={() => window.location.href = '/create-trip'}
+              >
+                <Plus className="h-5 w-5 mr-2" />
+                Create New Trip
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Recent Trips */}
         <div>

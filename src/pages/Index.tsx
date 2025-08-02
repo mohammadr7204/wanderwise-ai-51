@@ -98,15 +98,18 @@ const Index = () => {
               <Link to="/pricing" className="text-muted-foreground hover:text-foreground transition-colors">Pricing</Link>
               <Link to="/about" className="text-muted-foreground hover:text-foreground transition-colors">About</Link>
               {user ? (
-                <div className="flex items-center space-x-4">
-                  <span className="text-sm text-muted-foreground">
-                    Welcome, {user.email}!
-                  </span>
-                  <Button variant="outline" size="sm" onClick={handleSignOut}>
-                    <LogOut className="h-4 w-4 mr-2" />
-                    Sign Out
-                  </Button>
-                </div>
+                <>
+                  <Link to="/dashboard" className="text-muted-foreground hover:text-foreground transition-colors">Dashboard</Link>
+                  <div className="flex items-center space-x-4">
+                    <span className="text-sm text-muted-foreground">
+                      Welcome, {user.email}!
+                    </span>
+                    <Button variant="outline" size="sm" onClick={handleSignOut}>
+                      <LogOut className="h-4 w-4 mr-2" />
+                      Sign Out
+                    </Button>
+                  </div>
+                </>
               ) : (
                 <>
                   <Link to="/auth">

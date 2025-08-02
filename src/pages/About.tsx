@@ -25,9 +25,10 @@ const About = () => {
               <Link to="/pricing" className="text-muted-foreground hover:text-foreground transition-colors">Pricing</Link>
               <Link to="/about" className="text-foreground font-medium">About</Link>
               {user ? (
-                <Link to="/dashboard">
-                  <Button variant="adventure" size="sm">Dashboard</Button>
-                </Link>
+                <>
+                  <Link to="/dashboard" className="text-muted-foreground hover:text-foreground transition-colors">Dashboard</Link>
+                  <span className="text-sm text-muted-foreground">Welcome, {user.email}!</span>
+                </>
               ) : (
                 <>
                   <Link to="/auth">

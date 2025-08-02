@@ -56,13 +56,22 @@ const Pricing = () => {
               <span className="text-lg font-semibold text-primary">Atlas</span>
             </Link>
             <div className="flex items-center gap-4">
+              <Link to="/#features">
+                <Button variant="ghost">Features</Button>
+              </Link>
+              <Link to="/pricing">
+                <Button variant="ghost" className="text-primary font-medium">Pricing</Button>
+              </Link>
               <Link to="/about">
                 <Button variant="ghost">About</Button>
               </Link>
               {user ? (
-                <Link to="/dashboard">
-                  <Button variant="outline">Dashboard</Button>
-                </Link>
+                <>
+                  <Link to="/dashboard">
+                    <Button variant="outline">Dashboard</Button>
+                  </Link>
+                  <span className="text-sm text-gray-600">Welcome, {user.email}!</span>
+                </>
               ) : (
                 <Link to="/auth">
                   <Button variant="outline">Sign In</Button>
@@ -93,146 +102,149 @@ const Pricing = () => {
           <h2 className="text-3xl font-bold text-gray-900 mb-8 text-center">
             Choose Your Service Level
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {serviceTiers.map((tier) => {
-              const IconComponent = tier.icon;
-              
-              return (
-                <Card 
-                  key={tier.id} 
-                  className={`relative overflow-hidden transition-all duration-200 hover:shadow-lg ${
-                    tier.popular ? 'ring-2 ring-primary shadow-lg scale-105' : ''
-                  }`}
-                >
-                  {tier.popular && (
-                    <div className="absolute top-0 left-0 right-0 bg-primary text-white text-center py-2 text-sm font-medium">
-                      Most Popular
-                    </div>
-                  )}
-
-                  <CardHeader className={tier.popular ? 'pt-12' : ''}>
-                    <div className="flex items-center gap-3">
-                      <IconComponent className="h-8 w-8 text-primary" />
-                      <div>
-                        <CardTitle className="text-xl">{tier.name}</CardTitle>
-                        <CardDescription>{tier.description}</CardDescription>
-                      </div>
-                    </div>
-                    
-                    <div className="text-center mt-6">
-                      <div className="text-4xl font-bold text-gray-900">
-                        ${tier.price}+
-                        <span className="text-lg font-normal text-gray-500">/trip</span>
-                      </div>
-                      <p className="text-sm text-gray-500 mt-1">Starting price</p>
-                    </div>
-                  </CardHeader>
-
-                  <CardContent className="space-y-6">
-                    {/* Features */}
-                    <div>
-                      <h4 className="font-medium text-gray-900 mb-3">What's included:</h4>
-                      <ul className="space-y-2">
-                        {tier.features.map((feature, index) => (
-                          <li key={index} className="flex items-start gap-2">
-                            <Check className="h-4 w-4 text-green-500 flex-shrink-0 mt-0.5" />
-                            <span className="text-sm text-gray-600">{feature}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-
-
-                    {/* CTA Button */}
-                    <div className="pt-4">
-                      <Link to="/create-trip">
-                        <Button 
-                          variant={tier.popular ? "default" : "outline"} 
-                          className="w-full"
-                        >
-                          Start Planning with {tier.name}
-                          <ArrowRight className="h-4 w-4 ml-2" />
-                        </Button>
-                      </Link>
-                    </div>
-                  </CardContent>
-                </Card>
-              );
-            })}
-
-            {/* Executive Concierge */}
-            <Card className="relative overflow-hidden transition-all duration-200 hover:shadow-lg border-2 border-amber-500 bg-gradient-to-br from-amber-50 to-amber-100">
-              <CardHeader>
-                <div className="flex items-center gap-3">
-                  <Crown className="h-8 w-8 text-amber-600" />
-                  <div>
-                    <CardTitle className="text-xl text-amber-800">Executive Concierge</CardTitle>
-                    <CardDescription className="text-amber-700">White-glove travel planning service</CardDescription>
-                  </div>
-                </div>
+          <div className="flex justify-center">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl">
+              {serviceTiers.map((tier) => {
+                const IconComponent = tier.icon;
                 
-                <div className="text-center mt-6">
-                  <div className="text-4xl font-bold text-amber-800">
-                    Consultation Required
-                  </div>
-                  <p className="text-sm text-amber-600 mt-1">Starting at $500</p>
-                </div>
-              </CardHeader>
-
-              <CardContent className="space-y-6">
-                {/* Features */}
-                <div>
-                  <h4 className="font-medium text-amber-900 mb-3">What's included:</h4>
-                  <ul className="space-y-2">
-                    <li className="flex items-start gap-2">
-                      <Check className="h-4 w-4 text-amber-600 flex-shrink-0 mt-0.5" />
-                      <span className="text-sm text-amber-800">One-on-one consultation call</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <Check className="h-4 w-4 text-amber-600 flex-shrink-0 mt-0.5" />
-                      <span className="text-sm text-amber-800">Complete booking service (flights, hotels, transport)</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <Check className="h-4 w-4 text-amber-600 flex-shrink-0 mt-0.5" />
-                      <span className="text-sm text-amber-800">Restaurant reservations & exclusive experiences</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <Check className="h-4 w-4 text-amber-600 flex-shrink-0 mt-0.5" />
-                      <span className="text-sm text-amber-800">Dedicated travel coordinator</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <Check className="h-4 w-4 text-amber-600 flex-shrink-0 mt-0.5" />
-                      <span className="text-sm text-amber-800">24/7 support during travel</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <Check className="h-4 w-4 text-amber-600 flex-shrink-0 mt-0.5" />
-                      <span className="text-sm text-amber-800">Unlimited revisions</span>
-                    </li>
-                  </ul>
-                </div>
-
-                {/* CTA Button */}
-                <div className="pt-4">
-                  <Button 
-                    className="w-full bg-amber-600 hover:bg-amber-700 text-white"
-                    onClick={() => window.open('https://calendly.com/atlas-executive', '_blank')}
+                return (
+                  <Card 
+                    key={tier.id} 
+                    className={`relative overflow-hidden transition-all duration-200 hover:shadow-lg ${
+                      tier.popular ? 'ring-2 ring-primary shadow-lg scale-105' : ''
+                    }`}
                   >
-                    Book Consultation
-                    <ArrowRight className="h-4 w-4 ml-2" />
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-          
-          {/* Value messaging */}
-          <div className="mt-12 text-center">
-            <p className="text-lg text-gray-600 mb-4">
-              <strong>High Quality AI for Everyone</strong> - All plans include our comprehensive AI travel planning.
-            </p>
-            <p className="text-gray-500">
-              Choose between our complete Standard plan or premium Executive concierge service.
-            </p>
+                    {tier.popular && (
+                      <div className="absolute top-0 left-0 right-0 bg-primary text-white text-center py-2 text-sm font-medium">
+                        Most Popular
+                      </div>
+                    )}
+
+                    <CardHeader className={tier.popular ? 'pt-12' : ''}>
+                      <div className="flex items-center gap-3">
+                        <IconComponent className="h-8 w-8 text-primary" />
+                        <div>
+                          <CardTitle className="text-xl">{tier.name}</CardTitle>
+                          <CardDescription>{tier.description}</CardDescription>
+                        </div>
+                      </div>
+                      
+                      <div className="text-center mt-6">
+                        <div className="text-4xl font-bold text-gray-900">
+                          ${tier.price}+
+                          <span className="text-lg font-normal text-gray-500">/trip</span>
+                        </div>
+                        <p className="text-sm text-gray-500 mt-1">Starting price</p>
+                      </div>
+                    </CardHeader>
+
+                    <CardContent className="space-y-6">
+                      {/* Features */}
+                      <div>
+                        <ul className="space-y-2">
+                          <li className="flex items-start gap-2">
+                            <Check className="h-4 w-4 text-green-500 flex-shrink-0 mt-0.5" />
+                            <span className="text-sm text-gray-600">Full AI-generated itinerary (unlimited duration)</span>
+                          </li>
+                          <li className="flex items-start gap-2">
+                            <Check className="h-4 w-4 text-green-500 flex-shrink-0 mt-0.5" />
+                            <span className="text-sm text-gray-600">Restaurant and activity recommendations with booking links</span>
+                          </li>
+                          <li className="flex items-start gap-2">
+                            <Check className="h-4 w-4 text-green-500 flex-shrink-0 mt-0.5" />
+                            <span className="text-sm text-gray-600">Accommodation suggestions with booking links</span>
+                          </li>
+                          <li className="flex items-start gap-2">
+                            <Check className="h-4 w-4 text-green-500 flex-shrink-0 mt-0.5" />
+                            <span className="text-sm text-gray-600">Human booking assistance for hotels & activities</span>
+                          </li>
+                          <li className="flex items-start gap-2">
+                            <Check className="h-4 w-4 text-green-500 flex-shrink-0 mt-0.5" />
+                            <span className="text-sm text-gray-600">1 free revision with human review</span>
+                          </li>
+                          <li className="flex items-start gap-2">
+                            <Check className="h-4 w-4 text-green-500 flex-shrink-0 mt-0.5" />
+                            <span className="text-sm text-gray-600">Delivered in 5-10 minutes</span>
+                          </li>
+                        </ul>
+                      </div>
+
+                      {/* CTA Button */}
+                      <div className="pt-4">
+                        <Link to="/create-trip">
+                          <Button 
+                            variant={tier.popular ? "default" : "outline"} 
+                            className="w-full"
+                          >
+                            Start Planning with {tier.name}
+                            <ArrowRight className="h-4 w-4 ml-2" />
+                          </Button>
+                        </Link>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+
+              {/* Executive Concierge */}
+              <Card className="relative overflow-hidden transition-all duration-200 hover:shadow-lg border-2 border-amber-500 bg-gradient-to-br from-amber-50 to-amber-100">
+                <CardHeader>
+                  <div className="flex items-center gap-3">
+                    <Crown className="h-8 w-8 text-amber-600" />
+                    <div>
+                      <CardTitle className="text-xl text-amber-800">Executive Concierge</CardTitle>
+                      <CardDescription className="text-amber-700">White-glove travel planning service</CardDescription>
+                    </div>
+                  </div>
+                  
+                  <div className="text-center mt-6">
+                    <div className="text-4xl font-bold text-amber-800">
+                      Consultation Required
+                    </div>
+                    <p className="text-sm text-amber-600 mt-1">Starting at $500</p>
+                  </div>
+                </CardHeader>
+
+                <CardContent className="space-y-6">
+                  {/* Features */}
+                  <div>
+                    <ul className="space-y-2">
+                      <li className="flex items-start gap-2">
+                        <Check className="h-4 w-4 text-amber-600 flex-shrink-0 mt-0.5" />
+                        <span className="text-sm text-amber-800">One-on-one consultation call</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <Check className="h-4 w-4 text-amber-600 flex-shrink-0 mt-0.5" />
+                        <span className="text-sm text-amber-800">Complete booking service (flights, hotels, transport)</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <Check className="h-4 w-4 text-amber-600 flex-shrink-0 mt-0.5" />
+                        <span className="text-sm text-amber-800">Dedicated travel coordinator</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <Check className="h-4 w-4 text-amber-600 flex-shrink-0 mt-0.5" />
+                        <span className="text-sm text-amber-800">24/7 support during travel</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <Check className="h-4 w-4 text-amber-600 flex-shrink-0 mt-0.5" />
+                        <span className="text-sm text-amber-800">Unlimited revisions</span>
+                      </li>
+                    </ul>
+                  </div>
+
+                  {/* CTA Button */}
+                  <div className="pt-4">
+                    <Button 
+                      className="w-full bg-amber-600 hover:bg-amber-700 text-white"
+                      onClick={() => window.open('https://calendly.com/atlas-executive', '_blank')}
+                    >
+                      Book Consultation
+                      <ArrowRight className="h-4 w-4 ml-2" />
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           </div>
         </div>
 
