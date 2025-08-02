@@ -23,40 +23,24 @@ const Pricing = () => {
 
   const serviceTiers = [
     {
-      id: 'essential',
-      name: 'Essential Tier',
-      price: 39,
-      description: 'Perfect for independent travelers',
-      icon: Compass,
+      id: 'standard',
+      name: 'Standard Plan',
+      price: 25,
+      description: 'Complete AI travel planning service',
+      icon: Star,
+      popular: true,
       features: [
         'Full AI-generated itinerary (unlimited duration)',
         'Restaurant and activity recommendations with booking links',
         'Accommodation suggestions with booking links',
         'Transportation recommendations',
-        'PDF itinerary export',
-        'Email support (48hr response)',
-        'Self-service booking through provided links'
-      ],
-      limitations: [
-        'Self-service booking only',
-        'No revisions included',
-        'Email support only'
-      ]
-    },
-    {
-      id: 'premium',
-      name: 'Premium Tier',
-      price: 89,
-      description: 'Most popular - with booking assistance',
-      icon: Star,
-      popular: true,
-      features: [
-        'Everything in Essential (same AI quality)',
         'Human booking assistance for hotels & activities',
         'Flight booking guidance',
         'Multiple destination planning',
-        'Limited revisions with human review (up to 2 changes per itinerary item)',
-        'Priority email support (24hr response)'
+        '1 free revision with human review',
+        'PDF itinerary export',
+        'Delivered in 5-10 minutes',
+        'Email support (24hr response)'
       ]
     }
   ];
@@ -244,10 +228,10 @@ const Pricing = () => {
           {/* Value messaging */}
           <div className="mt-12 text-center">
             <p className="text-lg text-gray-600 mb-4">
-              <strong>Same AI Quality for All Tiers</strong> - Our differentiation is based on human service levels, not AI output quality.
+              <strong>High Quality AI for Everyone</strong> - All plans include our comprehensive AI travel planning.
             </p>
             <p className="text-gray-500">
-              Essential and Premium plans receive identical AI-generated itineraries. The difference is in booking assistance and support.
+              Choose between our complete Standard plan or premium Executive concierge service.
             </p>
           </div>
         </div>
@@ -269,8 +253,7 @@ const Pricing = () => {
               <thead>
                 <tr className="border-b">
                   <th className="text-left py-3 px-4">Feature</th>
-                  <th className="text-center py-3 px-4">Essential</th>
-                  <th className="text-center py-3 px-4">Premium</th>
+                  <th className="text-center py-3 px-4">Standard</th>
                   <th className="text-center py-3 px-4">Executive</th>
                 </tr>
               </thead>
@@ -279,30 +262,30 @@ const Pricing = () => {
                   <td className="py-3 px-4 font-medium">AI Itinerary Quality</td>
                   <td className="text-center py-3 px-4">✅ Full</td>
                   <td className="text-center py-3 px-4">✅ Full</td>
-                  <td className="text-center py-3 px-4">✅ Full</td>
                 </tr>
                 <tr className="border-b">
                   <td className="py-3 px-4 font-medium">Trip Duration</td>
                   <td className="text-center py-3 px-4">Unlimited</td>
                   <td className="text-center py-3 px-4">Unlimited</td>
-                  <td className="text-center py-3 px-4">Unlimited</td>
+                </tr>
+                <tr className="border-b">
+                  <td className="py-3 px-4 font-medium">Delivery Time</td>
+                  <td className="text-center py-3 px-4">5-10 minutes</td>
+                  <td className="text-center py-3 px-4">Custom timeline</td>
                 </tr>
                 <tr className="border-b">
                   <td className="py-3 px-4 font-medium">Booking Assistance</td>
-                  <td className="text-center py-3 px-4">Self-service</td>
                   <td className="text-center py-3 px-4">Human help</td>
                   <td className="text-center py-3 px-4">Full service</td>
                 </tr>
                 <tr className="border-b">
                   <td className="py-3 px-4 font-medium">Revisions</td>
-                  <td className="text-center py-3 px-4">None</td>
-                  <td className="text-center py-3 px-4">Limited revisions</td>
+                  <td className="text-center py-3 px-4">1 free revision</td>
                   <td className="text-center py-3 px-4">Unlimited</td>
                 </tr>
                 <tr className="border-b">
                   <td className="py-3 px-4 font-medium">Support</td>
-                  <td className="text-center py-3 px-4">Email</td>
-                  <td className="text-center py-3 px-4">Priority email</td>
+                  <td className="text-center py-3 px-4">Email (24hr)</td>
                   <td className="text-center py-3 px-4">24/7 phone + email</td>
                 </tr>
               </tbody>
@@ -335,7 +318,7 @@ const Pricing = () => {
                 <span className="text-2xl font-bold text-primary">3</span>
               </div>
               <h3 className="text-xl font-semibold mb-2">Receive Itinerary</h3>
-              <p className="text-gray-600">Get your completed travel plan within 24-48 hours</p>
+              <p className="text-gray-600">Get your completed travel plan within 5-10 minutes</p>
             </div>
           </div>
         </div>
@@ -358,17 +341,17 @@ const Pricing = () => {
               </div>
               <div>
                 <h3 className="font-semibold text-gray-900">What if I need changes?</h3>
-                <p className="text-sm text-gray-600">Revisions are included based on your service tier. Premium gets 1 free revision, Luxury gets unlimited.</p>
+                <p className="text-sm text-gray-600">Standard plan includes 1 free revision. Executive gets unlimited revisions.</p>
               </div>
             </div>
             <div className="space-y-4">
               <div>
                 <h3 className="font-semibold text-gray-900">How quickly can you plan my trip?</h3>
-                <p className="text-sm text-gray-600">Most itineraries are completed within 24-48 hours. Rush orders (under 48 hours) include a 25% surcharge.</p>
+                <p className="text-sm text-gray-600">Standard plans are delivered within 5-10 minutes. Executive service has custom timelines based on consultation.</p>
               </div>
               <div>
                 <h3 className="font-semibold text-gray-900">Do you handle bookings?</h3>
-                <p className="text-sm text-gray-600">Depends on your service tier. Essential provides links, Premium assists with booking, Luxury handles everything.</p>
+                <p className="text-sm text-gray-600">Standard plan provides booking assistance and guidance. Executive handles all bookings for you.</p>
               </div>
               <div>
                 <h3 className="font-semibold text-gray-900">Is there a minimum trip length?</h3>

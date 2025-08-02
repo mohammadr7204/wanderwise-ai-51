@@ -11,7 +11,7 @@ export interface PricingBreakdown {
 }
 
 export interface ServiceTier {
-  id: 'essential' | 'premium' | 'executive';
+  id: 'standard' | 'executive';
   name: string;
   basePrice: number;
   description: string;
@@ -20,32 +20,22 @@ export interface ServiceTier {
 
 export const SERVICE_TIERS: ServiceTier[] = [
   {
-    id: 'essential',
-    name: 'Essential Tier',
-    basePrice: 39,
-    description: 'Perfect for independent travelers',
+    id: 'standard',
+    name: 'Standard Plan',
+    basePrice: 25,
+    description: 'Complete AI travel planning service',
     features: [
       'Full AI-generated itinerary (unlimited duration)',
       'Restaurant and activity recommendations with booking links',
       'Accommodation suggestions with booking links',
       'Transportation recommendations',
-      'PDF itinerary export',
-      'Email support (48hr response)',
-      'Self-service booking through provided links'
-    ]
-  },
-  {
-    id: 'premium',
-    name: 'Premium Tier',
-    basePrice: 89,
-    description: 'Most popular - with booking assistance',
-    features: [
-      'Everything in Essential (same AI quality)',
       'Human booking assistance for hotels & activities',
       'Flight booking guidance',
       'Multiple destination planning',
       '1 free revision with human review',
-      'Priority email support (24hr response)'
+      'PDF itinerary export',
+      'Delivered in 5-10 minutes',
+      'Email support (24hr response)'
     ]
   },
   {

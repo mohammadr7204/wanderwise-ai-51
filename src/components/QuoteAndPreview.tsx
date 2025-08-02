@@ -36,7 +36,7 @@ const QuoteAndPreview = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [trip, setTrip] = useState<Trip | null>(null);
-  const [selectedTier, setSelectedTier] = useState<'essential' | 'premium' | 'executive'>('premium');
+  const [selectedTier, setSelectedTier] = useState<'standard' | 'executive'>('standard');
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
 

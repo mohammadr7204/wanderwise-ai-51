@@ -15,36 +15,29 @@ interface PricingBreakdown {
     travelers: number;
     duration: number;
     destinations: number;
-    luxuryLevel: string;
-    activityLevel: string;
   };
 }
 
 interface TripDetails {
-  serviceTier: 'essential' | 'premium' | 'executive';
+  serviceTier: 'standard' | 'executive';
   travelerCount: number;
   duration: number;
   destinationCount: number;
-  luxuryLevel: 'budget' | 'mid-range' | 'luxury' | 'ultra-luxury';
-  activityLevel: 'relaxed' | 'moderate' | 'adventure' | 'exclusive';
 }
 
 const PricingCalculator = () => {
   const [tripDetails, setTripDetails] = useState<TripDetails>({
-    serviceTier: 'premium',
+    serviceTier: 'standard',
     travelerCount: 2,
     duration: 7,
-    destinationCount: 1,
-    luxuryLevel: 'mid-range',
-    activityLevel: 'moderate'
+    destinationCount: 1
   });
 
   const [pricing, setPricing] = useState<PricingBreakdown | null>(null);
 
   const calculatePricing = (details: TripDetails): PricingBreakdown => {
     const basePrices = {
-      essential: 39,
-      premium: 89,
+      standard: 25,
       executive: 500 // Starting price for consultation
     };
     
@@ -61,9 +54,7 @@ const PricingCalculator = () => {
         breakdown: {
           travelers: details.travelerCount,
           duration: details.duration,
-          destinations: details.destinationCount,
-          luxuryLevel: details.luxuryLevel,
-          activityLevel: details.activityLevel
+          destinations: details.destinationCount
         }
       };
     }
@@ -100,9 +91,7 @@ const PricingCalculator = () => {
       breakdown: {
         travelers: details.travelerCount,
         duration: details.duration,
-        destinations: details.destinationCount,
-        luxuryLevel: details.luxuryLevel,
-        activityLevel: details.activityLevel
+        destinations: details.destinationCount
       }
     };
   };
@@ -117,19 +106,16 @@ const PricingCalculator = () => {
 
   const getServiceFeatures = (tier: string) => {
     const features = {
-      essential: [
+      standard: [
         'Full AI-generated itinerary (unlimited duration)',
         'Restaurant and activity recommendations with booking links',
         'Accommodation suggestions with booking links',
-        'PDF itinerary export',
-        'Email support (48hr response)'
-      ],
-      premium: [
-        'Everything in Essential (same AI quality)',
         'Human booking assistance for hotels & activities',
         'Flight booking guidance',
         '1 free revision with human review',
-        'Priority email support (24hr response)'
+        'PDF itinerary export',
+        'Delivered in 5-10 minutes',
+        'Email support (24hr response)'
       ],
       executive: [
         'One-on-one consultation call',
@@ -173,8 +159,8 @@ const PricingCalculator = () => {
               <label className="text-sm font-medium text-gray-700 mb-2 block">
                 Service Level
               </label>
-              <div className="grid grid-cols-3 gap-2">
-                {['essential', 'premium', 'executive'].map((tier) => (
+              <div className="grid grid-cols-2 gap-2">
+                {['standard', 'executive'].map((tier) => (
                   <Button
                     key={tier}
                     variant={tripDetails.serviceTier === tier ? "default" : "outline"}
@@ -182,7 +168,7 @@ const PricingCalculator = () => {
                     onClick={() => updateTripDetails({ serviceTier: tier as any })}
                     className="capitalize"
                   >
-                    {tier}
+                    {tier === 'standard' ? 'Standard Plan' : 'Executive Concierge'}
                   </Button>
                 ))}
               </div>
@@ -245,41 +231,6 @@ const PricingCalculator = () => {
               </div>
             </div>
 
-            {/* Luxury Level */}
-            <div>
-              <label className="text-sm font-medium text-gray-700 mb-2 block">
-                Budget Preference
-              </label>
-              <Select value={tripDetails.luxuryLevel} onValueChange={(value: any) => updateTripDetails({ luxuryLevel: value })}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="budget">Budget-Friendly</SelectItem>
-                  <SelectItem value="mid-range">Mid-Range</SelectItem>
-                  <SelectItem value="luxury">Luxury</SelectItem>
-                  <SelectItem value="ultra-luxury">Ultra-Luxury</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Activity Level */}
-            <div>
-              <label className="text-sm font-medium text-gray-700 mb-2 block">
-                Activity Level
-              </label>
-              <Select value={tripDetails.activityLevel} onValueChange={(value: any) => updateTripDetails({ activityLevel: value })}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="relaxed">Relaxed Sightseeing</SelectItem>
-                  <SelectItem value="moderate">Moderate Activities</SelectItem>
-                  <SelectItem value="adventure">Adventure & Sports</SelectItem>
-                  <SelectItem value="exclusive">Exclusive Experiences</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
           </CardContent>
         </Card>
 
