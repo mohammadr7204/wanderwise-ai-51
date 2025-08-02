@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from '@/components/ui/use-toast';
-import { Compass, Mountain, Plane } from 'lucide-react';
+import { Compass, Mountain, Plane, Globe } from 'lucide-react';
 
 const Auth = () => {
   const { user, signIn, signUp, loading } = useAuth();
@@ -97,7 +97,9 @@ const Auth = () => {
       <div className="relative z-10 w-full max-w-md">
         <div className="text-center mb-8">
           <Link to="/" className="inline-flex items-center gap-2 text-white hover:text-adventure-orange transition-colors">
-            <Compass className="h-8 w-8" />
+            <div className="w-8 h-8 bg-gradient-hero rounded-lg flex items-center justify-center">
+              <Globe className="h-5 w-5 text-primary-foreground" />
+            </div>
             <span className="text-2xl font-bold font-heading">Atlas</span>
           </Link>
           <p className="text-white/80 mt-2">Your expertly curated travel companion</p>

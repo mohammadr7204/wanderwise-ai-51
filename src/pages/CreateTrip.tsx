@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react';
-import { Navigate, useNavigate, useSearchParams } from 'react-router-dom';
+import { Navigate, useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowLeft, ArrowRight, Compass, Crown } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Compass, Crown, Globe } from 'lucide-react';
 import { TripBasics } from '@/components/trip-wizard/TripBasics';
 import { DestinationPreferences } from '@/components/trip-wizard/DestinationPreferences';
 import { ActivityPreferences } from '@/components/trip-wizard/ActivityPreferences';
@@ -244,10 +244,12 @@ const CreateTrip = () => {
                 Back to Dashboard
               </Button>
             </div>
-            <div className="flex items-center gap-2">
-              <Compass className="h-6 w-6 text-primary" />
-              <span className="text-lg font-semibold text-primary">Atlas</span>
-            </div>
+            <Link to="/" className="flex items-center gap-2">
+              <div className="w-6 h-6 bg-gradient-hero rounded-lg flex items-center justify-center">
+                <Globe className="h-4 w-4 text-primary-foreground" />
+              </div>
+              <span className="text-lg font-semibold text-foreground">Atlas</span>
+            </Link>
           </div>
         </div>
       </header>

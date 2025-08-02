@@ -33,18 +33,18 @@ const Index = () => {
   const features = [
     {
       icon: <Sparkles className="h-8 w-8" />,
-      title: "Expert Curation",
-      description: "Our travel experts create personalized itineraries based on your unique preferences and travel style."
+      title: "Lightning Fast",
+      description: "Get your personalized travel itinerary in just 5-10 minutes, not days of planning."
     },
     {
       icon: <MapPin className="h-8 w-8" />,
-      title: "Detailed Day-by-Day",
-      description: "Get comprehensive daily schedules with activities, restaurants, and transportation all planned out."
+      title: "Fully Customizable",
+      description: "Every detail tailored to your preferences, budget, and travel style - no generic templates."
     },
     {
       icon: <Globe className="h-8 w-8" />,
-      title: "Global Destinations",
-      description: "From hidden gems to popular hotspots, discover amazing places around the world tailored to you."
+      title: "Expert Insights",
+      description: "Professional travel curation with local recommendations and insider knowledge you won't find elsewhere."
     }
   ];
 
@@ -86,12 +86,12 @@ const Index = () => {
       <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border">
         <div className="container mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
+            <Link to="/" className="flex items-center space-x-2">
               <div className="w-8 h-8 bg-gradient-hero rounded-lg flex items-center justify-center">
                 <Globe className="h-5 w-5 text-primary-foreground" />
               </div>
               <h1 className="font-elegant font-bold text-2xl text-foreground">Atlas</h1>
-            </div>
+            </Link>
             
             <div className="hidden md:flex items-center space-x-8">
               <a href="#features" className="text-muted-foreground hover:text-foreground transition-colors">Features</a>
@@ -269,27 +269,29 @@ const Index = () => {
       <section className="py-20 bg-gradient-hero relative overflow-hidden">
         <div className="absolute inset-0 bg-grid-white/10" />
         <div className="container mx-auto px-6 text-center relative z-10">
-          <h2 className="font-elegant text-4xl md:text-5xl font-bold text-primary-foreground mb-6">
-            Ready for Your Next Adventure?
-          </h2>
-          <p className="text-xl text-primary-foreground/90 mb-8 max-w-2xl mx-auto">
-            Let our travel experts create your perfect itinerary. Start planning your dream trip today.
-          </p>
-          {user ? (
-            <Link to="/create-trip">
-              <Button variant="hero" size="xl" className="bg-background text-foreground hover:bg-background/90">
-                Plan Your Next Trip
-                <ArrowRight className="ml-2 h-5 w-5" />
-              </Button>
-            </Link>
-          ) : (
-            <Link to="/auth">
-              <Button variant="hero" size="xl" className="bg-background text-foreground hover:bg-background/90">
-                Start Planning Now
-                <ArrowRight className="ml-2 h-5 w-5" />
-              </Button>
-            </Link>
-          )}
+          <div className="bg-background/90 backdrop-blur-sm rounded-xl p-8 max-w-3xl mx-auto">
+            <h2 className="font-elegant text-4xl md:text-5xl font-bold text-foreground mb-6">
+              Plan Your Next Adventure
+            </h2>
+            <p className="text-xl text-muted-foreground mb-8">
+              Create personalized travel itineraries with expert curation. From hidden gems to bucket-list destinations, we'll craft your perfect journey in minutes.
+            </p>
+            {user ? (
+              <Link to="/create-trip">
+                <Button variant="adventure" size="xl">
+                  Plan Your Next Trip
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </Button>
+              </Link>
+            ) : (
+              <Link to="/auth">
+                <Button variant="adventure" size="xl">
+                  Start Planning Now
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </Button>
+              </Link>
+            )}
+          </div>
         </div>
       </section>
 

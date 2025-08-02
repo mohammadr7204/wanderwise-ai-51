@@ -7,7 +7,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
-import { Compass, Plus, MapPin, Calendar, Users, DollarSign, LogOut, Settings, Crown, Eye, Edit, Trash2, CreditCard, MoreVertical } from 'lucide-react';
+import { Compass, Plus, MapPin, Calendar, Users, DollarSign, LogOut, Settings, Crown, Eye, Edit, Trash2, CreditCard, MoreVertical, Globe } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 interface Trip {
@@ -190,33 +190,36 @@ const Dashboard = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
       {/* Header */}
-      <header className="bg-white border-b border-gray-200 shadow-sm">
+      <header className="bg-background border-b border-border shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <Link to="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-              <Compass className="h-8 w-8 text-primary" />
-              <span className="text-2xl font-bold font-heading text-primary">Atlas</span>
+              <div className="w-8 h-8 bg-gradient-hero rounded-lg flex items-center justify-center">
+                <Globe className="h-5 w-5 text-primary-foreground" />
+              </div>
+              <span className="text-2xl font-bold font-heading text-foreground">Atlas</span>
             </Link>
             <div className="flex items-center gap-4">
               <Link to="/#features">
-                <Button variant="ghost">Features</Button>
+                <Button variant="ghost" className="text-muted-foreground hover:text-foreground transition-colors">Features</Button>
               </Link>
               <Link to="/pricing">
-                <Button variant="ghost">Pricing</Button>
+                <Button variant="ghost" className="text-muted-foreground hover:text-foreground transition-colors">Pricing</Button>
               </Link>
               <Link to="/about">
-                <Button variant="ghost">About</Button>
+                <Button variant="ghost" className="text-muted-foreground hover:text-foreground transition-colors">About</Button>
               </Link>
               <Link to="/dashboard">
-                <Button variant="ghost" className="text-primary font-medium">Dashboard</Button>
+                <Button variant="ghost" className="text-foreground font-medium">Dashboard</Button>
               </Link>
               <div className="text-right">
-                <p className="text-sm font-medium text-gray-900">
-                  {profile?.first_name} {profile?.last_name}
+                <p className="text-sm font-medium text-muted-foreground">
+                  Welcome, {profile?.first_name}!
                 </p>
               </div>
-              <Button variant="ghost" size="sm" onClick={handleSignOut}>
-                <LogOut className="h-4 w-4" />
+              <Button variant="outline" size="sm" onClick={handleSignOut}>
+                <LogOut className="h-4 w-4 mr-2" />
+                Sign Out
               </Button>
             </div>
           </div>
@@ -265,31 +268,31 @@ const Dashboard = () => {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">Total Budget</p>
+                  <p className="text-sm font-medium text-gray-600">Fun Fact</p>
                   <p className="text-2xl font-bold text-gray-900">
-                    ${trips.reduce((total, trip) => total + (trip.budget_max || 0), 0).toLocaleString()}
+                    {trips.length > 0 ? `${new Set(trips.map(trip => trip.destination)).size} Countries` : '0 Countries'}
                   </p>
                 </div>
-                <DollarSign className="h-8 w-8 text-green-600" />
+                <Globe className="h-8 w-8 text-blue-600" />
               </div>
             </CardContent>
           </Card>
         </div>
 
         {/* Create New Trip Prompt */}
-        <Card className="mb-8 bg-gradient-to-r from-adventure-blue to-adventure-teal">
+        <Card className="mb-8 bg-gradient-to-r from-primary to-secondary">
           <CardContent className="p-8">
-            <div className="flex items-center justify-between text-white">
+            <div className="flex items-center justify-between text-primary-foreground">
               <div>
                 <h2 className="text-2xl font-bold mb-2">Plan Your Next Adventure</h2>
-                <p className="text-white/80 mb-4">
+                <p className="text-primary-foreground/80 mb-4">
                   Create a personalized itinerary with our expert travel curation
                 </p>
               </div>
               <Button 
                 variant="secondary" 
                 size="lg" 
-                className="bg-white text-adventure-blue hover:bg-gray-100"
+                className="bg-background text-foreground hover:bg-background/90"
                 onClick={() => window.location.href = '/create-trip'}
               >
                 <Plus className="h-5 w-5 mr-2" />
