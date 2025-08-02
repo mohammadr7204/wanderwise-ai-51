@@ -14,7 +14,7 @@ const FlightAnalysis = ({ tripData }: FlightAnalysisProps) => {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (tripData?.formData?.startingLocation && tripData?.formData?.destination) {
+    if (tripData?.form_data || tripData?.formData) {
       loadFlightData();
     }
   }, [tripData]);
@@ -22,14 +22,19 @@ const FlightAnalysis = ({ tripData }: FlightAnalysisProps) => {
   const loadFlightData = async () => {
     setLoading(true);
     try {
+      // Get data from either form structure
+      const formData = tripData?.form_data || tripData?.formData || {};
+      const destinations = formData.specificDestinations || [];
+      const destination = destinations[0] || formData.destination || '';
+      
       const params: FlightSearchParams = {
-        origin: tripData.formData.startingLocation,
-        destination: tripData.formData.destination,
-        departureDate: tripData.formData.startDate,
-        returnDate: tripData.formData.endDate,
-        passengers: parseInt(tripData.formData.groupSize) || 1,
-        class: tripData.formData.flightClass || 'economy',
-        directOnly: tripData.formData.directFlights || false
+        origin: formData.startingLocation || 'Your Location',
+        destination: destination,
+        departureDate: formData.startDate || '',
+        returnDate: formData.endDate || '',
+        passengers: parseInt(formData.groupSize) || 1,
+        class: formData.flightClass || 'economy',
+        directOnly: formData.directFlights || false
       };
       
       const data = await searchFlights(params);
@@ -52,8 +57,10 @@ const FlightAnalysis = ({ tripData }: FlightAnalysisProps) => {
     );
   }
 
-  const origin = tripData?.formData?.startingLocation || 'Your City';
-  const destination = tripData?.formData?.destination || 'Destination';
+  const formData = tripData?.form_data || tripData?.formData || {};
+  const destinations = formData.specificDestinations || [];
+  const origin = formData.startingLocation || 'Your Location';
+  const destination = destinations[0] || formData.destination || 'Your Destination';
 
   return (
     <div className="space-y-6">
@@ -144,7 +151,7 @@ const FlightAnalysis = ({ tripData }: FlightAnalysisProps) => {
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
             <Button variant="outline" className="h-auto p-4" asChild>
               <a 
-                href={`https://www.google.com/flights?hl=en#flt=${origin}.${destination}.${tripData?.formData?.startDate || '2024-06-01'};c:${tripData?.formData?.flightClass?.toUpperCase() || 'ECONOMY'};e:1;sd:1;t:f`}
+                href={`https://www.google.com/flights?hl=en#flt=${encodeURIComponent(origin)}.${encodeURIComponent(destination)}.${formData.startDate || '2024-06-01'};c:${(formData.flightClass || 'economy').toUpperCase()};e:1;sd:1;t:f`}
                 target="_blank"
                 rel="noopener noreferrer"
               >
@@ -158,7 +165,7 @@ const FlightAnalysis = ({ tripData }: FlightAnalysisProps) => {
             
             <Button variant="outline" className="h-auto p-4" asChild>
               <a 
-                href={`https://www.expedia.com/Flights-Search?trip=roundtrip&leg1=from:${origin},to:${destination},departure:${tripData?.formData?.startDate || '2024-06-01'}&leg2=from:${destination},to:${origin},departure:${tripData?.formData?.endDate || '2024-06-08'}&passengers=adults:${tripData?.formData?.groupSize || 1},children:0,infants:0,infantinlap:N&mode=search`}
+                href={`https://www.expedia.com/Flights-Search?trip=roundtrip&leg1=from:${encodeURIComponent(origin)},to:${encodeURIComponent(destination)},departure:${formData.startDate || '2024-06-01'}&leg2=from:${encodeURIComponent(destination)},to:${encodeURIComponent(origin)},departure:${formData.endDate || '2024-06-08'}&passengers=adults:${formData.groupSize || 1},children:0,infants:0,infantinlap:N&mode=search`}
                 target="_blank"
                 rel="noopener noreferrer"
               >
@@ -172,7 +179,7 @@ const FlightAnalysis = ({ tripData }: FlightAnalysisProps) => {
             
             <Button variant="outline" className="h-auto p-4" asChild>
               <a 
-                href={`https://www.kayak.com/flights/${origin}-${destination}/${tripData?.formData?.startDate || '2024-06-01'}/${tripData?.formData?.endDate || '2024-06-08'}?sort=bestflight_a`}
+                href={`https://www.kayak.com/flights/${encodeURIComponent(origin)}-${encodeURIComponent(destination)}/${formData.startDate || '2024-06-01'}/${formData.endDate || '2024-06-08'}?sort=bestflight_a`}
                 target="_blank"
                 rel="noopener noreferrer"
               >

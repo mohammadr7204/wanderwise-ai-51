@@ -49,7 +49,9 @@ const EmergencyPlan = ({ tripData }: EmergencyPlanProps) => {
   }, [tripData]);
 
   const generateEmergencyPlan = () => {
-    const destination = tripData?.formData?.destination || '';
+    const formData = tripData?.form_data || tripData?.formData || {};
+    const destinations = formData.specificDestinations || [];
+    const destination = destinations[0] || formData.destination || '';
     const isInternational = !destination.toLowerCase().includes('usa') && !destination.toLowerCase().includes('united states');
 
     // Emergency contacts (these would be customized based on destination)
@@ -132,9 +134,11 @@ const EmergencyPlan = ({ tripData }: EmergencyPlanProps) => {
   };
 
   const generateWalletCard = () => {
-    const destination = tripData?.formData?.destination || 'Destination';
-    const dates = tripData?.formData?.startDate && tripData?.formData?.endDate 
-      ? `${tripData.formData.startDate} to ${tripData.formData.endDate}`
+    const formData = tripData?.form_data || tripData?.formData || {};
+    const destinations = formData.specificDestinations || [];
+    const destination = destinations[0] || formData.destination || 'Destination';
+    const dates = formData.startDate && formData.endDate 
+      ? `${formData.startDate} to ${formData.endDate}`
       : 'Travel dates';
 
     const cardData = `EMERGENCY WALLET CARD - ${destination}
@@ -194,12 +198,15 @@ Keep this card separate from wallet/phone.`;
     }
   };
 
+  const formData = tripData?.form_data || tripData?.formData || {};
+  const destinations = formData.specificDestinations || [];
+
   return (
     <div className="space-y-6">
       <div className="space-y-4">
         <h2 className="text-2xl font-bold">Emergency Plan</h2>
         <p className="text-muted-foreground">
-          Essential emergency contacts and procedures for {tripData?.formData?.destination || 'your destination'}
+          Essential emergency contacts and procedures for {destinations[0] || formData.destination || 'your destination'}
         </p>
       </div>
 

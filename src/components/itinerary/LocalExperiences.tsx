@@ -44,8 +44,10 @@ const LocalExperiences = ({ tripData }: LocalExperiencesProps) => {
   }, [tripData]);
 
   const generateLocalExperiences = () => {
-    const destination = tripData?.formData?.destination || '';
-    const interests = tripData?.formData?.interests || [];
+    const formData = tripData?.form_data || tripData?.formData || {};
+    const destinations = formData.specificDestinations || [];
+    const destination = destinations[0] || formData.destination || '';
+    const interests = formData.activityTypes || formData.interests || [];
 
     // Generate location-specific experiences
     const baseExperiences: LocalExperience[] = [
@@ -205,14 +207,100 @@ const LocalExperiences = ({ tripData }: LocalExperiencesProps) => {
     }
   };
 
+  const getLanguagePhrases = (destination: string) => {
+    const destLower = destination.toLowerCase();
+    let phrases = [];
+
+    // Language-specific phrases based on destination
+    if (destLower.includes('spain') || destLower.includes('spanish') || destLower.includes('mexico') || destLower.includes('argentina') || destLower.includes('colombia')) {
+      phrases = [
+        { english: "Hello / Good morning", local: "Hola / Buenos días", pronunciation: "OH-lah / BWAY-nohs DEE-ahs" },
+        { english: "Thank you", local: "Gracias", pronunciation: "GRAH-thee-ahs" },
+        { english: "Excuse me", local: "Disculpe", pronunciation: "dees-KOOL-peh" },
+        { english: "Where do locals eat?", local: "¿Dónde comen los locales?", pronunciation: "DON-deh KOH-men lohs loh-KAH-lehs" },
+        { english: "What do you recommend?", local: "¿Qué recomienda?", pronunciation: "keh reh-koh-mee-EN-dah" },
+        { english: "The check, please", local: "La cuenta, por favor", pronunciation: "lah KWEN-tah por fah-VOR" }
+      ];
+    } else if (destLower.includes('france') || destLower.includes('french') || destLower.includes('paris')) {
+      phrases = [
+        { english: "Hello / Good morning", local: "Bonjour", pronunciation: "bon-ZHOOR" },
+        { english: "Thank you", local: "Merci", pronunciation: "mer-SEE" },
+        { english: "Excuse me", local: "Excusez-moi", pronunciation: "eks-kü-zay-MWAH" },
+        { english: "Where do locals eat?", local: "Où mangent les habitants?", pronunciation: "oo mahn-ZHAHN lay zah-bee-TAHN" },
+        { english: "What do you recommend?", local: "Que recommandez-vous?", pronunciation: "kuh ruh-koh-mahn-day VOO" },
+        { english: "The check, please", local: "L'addition, s'il vous plaît", pronunciation: "lah-dee-see-OHN seel voo PLAY" }
+      ];
+    } else if (destLower.includes('italy') || destLower.includes('italian') || destLower.includes('rome') || destLower.includes('florence')) {
+      phrases = [
+        { english: "Hello / Good morning", local: "Ciao / Buongiorno", pronunciation: "chah-oh / bwohn-JOR-noh" },
+        { english: "Thank you", local: "Grazie", pronunciation: "GRAH-tsee-eh" },
+        { english: "Excuse me", local: "Mi scusi", pronunciation: "mee SKOO-zee" },
+        { english: "Where do locals eat?", local: "Dove mangiano gli abitanti?", pronunciation: "DOH-veh mahn-JAH-noh lyee ah-bee-TAHN-tee" },
+        { english: "What do you recommend?", local: "Cosa mi consiglia?", pronunciation: "KOH-zah mee kohn-SEE-lyah" },
+        { english: "The check, please", local: "Il conto, per favore", pronunciation: "eel KOHN-toh per fah-VOH-reh" }
+      ];
+    } else if (destLower.includes('germany') || destLower.includes('german') || destLower.includes('berlin') || destLower.includes('munich')) {
+      phrases = [
+        { english: "Hello / Good morning", local: "Hallo / Guten Morgen", pronunciation: "HAH-loh / GOO-ten MOR-gen" },
+        { english: "Thank you", local: "Danke", pronunciation: "DAHN-keh" },
+        { english: "Excuse me", local: "Entschuldigung", pronunciation: "ent-SHOOL-dee-goong" },
+        { english: "Where do locals eat?", local: "Wo essen die Einheimischen?", pronunciation: "voh ES-sen dee INE-high-mish-en" },
+        { english: "What do you recommend?", local: "Was empfehlen Sie?", pronunciation: "vahs em-PFAY-len zee" },
+        { english: "The check, please", local: "Die Rechnung, bitte", pronunciation: "dee REKH-noong BIT-teh" }
+      ];
+    } else if (destLower.includes('japan') || destLower.includes('japanese') || destLower.includes('tokyo') || destLower.includes('kyoto')) {
+      phrases = [
+        { english: "Hello / Good morning", local: "こんにちは / おはようございます", pronunciation: "kon-nee-chee-wah / oh-HAH-yoh goh-ZAH-ee-mahs" },
+        { english: "Thank you", local: "ありがとうございます", pronunciation: "ah-ree-GAH-toh goh-ZAH-ee-mahs" },
+        { english: "Excuse me", local: "すみません", pronunciation: "soo-mee-mah-sen" },
+        { english: "Where do locals eat?", local: "地元の人はどこで食べますか？", pronunciation: "jee-moh-toh no hee-toh wah doh-koh deh tah-beh-mahs-kah" },
+        { english: "What do you recommend?", local: "何がおすすめですか？", pronunciation: "nah-nee gah oh-soo-soo-meh deh-soo-kah" },
+        { english: "The check, please", local: "お会計をお願いします", pronunciation: "oh-kai-keh oh oh-neh-GAH-ee shee-mahs" }
+      ];
+    } else if (destLower.includes('portugal') || destLower.includes('portuguese') || destLower.includes('lisbon') || destLower.includes('porto')) {
+      phrases = [
+        { english: "Hello / Good morning", local: "Olá / Bom dia", pronunciation: "oh-LAH / bohm DEE-ah" },
+        { english: "Thank you", local: "Obrigado/a", pronunciation: "oh-bree-GAH-doh/dah" },
+        { english: "Excuse me", local: "Com licença", pronunciation: "kohm lee-SEN-sah" },
+        { english: "Where do locals eat?", local: "Onde comem os locais?", pronunciation: "OHN-deh KOH-men ohs loh-KICE" },
+        { english: "What do you recommend?", local: "O que recomenda?", pronunciation: "oh keh reh-koh-MEN-dah" },
+        { english: "The check, please", local: "A conta, por favor", pronunciation: "ah KOHN-tah por fah-VOR" }
+      ];
+    } else {
+      // Default universal phrases
+      phrases = [
+        { english: "Hello / Good morning", local: "Hello / Good morning", pronunciation: "Universal greeting" },
+        { english: "Thank you", local: "Thank you", pronunciation: "Shows appreciation" },
+        { english: "Excuse me", local: "Excuse me", pronunciation: "Polite attention getter" },
+        { english: "Where do locals eat?", local: "Where do locals eat?", pronunciation: "Gets authentic recommendations" },
+        { english: "What do you recommend?", local: "What do you recommend?", pronunciation: "Personal recommendations" },
+        { english: "I'm sorry, I don't speak [language]", local: "I'm sorry, I don't speak [language]", pronunciation: "Honest communication" }
+      ];
+    }
+
+    return (
+      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {phrases.map((phrase, index) => (
+          <div key={index} className="p-3 bg-muted/50 rounded-lg">
+            <p className="font-medium">{phrase.english}</p>
+            <p className="text-lg font-semibold text-primary">{phrase.local}</p>
+            <p className="text-sm text-muted-foreground italic">{phrase.pronunciation}</p>
+          </div>
+        ))}
+      </div>
+    );
+  };
+
   const categories = [...new Set(experiences.map(exp => exp.category))];
+  const formData = tripData?.form_data || tripData?.formData || {};
+  const destinations = formData.specificDestinations || [];
 
   return (
     <div className="space-y-6">
       <div className="space-y-4">
         <h2 className="text-2xl font-bold">Local Experiences</h2>
         <p className="text-muted-foreground">
-          Authentic local life in {tripData?.formData?.destination || 'your destination'} - where tourists don't go
+          Authentic local life in {destinations[0] || formData.destination || 'your destination'} - where tourists don't go
         </p>
       </div>
 
@@ -221,39 +309,14 @@ const LocalExperiences = ({ tripData }: LocalExperiencesProps) => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Languages className="h-5 w-5 text-primary" />
-            Essential Local Phrases
+            Essential Local Phrases for {destinations[0] || formData.destination || 'Your Destination'}
           </CardTitle>
           <CardDescription>
             Key phrases to connect with locals and show respect for the culture
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-            <div className="p-3 bg-muted/50 rounded-lg">
-              <p className="font-medium">Hello / Good morning</p>
-              <p className="text-sm text-muted-foreground">Universal ice breaker</p>
-            </div>
-            <div className="p-3 bg-muted/50 rounded-lg">
-              <p className="font-medium">Thank you</p>
-              <p className="text-sm text-muted-foreground">Shows appreciation</p>
-            </div>
-            <div className="p-3 bg-muted/50 rounded-lg">
-              <p className="font-medium">Excuse me, where do locals eat?</p>
-              <p className="text-sm text-muted-foreground">Gets authentic recommendations</p>
-            </div>
-            <div className="p-3 bg-muted/50 rounded-lg">
-              <p className="font-medium">What's your favorite place here?</p>
-              <p className="text-sm text-muted-foreground">Personal recommendations</p>
-            </div>
-            <div className="p-3 bg-muted/50 rounded-lg">
-              <p className="font-medium">Can you recommend something local?</p>
-              <p className="text-sm text-muted-foreground">For authentic experiences</p>
-            </div>
-            <div className="p-3 bg-muted/50 rounded-lg">
-              <p className="font-medium">I'm sorry, I don't speak [language]</p>
-              <p className="text-sm text-muted-foreground">Honest communication</p>
-            </div>
-          </div>
+          {getLanguagePhrases(destinations[0] || formData.destination || '')}
         </CardContent>
       </Card>
 

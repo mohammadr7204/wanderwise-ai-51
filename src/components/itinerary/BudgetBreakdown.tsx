@@ -37,36 +37,69 @@ const BudgetBreakdown = ({ tripData, existingBudget }: BudgetBreakdownProps) => 
 
   useEffect(() => {
     calculateBudget();
-  }, [tripData, totalBudget]);
+  }, [tripData, existingBudget]);
 
   const calculateBudget = () => {
     const duration = getDuration();
-    const groupSize = parseInt(tripData?.formData?.groupSize) || 1;
-    const destination = tripData?.formData?.destination || '';
+    const groupSize = parseInt(tripData?.form_data?.groupSize || tripData?.formData?.groupSize) || 1;
     
-    // Adjust budget based on destination (rough estimates)
-    let dailyRate = 100; // Base daily rate
-    if (destination.includes('Japan') || destination.includes('Switzerland') || destination.includes('Norway')) {
-      dailyRate = 200;
-    } else if (destination.includes('Western Europe') || destination.includes('Australia')) {
-      dailyRate = 150;
-    } else if (destination.includes('Southeast Asia') || destination.includes('India')) {
-      dailyRate = 60;
+    // Use actual budget from form data if available
+    const minBudget = tripData?.form_data?.budgetMin || tripData?.formData?.budgetMin || 1000;
+    const maxBudget = tripData?.form_data?.budgetMax || tripData?.formData?.budgetMax || 5000;
+    const averageBudget = Math.round((minBudget + maxBudget) / 2);
+    
+    // Use existing budget breakdown if available
+    if (existingBudget?.tripTotal) {
+      const total = parseInt(existingBudget.tripTotal.replace(/[^0-9]/g, '')) || averageBudget;
+      setTotalBudget(total);
+    } else {
+      setTotalBudget(averageBudget);
     }
 
-    const estimatedBudget = dailyRate * duration * groupSize;
-    if (totalBudget === 2000) { // Only set if still default
-      setTotalBudget(estimatedBudget);
+    // Get destination and trip preferences for more accurate budgeting
+    const destinations = tripData?.form_data?.specificDestinations || tripData?.formData?.specificDestinations || [];
+    const destination = destinations[0] || tripData?.form_data?.destination || tripData?.formData?.destination || '';
+    const accommodationType = tripData?.form_data?.accommodationType || tripData?.formData?.accommodationType || 'hotel';
+    const transportPreferences = tripData?.form_data?.transportPreferences || tripData?.formData?.transportPreferences || [];
+    
+    // Adjust budget percentages based on destination and preferences
+    let flightPercentage = 0.35;
+    let accommodationPercentage = 0.25;
+    let foodPercentage = 0.20;
+    
+    // Adjust for expensive destinations
+    const expensiveDestinations = ['japan', 'switzerland', 'norway', 'iceland', 'denmark', 'singapore'];
+    const isExpensive = expensiveDestinations.some(exp => destination.toLowerCase().includes(exp));
+    
+    if (isExpensive) {
+      accommodationPercentage = 0.30;
+      foodPercentage = 0.25;
+      flightPercentage = 0.30;
     }
+    
+    // Adjust for accommodation type
+    if (accommodationType === 'luxury-hotel') {
+      accommodationPercentage = 0.35;
+      foodPercentage = 0.25;
+    } else if (accommodationType === 'hostel' || accommodationType === 'budget-hotel') {
+      accommodationPercentage = 0.15;
+      foodPercentage = 0.25;
+    }
+
+    const currentTotal = totalBudget || averageBudget;
 
     const items: BudgetItem[] = [
       {
         category: 'Flights',
-        amount: Math.round(totalBudget * 0.35),
-        percentage: 35,
+        amount: Math.round(currentTotal * flightPercentage),
+        percentage: Math.round(flightPercentage * 100),
         icon: <Plane className="h-4 w-4" />,
         color: 'bg-blue-500',
-        tips: [
+        tips: isExpensive ? [
+          'Book 2-3 months in advance for expensive destinations',
+          'Consider shoulder season travel',
+          'Use airline miles or points if available'
+        ] : [
           'Book 6-8 weeks in advance for best prices',
           'Consider nearby airports',
           'Use incognito mode when searching'
@@ -74,11 +107,19 @@ const BudgetBreakdown = ({ tripData, existingBudget }: BudgetBreakdownProps) => 
       },
       {
         category: 'Accommodation',
-        amount: Math.round(totalBudget * 0.25),
-        percentage: 25,
+        amount: Math.round(currentTotal * accommodationPercentage),
+        percentage: Math.round(accommodationPercentage * 100),
         icon: <Home className="h-4 w-4" />,
         color: 'bg-green-500',
-        tips: [
+        tips: accommodationType === 'luxury-hotel' ? [
+          'Book directly with hotels for room upgrades',
+          'Join loyalty programs for perks',
+          'Consider package deals with activities'
+        ] : accommodationType === 'hostel' ? [
+          'Book private rooms in advance',
+          'Check kitchen access for meal savings',
+          'Read recent reviews carefully'
+        ] : [
           'Book directly with hotels for perks',
           'Consider vacation rentals for groups',
           'Check cancellation policies'
@@ -86,11 +127,15 @@ const BudgetBreakdown = ({ tripData, existingBudget }: BudgetBreakdownProps) => 
       },
       {
         category: 'Food & Dining',
-        amount: Math.round(totalBudget * 0.20),
-        percentage: 20,
+        amount: Math.round(currentTotal * foodPercentage),
+        percentage: Math.round(foodPercentage * 100),
         icon: <Utensils className="h-4 w-4" />,
         color: 'bg-orange-500',
-        tips: [
+        tips: isExpensive ? [
+          'Lunch menus offer better value than dinner',
+          'Explore convenience stores for affordable meals',
+          'Book restaurant reservations in advance'
+        ] : [
           'Mix restaurant meals with local markets',
           'Try lunch menus for better prices',
           'Ask locals for recommendations'
@@ -98,50 +143,54 @@ const BudgetBreakdown = ({ tripData, existingBudget }: BudgetBreakdownProps) => 
       },
       {
         category: 'Activities',
-        amount: Math.round(totalBudget * 0.15),
+        amount: Math.round(currentTotal * 0.15),
         percentage: 15,
         icon: <Camera className="h-4 w-4" />,
         color: 'bg-purple-500',
         tips: [
-          'Book attraction tickets online',
-          'Look for combo deals',
-          'Consider city tourist cards'
+          'Book attraction tickets online for discounts',
+          'Look for combo deals and city passes',
+          'Many museums have free days'
         ]
       },
       {
         category: 'Local Transport',
-        amount: Math.round(totalBudget * 0.08),
+        amount: Math.round(currentTotal * 0.08),
         percentage: 8,
         icon: <Bus className="h-4 w-4" />,
         color: 'bg-yellow-500',
-        tips: [
-          'Use public transport passes',
-          'Walk when possible',
-          'Download transport apps'
+        tips: transportPreferences.includes('rental-car') ? [
+          'Compare rental car prices across companies',
+          'Check fuel costs and parking fees',
+          'Consider insurance coverage options'
+        ] : [
+          'Use public transport passes for savings',
+          'Download local transport apps',
+          'Walk when distances are reasonable'
         ]
       },
       {
         category: 'Emergency Fund',
-        amount: Math.round(totalBudget * 0.10),
+        amount: Math.round(currentTotal * 0.10),
         percentage: 10,
         icon: <Shield className="h-4 w-4" />,
         color: 'bg-red-500',
         tips: [
           'Keep 10-15% for unexpected costs',
           'Separate from daily spending money',
-          'Consider travel insurance'
+          'Get comprehensive travel insurance'
         ]
       },
       {
-        category: 'Splurge Moment',
-        amount: Math.round(totalBudget * 0.07),
+        category: 'Splurge Experience',
+        amount: Math.round(currentTotal * 0.07),
         percentage: 7,
         icon: <Sparkles className="h-4 w-4" />,
         color: 'bg-pink-500',
         tips: [
-          'One special experience per trip',
-          'Fine dining or unique activity',
-          'Make memories worth the cost'
+          'One memorable experience per trip',
+          'Research must-do activities for your destination',
+          'Book signature experiences in advance'
         ]
       }
     ];
@@ -150,6 +199,11 @@ const BudgetBreakdown = ({ tripData, existingBudget }: BudgetBreakdownProps) => 
   };
 
   const getDuration = () => {
+    if (tripData?.form_data?.startDate && tripData?.form_data?.endDate) {
+      const start = new Date(tripData.form_data.startDate);
+      const end = new Date(tripData.form_data.endDate);
+      return Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+    }
     if (tripData?.formData?.startDate && tripData?.formData?.endDate) {
       const start = new Date(tripData.formData.startDate);
       const end = new Date(tripData.formData.endDate);
@@ -160,15 +214,18 @@ const BudgetBreakdown = ({ tripData, existingBudget }: BudgetBreakdownProps) => 
 
   const getDailyBudget = () => {
     const duration = getDuration();
-    return Math.round(totalBudget / duration);
+    return Math.round((totalBudget || 2000) / duration);
   };
 
   const exportBudget = () => {
+    const destinations = tripData?.form_data?.specificDestinations || tripData?.formData?.specificDestinations || [];
+    const destination = destinations[0] || tripData?.form_data?.destination || tripData?.formData?.destination || 'Unknown';
+    
     const budgetData = {
       trip: tripData?.title || 'My Trip',
-      destination: tripData?.formData?.destination,
+      destination: destination,
       duration: getDuration(),
-      totalBudget,
+      totalBudget: totalBudget || 2000,
       dailyBudget: getDailyBudget(),
       breakdown: budgetItems.map(item => ({
         category: item.category,
@@ -191,7 +248,7 @@ const BudgetBreakdown = ({ tripData, existingBudget }: BudgetBreakdownProps) => 
       <div className="space-y-4">
         <h2 className="text-2xl font-bold">Budget Breakdown</h2>
         <p className="text-muted-foreground">
-          Smart allocation for your {getDuration()}-day trip to optimize every dollar
+          Smart allocation for your {getDuration()}-day trip - personalized for your preferences and destination
         </p>
       </div>
 
@@ -203,7 +260,7 @@ const BudgetBreakdown = ({ tripData, existingBudget }: BudgetBreakdownProps) => 
               <DollarSign className="h-5 w-5 text-green-600" />
               <span className="font-medium">Total Budget</span>
             </div>
-            <p className="text-3xl font-bold">${totalBudget.toLocaleString()}</p>
+            <p className="text-3xl font-bold">${(totalBudget || 2000).toLocaleString()}</p>
           </CardContent>
         </Card>
         
@@ -239,7 +296,7 @@ const BudgetBreakdown = ({ tripData, existingBudget }: BudgetBreakdownProps) => 
             </Button>
           </CardTitle>
           <CardDescription>
-            Based on destination pricing and travel best practices
+            Based on your destination, preferences, and current market pricing
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">

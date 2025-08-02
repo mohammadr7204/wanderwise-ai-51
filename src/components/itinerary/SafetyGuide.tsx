@@ -53,7 +53,9 @@ const SafetyGuide = ({ tripData }: SafetyGuideProps) => {
   }, [tripData]);
 
   const generateSafetyContent = () => {
-    const destination = tripData?.formData?.destination || '';
+    const formData = tripData?.form_data || tripData?.formData || {};
+    const destinations = formData.specificDestinations || [];
+    const destination = destinations[0] || formData.destination || '';
     
     // Common tourist scams (these are universal but we can customize based on destination)
     const commonScams: ScamWarning[] = [
@@ -248,13 +250,15 @@ const SafetyGuide = ({ tripData }: SafetyGuideProps) => {
   };
 
   const categories = [...new Set(safetyTips.map(tip => tip.category))];
+  const formData = tripData?.form_data || tripData?.formData || {};
+  const destinations = formData.specificDestinations || [];
 
   return (
     <div className="space-y-6">
       <div className="space-y-4">
         <h2 className="text-2xl font-bold">Safety & Scam Prevention</h2>
         <p className="text-muted-foreground">
-          Stay safe and avoid common tourist traps in {tripData?.formData?.destination || 'your destination'}
+          Stay safe and avoid common tourist traps in {destinations[0] || formData.destination || 'your destination'}
         </p>
       </div>
 

@@ -78,11 +78,15 @@ const RouteOptimizer = ({ tripData, dayActivities = [] }: RouteOptimizerProps) =
   }, []);
 
   const generateSampleActivities = () => {
+    const formData = tripData?.form_data || tripData?.formData || {};
+    const destinations = formData.specificDestinations || [];
+    const destination = destinations[0] || formData.destination || '';
+    
     const sampleActivities: Activity[] = [
       {
         id: '1',
-        name: 'Museum of Local History',
-        location: 'Downtown District',
+        name: `${destination ? destination + ' ' : ''}Museum of Local History`,
+        location: destination ? `${destination} Downtown District` : 'Downtown District',
         openingHours: '09:00-17:00',
         estimatedDuration: 90,
         category: 'attraction',
@@ -290,12 +294,15 @@ const RouteOptimizer = ({ tripData, dayActivities = [] }: RouteOptimizerProps) =
     return `${newHours.toString().padStart(2, '0')}:${newMinutes.toString().padStart(2, '0')}`;
   };
 
+  const formData = tripData?.form_data || tripData?.formData || {};
+  const destinations = formData.specificDestinations || [];
+
   return (
     <div className="space-y-6">
       <div className="space-y-4">
         <h2 className="text-2xl font-bold">Route Optimizer</h2>
         <p className="text-muted-foreground">
-          Intelligent route planning considering opening hours, crowds, energy levels, and weather
+          Intelligent route planning for {destinations[0] || formData.destination || 'your destination'} considering opening hours, crowds, energy levels, and weather
         </p>
       </div>
 
