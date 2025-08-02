@@ -71,80 +71,124 @@ const RouteOptimizer = ({ tripData, dayActivities = [] }: RouteOptimizerProps) =
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    // Initialize with sample activities if none provided
+    // Initialize with activities from itinerary data if available
     if (activities.length === 0) {
-      generateSampleActivities();
+      loadActivitiesFromItinerary();
     }
-  }, []);
+  }, [tripData]);
 
-  const generateSampleActivities = () => {
+  const loadActivitiesFromItinerary = () => {
     const formData = tripData?.form_data || tripData?.formData || {};
     const destinations = formData.specificDestinations || [];
     const destination = destinations[0] || formData.destination || '';
+    const interests = formData.interests || formData.activityTypes || [];
     
-    const sampleActivities: Activity[] = [
-      {
+    // Create activities based on actual trip preferences
+    const generatedActivities: Activity[] = [];
+    
+    // Add activities based on user interests
+    if (interests.includes('cultural')) {
+      generatedActivities.push({
         id: '1',
-        name: `${destination ? destination + ' ' : ''}Museum of Local History`,
-        location: destination ? `${destination} Downtown District` : 'Downtown District',
+        name: `${destination} Historical Center`,
+        location: 'City Center',
         openingHours: '09:00-17:00',
-        estimatedDuration: 90,
+        estimatedDuration: 120,
         category: 'attraction',
         crowdLevel: 'medium',
         energyRequired: 'low',
         weatherDependent: false,
-        priority: 4
-      },
-      {
+        priority: 1
+      });
+      
+      generatedActivities.push({
         id: '2',
-        name: 'Central Park Walk',
-        location: 'Central Park',
-        openingHours: '06:00-22:00',
-        estimatedDuration: 60,
-        category: 'activity',
-        crowdLevel: 'low',
-        energyRequired: 'medium',
-        weatherDependent: true,
-        priority: 3
-      },
-      {
-        id: '3',
-        name: 'Local Market',
-        location: 'Market Square',
+        name: `${destination} Local Market`,
+        location: 'Market District',
         openingHours: '08:00-14:00',
-        estimatedDuration: 45,
+        estimatedDuration: 90,
         category: 'attraction',
         crowdLevel: 'high',
         energyRequired: 'medium',
         weatherDependent: false,
-        priority: 5
-      },
-      {
-        id: '4',
-        name: 'Traditional Restaurant',
-        location: 'Old Town',
-        openingHours: '12:00-22:00',
-        estimatedDuration: 90,
-        category: 'restaurant',
-        crowdLevel: 'medium',
-        energyRequired: 'low',
-        weatherDependent: false,
-        priority: 4
-      },
-      {
-        id: '5',
-        name: 'Scenic Viewpoint',
-        location: 'Hill District',
-        openingHours: '24/7',
-        estimatedDuration: 30,
-        category: 'attraction',
+        priority: 2
+      });
+    }
+    
+    if (interests.includes('nature') || interests.includes('adventure')) {
+      generatedActivities.push({
+        id: '3',
+        name: `${destination} Nature Trail`,
+        location: 'Natural Area',
+        openingHours: '06:00-18:00',
+        estimatedDuration: 180,
+        category: 'activity',
         crowdLevel: 'low',
         energyRequired: 'high',
         weatherDependent: true,
-        priority: 3
-      }
-    ];
-    setActivities(sampleActivities);
+        priority: 1
+      });
+      
+      generatedActivities.push({
+        id: '4',
+        name: `${destination} Scenic Viewpoint`,
+        location: 'Elevated Area',
+        openingHours: '06:00-20:00',
+        estimatedDuration: 60,
+        category: 'attraction',
+        crowdLevel: 'medium',
+        energyRequired: 'medium',
+        weatherDependent: true,
+        priority: 1
+      });
+    }
+    
+    if (interests.includes('food') || interests.includes('culinary')) {
+      generatedActivities.push({
+        id: '5',
+        name: `${destination} Food District`,
+        location: 'Culinary Quarter',
+        openingHours: '11:00-22:00',
+        estimatedDuration: 120,
+        category: 'restaurant',
+        crowdLevel: 'high',
+        energyRequired: 'low',
+        weatherDependent: false,
+        priority: 1
+      });
+    }
+    
+    // Default activities if no specific interests
+    if (generatedActivities.length === 0) {
+      generatedActivities.push(
+        {
+          id: '1',
+          name: `${destination} Main Attraction`,
+          location: 'City Center',
+          openingHours: '09:00-17:00',
+          estimatedDuration: 120,
+          category: 'attraction',
+          crowdLevel: 'medium',
+          energyRequired: 'low',
+          weatherDependent: false,
+          priority: 1
+        },
+        {
+          id: '2',
+          name: `${destination} Walking Area`,
+          location: 'Historic District',
+          openingHours: '08:00-20:00',
+          estimatedDuration: 90,
+          category: 'activity',
+          crowdLevel: 'medium',
+          energyRequired: 'medium',
+          weatherDependent: false,
+          priority: 2
+        }
+      );
+    }
+    
+    setActivities(generatedActivities);
   };
 
   const optimizeRoute = () => {

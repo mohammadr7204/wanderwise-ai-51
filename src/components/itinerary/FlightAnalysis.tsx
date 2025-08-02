@@ -86,17 +86,17 @@ const FlightAnalysis = ({ tripData }: FlightAnalysisProps) => {
           <div className="text-center p-4 bg-muted/50 rounded-lg">
             <DollarSign className="h-6 w-6 text-green-600 mx-auto mb-2" />
             <p className="text-sm text-muted-foreground">Price Range</p>
-            <p className="font-semibold">{flightData?.priceRange || '$400 - $800'}</p>
+            <p className="font-semibold">{flightData?.priceRange || 'Loading...'}</p>
           </div>
           <div className="text-center p-4 bg-muted/50 rounded-lg">
             <Clock className="h-6 w-6 text-blue-600 mx-auto mb-2" />
             <p className="text-sm text-muted-foreground">Flight Time</p>
-            <p className="font-semibold">{flightData?.averageFlightTime || '8h 30m'}</p>
+            <p className="font-semibold">{flightData?.averageFlightTime || 'Calculating...'}</p>
           </div>
           <div className="text-center p-4 bg-muted/50 rounded-lg">
             <TrendingDown className="h-6 w-6 text-orange-600 mx-auto mb-2" />
             <p className="text-sm text-muted-foreground">Best Booking</p>
-            <p className="font-semibold">{flightData?.bestBookingTime || '6-8 weeks ahead'}</p>
+            <p className="font-semibold">{flightData?.bestBookingTime || 'Analyzing...'}</p>
           </div>
           <div className="text-center p-4 bg-muted/50 rounded-lg">
             <Plane className="h-6 w-6 text-purple-600 mx-auto mb-2" />
@@ -123,7 +123,7 @@ const FlightAnalysis = ({ tripData }: FlightAnalysisProps) => {
               Based on historical pricing data, these days typically offer the best deals:
             </p>
             <div className="flex flex-wrap gap-2">
-              {(flightData?.cheapestDays || ['Tuesday', 'Wednesday', 'Thursday']).map((day) => (
+              {(flightData?.cheapestDays || []).map((day) => (
                 <Badge key={day} variant="secondary" className="text-green-700 bg-green-50">
                   {day}
                 </Badge>

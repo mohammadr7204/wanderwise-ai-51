@@ -54,39 +54,133 @@ const EmergencyPlan = ({ tripData }: EmergencyPlanProps) => {
     const destination = destinations[0] || formData.destination || '';
     const isInternational = !destination.toLowerCase().includes('usa') && !destination.toLowerCase().includes('united states');
 
-    // Emergency contacts (these would be customized based on destination)
+    // Generate dynamic emergency contacts based on destination
+    const getEmergencyNumbers = (dest: string) => {
+      const destLower = dest.toLowerCase();
+      
+      // European Union countries
+      if (destLower.includes('spain') || destLower.includes('france') || destLower.includes('italy') || 
+          destLower.includes('germany') || destLower.includes('portugal') || destLower.includes('greece') ||
+          destLower.includes('netherlands') || destLower.includes('belgium') || destLower.includes('austria') ||
+          destLower.includes('poland') || destLower.includes('europe')) {
+        return {
+          emergency: '112',
+          police: '112',
+          medical: '112',
+          embassy: 'Search "US Embassy ' + dest + '"'
+        };
+      }
+      
+      // UK and Ireland
+      if (destLower.includes('uk') || destLower.includes('england') || destLower.includes('scotland') ||
+          destLower.includes('wales') || destLower.includes('ireland') || destLower.includes('london')) {
+        return {
+          emergency: '999',
+          police: '999',
+          medical: '999',
+          embassy: 'US Embassy London: +44-20-7499-9000'
+        };
+      }
+      
+      // Asian countries
+      if (destLower.includes('japan')) {
+        return {
+          emergency: '110 (Police) / 119 (Fire/Medical)',
+          police: '110',
+          medical: '119',
+          embassy: 'US Embassy Tokyo: +81-3-3224-5000'
+        };
+      }
+      
+      if (destLower.includes('china')) {
+        return {
+          emergency: '110 (Police) / 120 (Medical)',
+          police: '110',
+          medical: '120',
+          embassy: 'US Embassy Beijing: +86-10-8531-3000'
+        };
+      }
+      
+      if (destLower.includes('india')) {
+        return {
+          emergency: '100 (Police) / 102 (Medical)',
+          police: '100',
+          medical: '102',
+          embassy: 'US Embassy New Delhi: +91-11-2419-8000'
+        };
+      }
+      
+      if (destLower.includes('thailand')) {
+        return {
+          emergency: '191 (Police) / 1669 (Medical)',
+          police: '191',
+          medical: '1669',
+          embassy: 'US Embassy Bangkok: +66-2-205-4000'
+        };
+      }
+      
+      // Other regions
+      if (destLower.includes('australia')) {
+        return {
+          emergency: '000',
+          police: '000',
+          medical: '000',
+          embassy: 'US Consulate: Search by city'
+        };
+      }
+      
+      if (destLower.includes('canada')) {
+        return {
+          emergency: '911',
+          police: '911',
+          medical: '911',
+          embassy: 'US Consulate: Search by city'
+        };
+      }
+      
+      // Default for other destinations
+      return {
+        emergency: 'Check local emergency number',
+        police: 'Contact local police',
+        medical: 'Contact local hospital',
+        embassy: 'Search "US Embassy ' + dest + '"'
+      };
+    };
+    
+    const emergencyNumbers = getEmergencyNumbers(destination);
+    
     const contacts: EmergencyContact[] = [
       {
         service: 'Emergency Services',
-        number: isInternational ? '112 (EU) / 911' : '911',
+        number: emergencyNumbers.emergency,
         description: 'Police, Fire, Medical Emergency',
         icon: <AlertTriangle className="h-4 w-4" />,
         priority: 'critical'
       },
       {
         service: 'Police',
-        number: isInternational ? 'Local police number' : '911',
+        number: emergencyNumbers.police,
         description: 'Crime, theft, assault',
         icon: <Shield className="h-4 w-4" />,
         priority: 'critical'
       },
       {
         service: 'Medical Emergency',
-        number: isInternational ? 'Local ambulance' : '911',
+        number: emergencyNumbers.medical,
         description: 'Ambulance, hospital emergency',
         icon: <Heart className="h-4 w-4" />,
         priority: 'critical'
       },
       {
         service: 'US Embassy/Consulate',
-        number: '+1-xxx-xxx-xxxx',
+        number: emergencyNumbers.embassy,
         description: 'Lost passport, legal issues, major emergencies',
         icon: <Building className="h-4 w-4" />,
         priority: 'important'
       },
       {
         service: 'Travel Insurance',
-        number: 'Your insurance number',
+        number: 'Check your policy card',
         description: 'Medical coverage, trip assistance',
         icon: <FileText className="h-4 w-4" />,
         priority: 'important'

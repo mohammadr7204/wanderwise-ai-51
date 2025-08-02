@@ -129,13 +129,53 @@ const PackingList = ({ tripData }: PackingListProps) => {
 
   const getClimateFromDestination = (destination: string): string => {
     const dest = destination.toLowerCase();
-    if (dest.includes('tropical') || dest.includes('beach') || dest.includes('hawaii') || dest.includes('thailand')) {
+    
+    // Tropical/warm destinations
+    if (dest.includes('tropical') || dest.includes('beach') || dest.includes('hawaii') || 
+        dest.includes('thailand') || dest.includes('bali') || dest.includes('caribbean') ||
+        dest.includes('maldives') || dest.includes('seychelles') || dest.includes('fiji') ||
+        dest.includes('costa rica') || dest.includes('mexico') || dest.includes('bahamas') ||
+        dest.includes('bermuda') || dest.includes('florida') || dest.includes('miami') ||
+        dest.includes('phoenix') || dest.includes('las vegas') || dest.includes('dubai') ||
+        dest.includes('singapore') || dest.includes('malaysia') || dest.includes('indonesia') ||
+        dest.includes('philippines') || dest.includes('india') || dest.includes('sri lanka') ||
+        dest.includes('vietnam') || dest.includes('cambodia') || dest.includes('laos')) {
       return 'warm';
-    } else if (dest.includes('cold') || dest.includes('winter') || dest.includes('snow') || dest.includes('iceland')) {
+    }
+    
+    // Cold destinations
+    if (dest.includes('cold') || dest.includes('winter') || dest.includes('snow') || 
+        dest.includes('iceland') || dest.includes('greenland') || dest.includes('alaska') ||
+        dest.includes('norway') || dest.includes('sweden') || dest.includes('finland') ||
+        dest.includes('denmark') || dest.includes('siberia') || dest.includes('antarctica') ||
+        dest.includes('patagonia') || dest.includes('himalaya') || dest.includes('tibet') ||
+        dest.includes('mongolia') || dest.includes('canada') || dest.includes('russia') ||
+        dest.includes('poland') || dest.includes('estonia') || dest.includes('latvia') ||
+        dest.includes('lithuania') || dest.includes('belarus') || dest.includes('ukraine')) {
       return 'cold';
-    } else if (dest.includes('rain') || dest.includes('monsoon') || dest.includes('seattle')) {
+    }
+    
+    // Rainy destinations
+    if (dest.includes('rain') || dest.includes('monsoon') || dest.includes('seattle') ||
+        dest.includes('london') || dest.includes('ireland') || dest.includes('scotland') ||
+        dest.includes('vancouver') || dest.includes('portland') || dest.includes('amsterdam') ||
+        dest.includes('belgium') || dest.includes('bangladesh') || dest.includes('mumbai') ||
+        dest.includes('kolkata') || dest.includes('kerala') || dest.includes('goa') ||
+        dest.includes('sri lanka') || dest.includes('myanmar') || dest.includes('colombia') ||
+        dest.includes('ecuador') || dest.includes('peru') || dest.includes('chile') ||
+        dest.includes('new zealand') || dest.includes('tasmania')) {
       return 'rainy';
     }
+    
+    // Mediterranean climate
+    if (dest.includes('mediterranean') || dest.includes('spain') || dest.includes('italy') ||
+        dest.includes('greece') || dest.includes('turkey') || dest.includes('portugal') ||
+        dest.includes('southern france') || dest.includes('california') || dest.includes('australia') ||
+        dest.includes('south africa') || dest.includes('chile') || dest.includes('morocco') ||
+        dest.includes('tunisia') || dest.includes('cyprus') || dest.includes('malta')) {
+      return 'warm';
+    }
+    
     return 'temperate';
   };
 

@@ -43,13 +43,47 @@ export interface FlightSearchParams {
 }
 
 export const searchFlights = async (params: FlightSearchParams): Promise<FlightData> => {
-  // This would integrate with a real flight API in production
-  // For now, return mock data
+  // Generate dynamic flight data based on route distance and destination
+  const getRouteData = (origin: string, destination: string) => {
+    // Simple distance estimation for price/time calculation
+    const isInternational = origin.toLowerCase().includes('us') && !destination.toLowerCase().includes('us');
+    const isLongHaul = isInternational || destination.toLowerCase().includes('europe') || destination.toLowerCase().includes('asia');
+    
+    let basePrice = 200;
+    let flightTime = '2h 30m';
+    let bookingWeeks = '3-4 weeks';
+    
+    if (isLongHaul) {
+      basePrice = 600;
+      flightTime = '8h 30m';
+      bookingWeeks = '6-8 weeks';
+    } else if (isInternational) {
+      basePrice = 400;
+      flightTime = '5h 15m';
+      bookingWeeks = '4-6 weeks';
+    }
+    
+    // Add seasonal variation
+    const currentMonth = new Date().getMonth();
+    const isHighSeason = [5, 6, 7, 11].includes(currentMonth); // June, July, August, December
+    if (isHighSeason) basePrice *= 1.4;
+    
+    return {
+      priceRange: `$${Math.round(basePrice * 0.8)} - $${Math.round(basePrice * 1.3)}`,
+      averageFlightTime: flightTime,
+      bestBookingTime: `${bookingWeeks} before departure`,
+      directFlights: !isLongHaul || destination.toLowerCase().includes('major city'),
+      cheapestDays: isLongHaul ? ['Tuesday', 'Wednesday', 'Thursday'] : ['Tuesday', 'Wednesday', 'Saturday']
+    };
+  };
+  
+  const routeData = getRouteData(params.origin, params.destination);
+  
   return {
-    cheapestDays: ['Tuesday', 'Wednesday', 'Thursday'],
-    bestBookingTime: '6-8 weeks before departure',
-    priceRange: '$400 - $800',
-    directFlights: true,
-    averageFlightTime: '8h 30m'
+    cheapestDays: routeData.cheapestDays,
+    bestBookingTime: routeData.bestBookingTime,
+    priceRange: routeData.priceRange,
+    directFlights: routeData.directFlights,
+    averageFlightTime: routeData.averageFlightTime
   };
 };
