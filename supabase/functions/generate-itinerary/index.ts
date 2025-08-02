@@ -422,13 +422,44 @@ Return ONLY valid JSON. Do not include any text before or after the JSON object.
     // Parse the JSON response from Claude
     let parsedItinerary;
     try {
-      // Clean the response in case Claude added any extra text
-      const jsonStart = rawItinerary.indexOf('{');
-      const jsonEnd = rawItinerary.lastIndexOf('}') + 1;
-      const cleanJson = rawItinerary.substring(jsonStart, jsonEnd);
+      // Clean the response in case Claude added any extra text or markdown
+      let cleanJson = rawItinerary;
+      
+      // Remove markdown code blocks if present
+      if (cleanJson.includes('```json')) {
+        cleanJson = cleanJson.replace(/```json\s*/, '');
+        cleanJson = cleanJson.replace(/\s*```\s*$/, '');
+      }
+      
+      // Find the JSON object
+      const jsonStart = cleanJson.indexOf('{');
+      const jsonEnd = cleanJson.lastIndexOf('}') + 1;
+      
+      if (jsonStart === -1 || jsonEnd === 0) {
+        throw new Error('No JSON object found in response');
+      }
+      
+      cleanJson = cleanJson.substring(jsonStart, jsonEnd);
+      
+      // Try to fix incomplete JSON by adding missing closing braces
+      let braceCount = 0;
+      for (let i = 0; i < cleanJson.length; i++) {
+        if (cleanJson[i] === '{') braceCount++;
+        if (cleanJson[i] === '}') braceCount--;
+      }
+      
+      // Add missing closing braces
+      while (braceCount > 0) {
+        cleanJson += '}';
+        braceCount--;
+      }
+      
       parsedItinerary = JSON.parse(cleanJson);
     } catch (parseError) {
       console.error('Failed to parse AI response as JSON:', parseError);
+      console.error('Raw response length:', rawItinerary.length);
+      console.error('Raw response preview:', rawItinerary.substring(0, 500));
+      
       // Fallback: return the raw text
       parsedItinerary = {
         destination: tripData.destinationType === 'specific' ? tripData.specificDestinations[0] : 'AI-selected',
