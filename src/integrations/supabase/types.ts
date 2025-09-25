@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      destination_history: {
+        Row: {
+          climate_type: string | null
+          continent: string | null
+          created_at: string
+          destination_category: string
+          id: string
+          suggested_at: string
+          suggested_destination: string
+          travel_style: string | null
+          user_id: string
+        }
+        Insert: {
+          climate_type?: string | null
+          continent?: string | null
+          created_at?: string
+          destination_category: string
+          id?: string
+          suggested_at?: string
+          suggested_destination: string
+          travel_style?: string | null
+          user_id: string
+        }
+        Update: {
+          climate_type?: string | null
+          continent?: string | null
+          created_at?: string
+          destination_category?: string
+          id?: string
+          suggested_at?: string
+          suggested_destination?: string
+          travel_style?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       itineraries: {
         Row: {
           content: Json

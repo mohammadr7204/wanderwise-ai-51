@@ -50,7 +50,7 @@ serve(async (req) => {
     try {
       requestBody = await req.json();
       logStep("Request body parsed", { body: requestBody });
-    } catch (parseError) {
+    } catch (parseError: any) {
       logStep("Request body parse error", { error: parseError.message });
       throw new Error("Invalid JSON in request body");
     }
@@ -78,7 +78,7 @@ serve(async (req) => {
         apiVersion: "2023-10-16" 
       });
       logStep("Stripe client initialized");
-    } catch (stripeError) {
+    } catch (stripeError: any) {
       logStep("Stripe initialization failed", { error: stripeError.message });
       throw new Error("Payment system initialization failed");
     }
@@ -123,7 +123,7 @@ serve(async (req) => {
       } else {
         logStep("No existing customer found, will create new one");
       }
-    } catch (customerError) {
+    } catch (customerError: any) {
       logStep("Error checking customer", { error: customerError.message });
       // Continue without customer ID - Stripe will create one
     }
@@ -183,7 +183,7 @@ serve(async (req) => {
         url: session.url 
       });
 
-    } catch (stripeSessionError) {
+    } catch (stripeSessionError: any) {
       logStep("Stripe session creation failed", { error: stripeSessionError.message });
       throw new Error(`Failed to create payment session: ${stripeSessionError.message}`);
     }

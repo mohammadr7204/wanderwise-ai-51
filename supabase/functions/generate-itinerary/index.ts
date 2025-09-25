@@ -108,6 +108,254 @@ async function getCurrencyExchange(baseCurrency: string = 'USD') {
   }
 }
 
+// Types for destination data
+interface DestinationOption {
+  name: string;
+  continent: string;
+  bestMonths: number[];
+  budget: string;
+  groupSize: string;
+}
+
+interface DestinationPools {
+  [category: string]: {
+    [subCategory: string]: DestinationOption[];
+  };
+}
+
+// Comprehensive destination database with variety factors
+const DESTINATION_POOLS: DestinationPools = {
+  adventure: {
+    cold: [
+      { name: 'Iceland', continent: 'Europe', bestMonths: [1,2,3,11,12], budget: 'high', groupSize: 'any' },
+      { name: 'Norway', continent: 'Europe', bestMonths: [1,2,3,11,12], budget: 'high', groupSize: 'any' },
+      { name: 'Alaska, USA', continent: 'North America', bestMonths: [1,2,3,11,12], budget: 'medium', groupSize: 'any' },
+      { name: 'Patagonia, Chile', continent: 'South America', bestMonths: [1,2,3,11,12], budget: 'medium', groupSize: 'small' },
+      { name: 'Canadian Rockies', continent: 'North America', bestMonths: [1,2,3,11,12], budget: 'medium', groupSize: 'any' }
+    ],
+    temperate: [
+      { name: 'New Zealand', continent: 'Oceania', bestMonths: [3,4,5,9,10,11], budget: 'high', groupSize: 'any' },
+      { name: 'Scotland', continent: 'Europe', bestMonths: [4,5,6,7,8,9], budget: 'medium', groupSize: 'any' },
+      { name: 'Nepal', continent: 'Asia', bestMonths: [3,4,5,9,10,11], budget: 'low', groupSize: 'small' },
+      { name: 'Peru', continent: 'South America', bestMonths: [4,5,6,7,8,9], budget: 'medium', groupSize: 'any' }
+    ],
+    hot: [
+      { name: 'Costa Rica', continent: 'Central America', bestMonths: [6,7,8], budget: 'medium', groupSize: 'any' },
+      { name: 'Jordan', continent: 'Middle East', bestMonths: [3,4,5,9,10,11], budget: 'medium', groupSize: 'any' },
+      { name: 'Madagascar', continent: 'Africa', bestMonths: [4,5,6,7,8,9], budget: 'medium', groupSize: 'small' }
+    ]
+  },
+  beach: {
+    tropical: [
+      { name: 'Maldives', continent: 'Asia', bestMonths: [1,2,3,4,11,12], budget: 'high', groupSize: 'couples' },
+      { name: 'Bali, Indonesia', continent: 'Asia', bestMonths: [4,5,6,7,8,9], budget: 'medium', groupSize: 'any' },
+      { name: 'Seychelles', continent: 'Africa', bestMonths: [4,5,6,7,8,9], budget: 'high', groupSize: 'couples' },
+      { name: 'Turks and Caicos', continent: 'Caribbean', bestMonths: [1,2,3,4,11,12], budget: 'high', groupSize: 'any' },
+      { name: 'Greek Islands', continent: 'Europe', bestMonths: [5,6,7,8,9], budget: 'medium', groupSize: 'any' },
+      { name: 'Zanzibar, Tanzania', continent: 'Africa', bestMonths: [6,7,8,9,10], budget: 'medium', groupSize: 'any' }
+    ],
+    temperate: [
+      { name: 'California Coast, USA', continent: 'North America', bestMonths: [4,5,6,7,8,9], budget: 'high', groupSize: 'any' },
+      { name: 'Portuguese Coast', continent: 'Europe', bestMonths: [5,6,7,8,9], budget: 'medium', groupSize: 'any' },
+      { name: 'Croatian Coast', continent: 'Europe', bestMonths: [5,6,7,8,9], budget: 'medium', groupSize: 'any' }
+    ]
+  },
+  cultural: {
+    ancient: [
+      { name: 'Egypt', continent: 'Africa', bestMonths: [10,11,12,1,2,3], budget: 'medium', groupSize: 'any' },
+      { name: 'Jordan', continent: 'Middle East', bestMonths: [3,4,5,9,10,11], budget: 'medium', groupSize: 'any' },
+      { name: 'Cambodia', continent: 'Asia', bestMonths: [11,12,1,2,3], budget: 'low', groupSize: 'any' },
+      { name: 'Peru', continent: 'South America', bestMonths: [4,5,6,7,8,9], budget: 'medium', groupSize: 'any' }
+    ],
+    modern: [
+      { name: 'Japan', continent: 'Asia', bestMonths: [3,4,5,9,10,11], budget: 'high', groupSize: 'any' },
+      { name: 'South Korea', continent: 'Asia', bestMonths: [3,4,5,9,10,11], budget: 'medium', groupSize: 'any' },
+      { name: 'Morocco', continent: 'Africa', bestMonths: [3,4,5,9,10,11], budget: 'medium', groupSize: 'any' },
+      { name: 'India', continent: 'Asia', bestMonths: [10,11,12,1,2,3], budget: 'low', groupSize: 'any' }
+    ]
+  },
+  city: {
+    europe: [
+      { name: 'Paris, France', continent: 'Europe', bestMonths: [4,5,6,7,8,9], budget: 'high', groupSize: 'any' },
+      { name: 'Prague, Czech Republic', continent: 'Europe', bestMonths: [4,5,6,7,8,9], budget: 'low', groupSize: 'any' },
+      { name: 'Amsterdam, Netherlands', continent: 'Europe', bestMonths: [4,5,6,7,8], budget: 'high', groupSize: 'any' },
+      { name: 'Budapest, Hungary', continent: 'Europe', bestMonths: [4,5,6,7,8,9], budget: 'low', groupSize: 'any' }
+    ],
+    asia: [
+      { name: 'Tokyo, Japan', continent: 'Asia', bestMonths: [3,4,5,9,10,11], budget: 'high', groupSize: 'any' },
+      { name: 'Singapore', continent: 'Asia', bestMonths: [1,2,3,4,11,12], budget: 'high', groupSize: 'any' },
+      { name: 'Bangkok, Thailand', continent: 'Asia', bestMonths: [11,12,1,2], budget: 'low', groupSize: 'any' },
+      { name: 'Dubai, UAE', continent: 'Middle East', bestMonths: [10,11,12,1,2,3], budget: 'high', groupSize: 'any' }
+    ],
+    americas: [
+      { name: 'New York, USA', continent: 'North America', bestMonths: [4,5,6,7,8,9], budget: 'high', groupSize: 'any' },
+      { name: 'Buenos Aires, Argentina', continent: 'South America', bestMonths: [3,4,5,9,10,11], budget: 'medium', groupSize: 'any' },
+      { name: 'Mexico City, Mexico', continent: 'North America', bestMonths: [3,4,5,9,10,11], budget: 'low', groupSize: 'any' }
+    ]
+  },
+  nature: {
+    safari: [
+      { name: 'Serengeti, Tanzania', continent: 'Africa', bestMonths: [6,7,8,9,10], budget: 'high', groupSize: 'small' },
+      { name: 'Kruger, South Africa', continent: 'Africa', bestMonths: [4,5,6,7,8,9], budget: 'medium', groupSize: 'any' },
+      { name: 'Masai Mara, Kenya', continent: 'Africa', bestMonths: [7,8,9,10], budget: 'high', groupSize: 'small' }
+    ],
+    wilderness: [
+      { name: 'Amazon Rainforest, Brazil', continent: 'South America', bestMonths: [6,7,8,9], budget: 'medium', groupSize: 'small' },
+      { name: 'Yellowstone, USA', continent: 'North America', bestMonths: [6,7,8,9], budget: 'medium', groupSize: 'any' },
+      { name: 'Galapagos Islands', continent: 'South America', bestMonths: [1,2,3,4,11,12], budget: 'high', groupSize: 'small' }
+    ]
+  },
+  budget: {
+    europe: [
+      { name: 'Portugal', continent: 'Europe', bestMonths: [4,5,6,7,8,9], budget: 'low', groupSize: 'any' },
+      { name: 'Poland', continent: 'Europe', bestMonths: [4,5,6,7,8,9], budget: 'low', groupSize: 'any' },
+      { name: 'Estonia', continent: 'Europe', bestMonths: [5,6,7,8], budget: 'low', groupSize: 'any' }
+    ],
+    asia: [
+      { name: 'Vietnam', continent: 'Asia', bestMonths: [11,12,1,2,3], budget: 'low', groupSize: 'any' },
+      { name: 'Thailand', continent: 'Asia', bestMonths: [11,12,1,2], budget: 'low', groupSize: 'any' },
+      { name: 'Nepal', continent: 'Asia', bestMonths: [3,4,5,9,10,11], budget: 'low', groupSize: 'any' }
+    ],
+    americas: [
+      { name: 'Guatemala', continent: 'Central America', bestMonths: [11,12,1,2,3,4], budget: 'low', groupSize: 'any' },
+      { name: 'Bolivia', continent: 'South America', bestMonths: [4,5,6,7,8,9], budget: 'low', groupSize: 'any' }
+    ]
+  }
+};
+
+// Smart destination selection algorithm
+async function selectOptimalDestination(tripData: any, userId: string, supabase: any, currentMonth: number): Promise<string> {
+  // Get user's recent destination history
+  const { data: history } = await supabase
+    .from('destination_history')
+    .select('*')
+    .eq('user_id', userId)
+    .order('suggested_at', { ascending: false })
+    .limit(10);
+
+  const recentCategories = history?.map((h: any) => h.destination_category) || [];
+  const recentContinents = history?.map((h: any) => h.continent) || [];
+  
+  // Determine budget level
+  const avgBudget = (tripData.budgetMin + tripData.budgetMax) / 2;
+  const budgetLevel = avgBudget < 1500 ? 'low' : avgBudget < 3000 ? 'medium' : 'high';
+  
+  // Determine group size category
+  const groupSizeCategory = tripData.groupSize <= 2 ? 'couples' : tripData.groupSize <= 4 ? 'small' : 'large';
+  
+  // Build candidate pools based on preferences
+  let candidates: any[] = [];
+  
+  // Map activity types to destination categories
+  const activityMapping: { [key: string]: string[] } = {
+    'adventure': ['adventure'],
+    'beach-relaxation': ['beach'],
+    'cultural': ['cultural'],
+    'urban-exploration': ['city'],
+    'nature-wildlife': ['nature'],
+    'culinary': ['cultural', 'city'],
+    'photography': ['nature', 'cultural'],
+    'wellness': ['beach', 'nature']
+  };
+  
+  // Get relevant destination pools
+  for (const activity of tripData.activityTypes) {
+    const categories = activityMapping[activity] || ['cultural'];
+    for (const category of categories) {
+      if (DESTINATION_POOLS[category]) {
+        Object.values(DESTINATION_POOLS[category]).forEach((pool: DestinationOption[]) => {
+          candidates.push(...pool.map(dest => ({ ...dest, category, subCategory: category })));
+        });
+      }
+    }
+  }
+  
+  // If budget-conscious, add budget destinations
+  if (budgetLevel === 'low') {
+    Object.values(DESTINATION_POOLS.budget).forEach((pool: DestinationOption[]) => {
+      candidates.push(...pool.map(dest => ({ ...dest, category: 'budget', subCategory: 'budget' })));
+    });
+  }
+  
+  // Filter candidates based on criteria
+  candidates = candidates.filter(dest => {
+    // Budget compatibility
+    if (dest.budget === 'high' && budgetLevel === 'low') return false;
+    if (dest.budget === 'low' && budgetLevel === 'high') return Math.random() < 0.3; // Sometimes include for variety
+    
+    // Group size compatibility
+    if (dest.groupSize === 'couples' && tripData.groupSize > 2) return false;
+    if (dest.groupSize === 'small' && tripData.groupSize > 6) return false;
+    
+    // Climate preferences
+    if (tripData.climatePreferences.length > 0) {
+      const climateMap: { [key: string]: string[] } = {
+        'tropical': ['tropical'],
+        'temperate': ['temperate'],
+        'cold': ['cold'],
+        'dry': ['temperate', 'hot'],
+        'humid': ['tropical']
+      };
+      
+      const destClimate = dest.subCategory || 'temperate';
+      const matchesClimate = tripData.climatePreferences.some((pref: string) => 
+        climateMap[pref]?.includes(destClimate) || destClimate.includes(pref)
+      );
+      if (!matchesClimate) return false;
+    }
+    
+    // Seasonal appropriateness
+    if (!dest.bestMonths.includes(currentMonth)) return false;
+    
+    return true;
+  });
+  
+  // Apply variety logic - avoid recent categories and continents
+  const scoredCandidates = candidates.map(dest => {
+    let score = Math.random(); // Base randomness
+    
+    // Penalize recently suggested categories
+    if (recentCategories.includes(dest.category)) score -= 0.5;
+    if (recentCategories.slice(0, 3).includes(dest.category)) score -= 0.3;
+    
+    // Penalize recently suggested continents
+    if (recentContinents.includes(dest.continent)) score -= 0.3;
+    if (recentContinents.slice(0, 2).includes(dest.continent)) score -= 0.2;
+    
+    // Boost score for perfect budget match
+    if (dest.budget === budgetLevel) score += 0.2;
+    
+    // Boost score for perfect timing (current month is optimal)
+    if (dest.bestMonths.includes(currentMonth)) score += 0.15;
+    
+    return { ...dest, score };
+  });
+  
+  // Sort by score and pick top candidate
+  scoredCandidates.sort((a, b) => b.score - a.score);
+  const selected = scoredCandidates[0];
+  
+  if (selected) {
+    // Store this selection in history
+    await supabase
+      .from('destination_history')
+      .insert({
+        user_id: userId,
+        suggested_destination: selected.name,
+        destination_category: selected.category,
+        climate_type: selected.subCategory,
+        travel_style: tripData.activityTypes[0] || 'cultural',
+        continent: selected.continent
+      });
+    
+    return selected.name;
+  }
+  
+  // Fallback to a random destination if no candidates
+  const fallbacks = ['Portugal', 'Thailand', 'Morocco', 'Costa Rica', 'Czech Republic'];
+  return fallbacks[Math.floor(Math.random() * fallbacks.length)];
+}
+
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -123,10 +371,21 @@ serve(async (req) => {
 
     console.log(`Starting AI-powered itinerary generation for trip ${tripId}`);
     
+    // Initialize Supabase client for destination selection
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabase = createClient(supabaseUrl, supabaseKey);
+    
     // Determine the destination for research
-    const targetDestination = tripData.destinationType === 'specific' && tripData.specificDestinations?.length > 0
-      ? tripData.specificDestinations[0]
-      : null;
+    let targetDestination: string | null = null;
+    
+    if (tripData.destinationType === 'specific' && tripData.specificDestinations?.length > 0) {
+      targetDestination = tripData.specificDestinations[0];
+    } else if (tripData.destinationType === 'surprise') {
+      const currentMonth = new Date().getMonth() + 1; // 1-12
+      targetDestination = await selectOptimalDestination(tripData, userId, supabase, currentMonth);
+      console.log(`AI selected surprise destination: ${targetDestination}`);
+    }
 
     // Gather real-time data in parallel
     console.log('Gathering real-time data...');
@@ -167,7 +426,7 @@ Travel Dates: ${tripData.startDate ? new Date(tripData.startDate).toLocaleDateSt
 
 **DESTINATION PREFERENCES**
 ${tripData.destinationType === 'surprise' ? 
-  'SURPRISE DESTINATION: Research and select the perfect destination based on all preferences, weather, and seasonal factors' : 
+  `SMART-SELECTED DESTINATION: ${targetDestination} - Chosen using advanced algorithms considering seasonality, user preferences, budget, and variety from past suggestions` : 
   `TARGET DESTINATIONS: ${tripData.specificDestinations.join(', ')}`
 }
 Travel Radius: ${tripData.travelRadius}
@@ -187,25 +446,25 @@ Special Requests: ${tripData.specialRequests || 'None'}
 ${realTimeData.weather ? `
 CURRENT WEATHER & FORECAST:
 - Current conditions: ${realTimeData.weather.current.weather[0].description}, ${Math.round(realTimeData.weather.current.main.temp)}°C
-- 5-day forecast: ${realTimeData.weather.forecast.map(f => 
+- 5-day forecast: ${realTimeData.weather.forecast.map((f: any) => 
   `${new Date(f.dt * 1000).toLocaleDateString()}: ${f.weather[0].description}, ${Math.round(f.main.temp)}°C`
 ).join(', ')}` : ''}
 
 ${realTimeData.attractions.length > 0 ? `
 REAL ATTRACTIONS WITH RATINGS:
-${realTimeData.attractions.map(a => 
+${realTimeData.attractions.map((a: any) => 
   `- ${a.name} (${a.rating}/5 stars) at ${a.address}${a.priceLevel ? ` - Price level: ${a.priceLevel}/4` : ''}`
 ).join('\n')}` : ''}
 
 ${realTimeData.restaurants.length > 0 ? `
 REAL RESTAURANTS WITH RATINGS:
-${realTimeData.restaurants.map(r => 
+${realTimeData.restaurants.map((r: any) => 
   `- ${r.name} (${r.rating}/5 stars) at ${r.address}${r.priceLevel ? ` - Price level: ${r.priceLevel}/4` : ''}`
 ).join('\n')}` : ''}
  
 ${realTimeData.events.length > 0 ? `
 CURRENT LOCAL EVENTS:
-${realTimeData.events.map(e => 
+${realTimeData.events.map((e: any) => 
   `- ${e.name} on ${new Date(e.startDate).toLocaleDateString()} at ${e.venue}${e.isFree ? ' (FREE)' : ''}`
 ).join('\n')}` : ''}
 
@@ -462,17 +721,13 @@ Return ONLY valid JSON. Do not include any text before or after the JSON object.
       
       // Fallback: return the raw text
       parsedItinerary = {
-        destination: tripData.destinationType === 'specific' ? tripData.specificDestinations[0] : 'AI-selected',
+        destination: tripData.destinationType === 'specific' ? tripData.specificDestinations[0] : targetDestination || 'AI-selected',
         rawContent: rawItinerary,
         error: 'Failed to parse structured response'
       };
     }
 
     // Store the complete itinerary in the database
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const supabase = createClient(supabaseUrl, supabaseKey);
-
     try {
       console.log(`Attempting to store itinerary for trip ${tripId}`);
       console.log('Itinerary content preview:', JSON.stringify(parsedItinerary).substring(0, 200) + '...');
@@ -506,7 +761,7 @@ Return ONLY valid JSON. Do not include any text before or after the JSON object.
       }
         
       console.log(`Itinerary and trip status updated successfully for trip ${tripId}`);
-    } catch (dbError) {
+    } catch (dbError: any) {
       console.error('Database storage error details:', {
         message: dbError.message,
         details: dbError.details,
@@ -520,7 +775,7 @@ Return ONLY valid JSON. Do not include any text before or after the JSON object.
     return new Response(JSON.stringify({ 
       success: true,
       itinerary: parsedItinerary,
-      destination: parsedItinerary.destination || (tripData.destinationType === 'specific' ? tripData.specificDestinations[0] : 'AI-selected'),
+      destination: parsedItinerary.destination || targetDestination || (tripData.destinationType === 'specific' ? tripData.specificDestinations[0] : 'AI-selected'),
       duration: tripDuration,
       generatedAt: new Date().toISOString(),
       realTimeDataUsed: {
@@ -532,7 +787,7 @@ Return ONLY valid JSON. Do not include any text before or after the JSON object.
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error in generate-itinerary function:', error);
     return new Response(JSON.stringify({ error: error.message }), {
       status: 500,
