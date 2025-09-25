@@ -43,3 +43,6 @@ verify_jwt = false
 
 [functions.get-emergency-data]
 verify_jwt = false
+
+[functions.get-route-optimization]
+verify_jwt = false

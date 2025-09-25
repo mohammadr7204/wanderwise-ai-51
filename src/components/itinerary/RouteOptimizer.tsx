@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
+import { supabase } from '@/integrations/supabase/client';
 import { 
   MapPin, 
   Clock, 
@@ -21,7 +22,10 @@ import {
   RefreshCw,
   Route,
   Timer,
-  Gauge
+  Gauge,
+  Car,
+  Train,
+  Footprints
 } from 'lucide-react';
 
 interface Activity {
@@ -36,6 +40,9 @@ interface Activity {
   energyRequired: 'low' | 'medium' | 'high';
   weatherDependent: boolean;
   priority: number; // 1-5, 5 being highest
+  travelTimes?: number[];
+  suggestedTimes?: string[];
+  notes?: string;
 }
 
 interface RouteOptimization {
@@ -45,6 +52,19 @@ interface RouteOptimization {
   energyDistribution: string;
   suggestions: string[];
   breaks: BreakSuggestion[];
+  transportationOptions?: TransportationOption[];
+  realTravelTimes?: boolean;
+}
+
+interface TransportationOption {
+  from: string;
+  to: string;
+  mode: 'walking' | 'transit' | 'rideshare';
+  duration?: string;
+  distance?: string;
+  estimatedCost?: string;
+  instructions?: string[];
+  note?: string;
 }
 
 interface BreakSuggestion {
@@ -52,6 +72,7 @@ interface BreakSuggestion {
   type: 'rest' | 'food' | 'bathroom';
   location: string;
   reason: string;
+  duration?: number;
 }
 
 interface RouteOptimizerProps {
@@ -191,15 +212,44 @@ const RouteOptimizer = ({ tripData, dayActivities = [] }: RouteOptimizerProps) =
     setActivities(generatedActivities);
   };
 
-  const optimizeRoute = () => {
+  const optimizeRoute = async () => {
     setLoading(true);
     
-    // Simulate route optimization algorithm
-    setTimeout(() => {
+    try {
+      const formData = tripData?.form_data || tripData?.formData || {};
+      const destinations = formData.specificDestinations || [];
+      const destination = destinations[0] || formData.destination || '';
+      const tripStartDate = new Date(formData.startDate || Date.now());
+      const tripDay = Math.ceil((Date.now() - tripStartDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+
+      const { data, error } = await supabase.functions.invoke('get-route-optimization', {
+        body: {
+          activities,
+          startTime,
+          energyLevel,
+          includeBreaks,
+          weatherBackup,
+          destination,
+          tripDay
+        }
+      });
+
+      if (error) {
+        console.error('Route optimization error:', error);
+        // Fallback to local optimization
+        const optimized = performRouteOptimization();
+        setOptimization(optimized);
+      } else {
+        setOptimization(data);
+      }
+    } catch (error) {
+      console.error('Failed to optimize route:', error);
+      // Fallback to local optimization
       const optimized = performRouteOptimization();
       setOptimization(optimized);
+    } finally {
       setLoading(false);
-    }, 2000);
+    }
   };
 
   const performRouteOptimization = (): RouteOptimization => {
@@ -570,6 +620,56 @@ const RouteOptimizer = ({ tripData, dayActivities = [] }: RouteOptimizerProps) =
                   ))}
                 </div>
               </div>
+            )}
+
+            {/* Transportation Options */}
+            {optimization.transportationOptions && optimization.transportationOptions.length > 0 && (
+              <div>
+                <h4 className="font-medium mb-3">Transportation Options</h4>
+                <div className="space-y-3">
+                  {optimization.transportationOptions.map((option, index) => (
+                    <div key={index} className="p-3 border rounded-lg">
+                      <div className="flex items-center gap-2 mb-2">
+                        {option.mode === 'walking' && <Footprints className="h-4 w-4 text-green-600" />}
+                        {option.mode === 'transit' && <Train className="h-4 w-4 text-blue-600" />}
+                        {option.mode === 'rideshare' && <Car className="h-4 w-4 text-purple-600" />}
+                        <span className="font-medium text-sm">
+                          {option.from} → {option.to}
+                        </span>
+                        <Badge variant="outline" className="text-xs">
+                          {option.mode}
+                        </Badge>
+                      </div>
+                      <div className="text-sm text-muted-foreground space-y-1">
+                        {option.duration && <p>Duration: {option.duration}</p>}
+                        {option.distance && <p>Distance: {option.distance}</p>}
+                        {option.estimatedCost && <p>Cost: {option.estimatedCost}</p>}
+                        {option.note && <p className="text-xs">{option.note}</p>}
+                        {option.instructions && option.instructions.length > 0 && (
+                          <div className="mt-2">
+                            <p className="text-xs font-medium">Instructions:</p>
+                            <ul className="text-xs space-y-1 ml-2">
+                              {option.instructions.map((instruction, i) => (
+                                <li key={i} dangerouslySetInnerHTML={{ __html: instruction }} />
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Real-time Travel Times Indicator */}
+            {optimization.realTravelTimes && (
+              <Alert>
+                <Navigation className="h-4 w-4" />
+                <AlertDescription>
+                  Route optimized with real-time travel times using Google Maps data
+                </AlertDescription>
+              </Alert>
             )}
 
             {/* Optimization Tips */}
