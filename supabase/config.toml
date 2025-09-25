@@ -31,3 +31,6 @@ verify_jwt = true
 
 [functions.search-flights]
 verify_jwt = true
+
+[functions.get-weather-forecast]
+verify_jwt = false
