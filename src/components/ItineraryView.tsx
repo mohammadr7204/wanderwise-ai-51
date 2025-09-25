@@ -7,7 +7,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useOfflineMode } from '@/hooks/useOfflineMode';
+import { useExportFeatures } from '@/hooks/useExportFeatures';
+import { useAnalytics } from '@/hooks/useAnalytics';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { LoadingSkeleton } from '@/components/ui/loading-skeleton';
+import { ErrorFallback, NetworkStatus } from '@/components/ui/error-fallback';
+import { MobileOptimizedTabs, MobileTabsList, MobileTabsTrigger, MobileTabsContent } from '@/components/ui/mobile-optimized-tabs';
+import { FeedbackCollector } from '@/components/ui/feedback-collector';
 import { 
   ArrowLeft, 
   Download, 
@@ -154,9 +161,13 @@ const ItineraryView = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { toast } = useToast();
+  const { isOnline, getOfflineTrip, getOfflineItinerary, saveForOffline } = useOfflineMode();
+  const { isExporting, generatePDF, generateCalendarFile, shareItinerary } = useExportFeatures();
+  const { trackRecommendationClicked, trackExportAction, trackFeatureUsage } = useAnalytics();
   const [trip, setTrip] = useState<Trip | null>(null);
   const [itinerary, setItinerary] = useState<Itinerary | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [activeDay, setActiveDay] = useState(1);
   const [activeTab, setActiveTab] = useState<string>("itinerary");
 
@@ -329,15 +340,31 @@ const ItineraryView = () => {
   const fetchTripAndItinerary = async () => {
     try {
       console.log('Fetching trip and itinerary for tripId:', tripId);
-      console.log('Current user:', user?.id);
-      console.log('User authenticated:', !!user);
+      
+      // Try offline first if not online
+      if (!isOnline) {
+        const offlineTrip = getOfflineTrip(tripId!);
+        const offlineItinerary = getOfflineItinerary(tripId!);
+        
+        if (offlineTrip && offlineItinerary) {
+          setTrip(offlineTrip);
+          setItinerary(offlineItinerary);
+          setLoading(false);
+          toast({
+            title: "Offline Mode",
+            description: "Viewing cached itinerary. Some features may be limited."
+          });
+          return;
+        }
+      }
       
       // Check authentication first
       const { data: { session } } = await supabase.auth.getSession();
-      console.log('Current session:', !!session);
+      if (!session) {
+        throw new Error('Authentication required');
+      }
       
       // Fetch trip details
-      console.log('Fetching trip data...');
       const { data: tripData, error: tripError } = await supabase
         .from('trips')
         .select('*')
@@ -350,98 +377,86 @@ const ItineraryView = () => {
         throw tripError;
       }
       
-      console.log('Trip data fetched successfully:', tripData);
       setTrip(tripData);
 
-      // Fetch itinerary with detailed error logging
-      console.log('Fetching itinerary data...');
+      // Fetch itinerary
       const itineraryResponse = await supabase
         .from('itineraries')
         .select('*')
         .eq('trip_id', tripId);
-        
-      console.log('Itinerary response:', itineraryResponse);
       
       if (itineraryResponse.error) {
-        console.error('Itinerary fetch error details:', {
-          message: itineraryResponse.error.message,
-          details: itineraryResponse.error.details,
-          hint: itineraryResponse.error.hint,
-          code: itineraryResponse.error.code
-        });
         throw itineraryResponse.error;
       }
       
       if (!itineraryResponse.data || itineraryResponse.data.length === 0) {
-        console.log('No itinerary found for trip:', tripId);
         throw new Error('No itinerary found for this trip');
       }
       
-      console.log('Itinerary data fetched successfully:', itineraryResponse.data[0]);
-      console.log('Itinerary content structure:', JSON.stringify(itineraryResponse.data[0].content, null, 2));
-      console.log('Content type:', typeof itineraryResponse.data[0].content);
-      console.log('Content keys:', Object.keys(itineraryResponse.data[0].content || {}));
-      
-      setItinerary({
+      const itineraryData = {
         ...itineraryResponse.data[0],
         content: itineraryResponse.data[0].content as Itinerary['content']
-      });
+      };
+      
+      setItinerary(itineraryData);
+
+      // Save for offline use
+      if (isOnline) {
+        saveForOffline({
+          trips: [tripData],
+          itineraries: [itineraryData]
+        });
+      }
 
     } catch (error: any) {
-      console.error('Detailed error information:', {
-        message: error.message,
-        details: error.details,
-        hint: error.hint,
-        code: error.code,
-        status: error.status,
-        statusText: error.statusText,
-        fullError: error
-      });
+      console.error('Error fetching data:', error);
+      const errorMessage = error?.message || "Failed to load itinerary";
+      setError(errorMessage);
       
-      let errorMessage = "Failed to load itinerary";
-      if (error.code === 'PGRST116') {
-        errorMessage = "No itinerary found for this trip";
-      } else if (error.message) {
-        errorMessage = error.message;
+      if (!isOnline) {
+        toast({
+          title: "Offline Error",
+          description: "No cached data available. Please connect to the internet.",
+          variant: "destructive"
+        });
       }
-      
-      toast({
-        title: "Error",
-        description: errorMessage,
-        variant: "destructive"
-      });
-      navigate('/dashboard');
     } finally {
       setLoading(false);
     }
   };
 
+  const retryFetch = () => {
+    setError(null);
+    setLoading(true);
+    fetchTripAndItinerary();
+  };
+
   const handleShare = async () => {
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: `${trip?.title} Itinerary`,
-          text: `Check out my travel itinerary for ${trip?.title}!`,
-          url: window.location.href
-        });
-      } catch (error) {
-        console.log('Share failed:', error);
-      }
-    } else {
-      // Fallback: copy to clipboard
-      await navigator.clipboard.writeText(window.location.href);
-      toast({
-        title: "Link Copied",
-        description: "Itinerary link copied to clipboard!"
-      });
+    if (trip) {
+      trackExportAction(trip.id, 'share');
+      await shareItinerary(trip.id, trip.title);
     }
   };
 
-  const handleDownloadPDF = () => {
-    toast({
-      title: "PDF Download",
-      description: "PDF download functionality coming soon!"
-    });
+  const handleDownloadPDF = async () => {
+    if (trip && itinerary) {
+      trackExportAction(trip.id, 'pdf');
+      await generatePDF({ trip, itinerary });
+    }
+  };
+
+  const handleDownloadCalendar = async () => {
+    if (trip && itinerary) {
+      trackExportAction(trip.id, 'calendar');
+      await generateCalendarFile({ trip, itinerary });
+    }
+  };
+
+  const handleRecommendationClick = (type: 'accommodation' | 'restaurant' | 'activity', name: string, url?: string) => {
+    trackRecommendationClicked(type, name, url);
+    if (url) {
+      window.open(url, '_blank');
+    }
   };
 
   const handleRequestRevision = () => {
@@ -491,10 +506,31 @@ const ItineraryView = () => {
     navigate(`/create-trip?edit=${tripId}`);
   };
 
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4">
+        <ErrorFallback
+          title="Failed to Load Itinerary"
+          description={error}
+          onRetry={retryFetch}
+          type="data"
+        />
+      </div>
+    );
+  }
+
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-pulse">Loading your itinerary...</div>
+      <div className="min-h-screen bg-background">
+        <NetworkStatus />
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="mb-6">
+            <LoadingSkeleton type="card" count={1} className="h-32" />
+          </div>
+          <div className="space-y-6">
+            <LoadingSkeleton type="activity" count={4} />
+          </div>
+        </div>
       </div>
     );
   }
@@ -692,7 +728,7 @@ const ItineraryView = () => {
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="itinerary" className="space-y-6">
+          <MobileTabsContent value="itinerary" className="space-y-6">
             <div className="grid lg:grid-cols-4 gap-6">
               {/* Day Navigation */}
               <div className="lg:col-span-1">
@@ -796,11 +832,11 @@ const ItineraryView = () => {
                 ))}
               </div>
             </div>
-          </TabsContent>
+          </MobileTabsContent>
 
-          <TabsContent value="routes" className="space-y-6">
+          <MobileTabsContent value="routes" className="space-y-6">
             <RouteOptimizer tripData={trip} />
-          </TabsContent>
+          </MobileTabsContent>
 
           <TabsContent value="flights" className="space-y-6">
             <FlightAnalysis tripData={trip} />
@@ -1381,18 +1417,18 @@ const ItineraryView = () => {
             <PackingList tripData={trip} />
           </TabsContent>
 
-          <TabsContent value="experiences" className="space-y-6">
+          <MobileTabsContent value="experiences" className="space-y-6">
             <LocalExperiences tripData={trip} />
-          </TabsContent>
+          </MobileTabsContent>
 
-          <TabsContent value="safety" className="space-y-6">
+          <MobileTabsContent value="safety" className="space-y-6">
             <SafetyGuide tripData={trip} />
-          </TabsContent>
+          </MobileTabsContent>
 
-          <TabsContent value="emergency" className="space-y-6">
+          <MobileTabsContent value="emergency" className="space-y-6">
             <EmergencyPlan tripData={trip} />
-          </TabsContent>
-        </Tabs>
+          </MobileTabsContent>
+        </MobileOptimizedTabs>
       </div>
     </div>
   );

@@ -6,6 +6,8 @@ import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useAnalytics } from '@/hooks/useAnalytics';
+import { ErrorFallback, NetworkStatus } from '@/components/ui/error-fallback';
 import { 
   MapPin, 
   Calendar, 
@@ -16,11 +18,11 @@ import {
 } from 'lucide-react';
 
 const GENERATION_STEPS = [
-  { id: 1, title: 'Gathering real-time data', description: 'Checking weather, attractions, and local events' },
-  { id: 2, title: 'AI research & analysis', description: 'Deep-diving into your destination with Claude Sonnet 4' },
-  { id: 3, title: 'Personalizing recommendations', description: 'Matching venues to your exact preferences' },
-  { id: 4, title: 'Optimizing logistics', description: 'Creating realistic schedules with real travel times' },
-  { id: 5, title: 'Final quality check', description: 'Ensuring everything meets your budget and needs' },
+  { id: 1, title: 'Researching flights...', description: 'Finding best flight options and prices for your dates' },
+  { id: 2, title: 'Finding restaurants...', description: 'Discovering amazing dining experiences with dietary preferences' },
+  { id: 3, title: 'Optimizing routes...', description: 'Creating efficient travel routes and realistic schedules' },
+  { id: 4, title: 'Gathering local insights', description: 'Collecting insider tips and hidden gems from locals' },
+  { id: 5, title: 'Personalizing recommendations', description: 'Matching venues to your exact preferences and budget' },
   { id: 6, title: 'Ready!', description: 'Your AI-powered itinerary is complete!' }
 ];
 
@@ -48,13 +50,16 @@ const GenerationStatus = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { toast } = useToast();
+  const { trackItineraryGenerated, trackError } = useAnalytics();
   const [trip, setTrip] = useState<Trip | null>(null);
   const [currentStep, setCurrentStep] = useState(1);
   const [progress, setProgress] = useState(0);
   const [currentFact, setCurrentFact] = useState(0);
-  const [estimatedTime, setEstimatedTime] = useState(240); // 4 minutes for real AI generation
+  const [estimatedTime, setEstimatedTime] = useState(240);
   const [isGenerating, setIsGenerating] = useState(false);
   const [currentStepDescription, setCurrentStepDescription] = useState('Initializing AI research...');
+  const [error, setError] = useState<string | null>(null);
+  const [generationStartTime, setGenerationStartTime] = useState<number | null>(null);
 
   useEffect(() => {
     if (tripId && user) {
@@ -159,14 +164,16 @@ const GenerationStatus = () => {
       if (data.status === 'completed') {
         navigate(`/trip/${tripId}/itinerary`);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching trip:', error);
+      const errorMessage = error?.message || "Failed to load trip details";
+      setError(errorMessage);
+      trackError(errorMessage, { context: 'fetch_trip', tripId });
       toast({
         title: "Error",
-        description: "Failed to load trip details",
+        description: errorMessage,
         variant: "destructive"
       });
-      navigate('/dashboard');
     }
   };
 
@@ -174,7 +181,9 @@ const GenerationStatus = () => {
     if (!trip?.form_data || isGenerating) return;
     
     setIsGenerating(true);
+    setGenerationStartTime(Date.now());
     setCurrentStepDescription('Initializing AI research with real-time data...');
+    setError(null);
     
     try {
       console.log('Starting real AI generation for trip:', tripId);
@@ -203,6 +212,10 @@ const GenerationStatus = () => {
 
       console.log('AI generation response:', data);
       
+      // Track successful generation
+      const generationDuration = generationStartTime ? Date.now() - generationStartTime : 0;
+      trackItineraryGenerated(trip.id, trip.tier, generationDuration);
+      
       // Complete progress and redirect
       setProgress(100);
       setCurrentStep(6);
@@ -212,20 +225,26 @@ const GenerationStatus = () => {
         navigate(`/trip/${tripId}/itinerary`);
       }, 2000);
       
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error in real generation:', error);
+      const errorMessage = error?.message || "Failed to generate itinerary. Please try again.";
+      setError(errorMessage);
       setIsGenerating(false);
+      trackError(errorMessage, { context: 'generation', tripId });
+      
       toast({
         title: "Generation Error",
-        description: error.message || "Failed to generate itinerary. Please try again.",
+        description: errorMessage,
         variant: "destructive"
       });
-      
-      // Fallback to dashboard after error
-      setTimeout(() => {
-        navigate('/dashboard');
-      }, 3000);
     }
+  };
+
+  const retryGeneration = () => {
+    setError(null);
+    setProgress(0);
+    setCurrentStep(1);
+    startRealGeneration();
   };
 
   const formatTime = (seconds: number) => {
@@ -233,6 +252,19 @@ const GenerationStatus = () => {
     const remainingSeconds = seconds % 60;
     return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
   };
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4">
+        <ErrorFallback
+          title="Generation Failed"
+          description={error}
+          onRetry={retryGeneration}
+          type="data"
+        />
+      </div>
+    );
+  }
 
   if (!trip) {
     return (
@@ -243,8 +275,10 @@ const GenerationStatus = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+    <>
+      <NetworkStatus />
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <div className="text-center mb-12">
           <div className="flex items-center justify-center mb-4">
             <Sparkles className="h-8 w-8 text-primary animate-pulse" />
@@ -336,8 +370,9 @@ const GenerationStatus = () => {
             </div>
           </CardContent>
         </Card>
+        </div>
       </div>
-    </div>
+    </>
   );
 };
 

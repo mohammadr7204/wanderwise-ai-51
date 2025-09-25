@@ -141,68 +141,40 @@ const AccommodationRecommendations: React.FC<AccommodationRecommendationsProps> 
                   variant="outline"
                   size="sm"
                   className="w-full"
-                  asChild
+                  onClick={() => window.open(formatBookingUrl(accommodation, 'booking'), '_blank')}
                 >
-                  <a
-                    href={formatBookingUrl(accommodation, 'booking')}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-1"
-                  >
-                    <ExternalLink className="h-3 w-3" />
-                    <div className="text-blue-600 font-semibold">Booking</div>
-                  </a>
+                  <ExternalLink className="h-3 w-3 mr-1" />
+                  <div className="text-blue-600 font-semibold">Booking</div>
                 </Button>
                 
                 <Button
                   variant="outline"
                   size="sm"
                   className="w-full"
-                  asChild
+                  onClick={() => window.open(formatBookingUrl(accommodation, 'airbnb'), '_blank')}
                 >
-                  <a
-                    href={formatBookingUrl(accommodation, 'airbnb')}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-1"
-                  >
-                    <ExternalLink className="h-3 w-3" />
-                    <div className="text-red-500 font-semibold">Airbnb</div>
-                  </a>
+                  <ExternalLink className="h-3 w-3 mr-1" />
+                  <div className="text-red-500 font-semibold">Airbnb</div>
                 </Button>
                 
                 <Button
                   variant="outline"
                   size="sm"
                   className="w-full"
-                  asChild
+                  onClick={() => window.open(formatBookingUrl(accommodation, 'hotels'), '_blank')}
                 >
-                  <a
-                    href={formatBookingUrl(accommodation, 'hotels')}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-1"
-                  >
-                    <ExternalLink className="h-3 w-3" />
-                    <div className="text-purple-600 font-semibold">Hotels.com</div>
-                  </a>
+                  <ExternalLink className="h-3 w-3 mr-1" />
+                  <div className="text-purple-600 font-semibold">Hotels.com</div>
                 </Button>
                 
                 <Button
                   variant="outline"
                   size="sm"
                   className="w-full"
-                  asChild
+                  onClick={() => window.open(formatBookingUrl(accommodation, 'expedia'), '_blank')}
                 >
-                  <a
-                    href={formatBookingUrl(accommodation, 'expedia')}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-1"
-                  >
-                    <ExternalLink className="h-3 w-3" />
-                    <div className="text-orange-600 font-semibold">Expedia</div>
-                  </a>
+                  <ExternalLink className="h-3 w-3 mr-1" />
+                  <div className="text-orange-600 font-semibold">Expedia</div>
                 </Button>
               </div>
             </CardContent>
