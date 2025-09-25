@@ -37,3 +37,9 @@ verify_jwt = false
 
 [functions.get-local-events]
 verify_jwt = false
+
+[functions.get-safety-data]
+verify_jwt = false
+
+[functions.get-emergency-data]
+verify_jwt = false

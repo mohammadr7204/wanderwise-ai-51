@@ -17,8 +17,10 @@ import {
   CreditCard,
   Camera,
   MessageSquare,
-  ExternalLink
+  ExternalLink,
+  Loader2
 } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 
 interface ScamWarning {
   id: string;
@@ -47,18 +49,61 @@ interface SafetyGuideProps {
 const SafetyGuide = ({ tripData }: SafetyGuideProps) => {
   const [scamWarnings, setScamWarnings] = useState<ScamWarning[]>([]);
   const [safetyTips, setSafetyTips] = useState<SafetyTip[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [safetyData, setSafetyData] = useState<any>(null);
 
   useEffect(() => {
-    generateSafetyContent();
+    fetchSafetyData();
   }, [tripData]);
 
-  const generateSafetyContent = () => {
+  const fetchSafetyData = async () => {
+    setLoading(true);
     const formData = tripData?.form_data || tripData?.formData || {};
     const destinations = formData.specificDestinations || [];
     const destination = destinations[0] || formData.destination || '';
-    
+
+    try {
+      const { data, error } = await supabase.functions.invoke('get-safety-data', {
+        body: {
+          destination,
+          lat: formData.lat,
+          lng: formData.lng
+        }
+      });
+
+      if (error) {
+        console.error('Error fetching safety data:', error);
+        generateFallbackContent(destination);
+      } else {
+        setSafetyData(data);
+        generateSafetyContent(data, destination);
+      }
+    } catch (error) {
+      console.error('Error fetching safety data:', error);
+      generateFallbackContent(destination);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const generateSafetyContent = (data: any, destination: string) => {
+    // Use real-time data or fallback to static content
+    const destinationScams = data?.destinationScams || [];
+    const commonScams = getCommonScams(destination);
+    const combinedScams = [...destinationScams, ...commonScams];
+
+    setScamWarnings(combinedScams);
+    setSafetyTips(getGeneralSafetyTips());
+  };
+
+  const generateFallbackContent = (destination: string) => {
+    setScamWarnings(getCommonScams(destination));
+    setSafetyTips(getGeneralSafetyTips());
+  };
+
+  const getCommonScams = (destination: string): ScamWarning[] => {
     // Common tourist scams (these are universal but we can customize based on destination)
-    const commonScams: ScamWarning[] = [
+    return [
       {
         id: 'fake-police',
         title: 'Fake Police Check',
@@ -115,68 +160,12 @@ const SafetyGuide = ({ tripData }: SafetyGuideProps) => {
         ],
         category: 'Transport',
         riskLevel: 'medium'
-      },
-      {
-        id: 'friendship-bracelet',
-        title: 'Forced Friendship Bracelet',
-        description: 'Someone ties a bracelet on your wrist "for free" then demands payment.',
-        commonPhrases: [
-          'Free bracelet for you, my friend!',
-          'I make this just for you',
-          'No money, just friendship!'
-        ],
-        politeResponse: 'No thank you, I don\'t want anything.',
-        redFlags: [
-          'Trying to touch you or tie something on',
-          'Insisting it\'s free initially',
-          'Getting aggressive when refused',
-          'Working in groups near tourist sites'
-        ],
-        category: 'Street Scam',
-        riskLevel: 'low'
-      },
-      {
-        id: 'fake-charity',
-        title: 'Fake Charity Petition',
-        description: 'Someone asks you to sign a petition while accomplices steal from you.',
-        commonPhrases: [
-          'Help deaf children, just sign here',
-          'Support our charity, one signature',
-          'Are you against helping children?'
-        ],
-        politeResponse: 'I don\'t sign things on the street. Have a good day.',
-        redFlags: [
-          'Clipboard blocking your view',
-          'Multiple people around',
-          'Emotional manipulation',
-          'Asking for personal information'
-        ],
-        category: 'Distraction',
-        riskLevel: 'medium'
-      },
-      {
-        id: 'restaurant-scam',
-        title: 'Restaurant Bill Padding',
-        description: 'Menu prices don\'t match the bill, or surprise charges appear.',
-        commonPhrases: [
-          'Cover charge is normal here',
-          'Bread and water are extra',
-          'Tourist tax on the bill'
-        ],
-        politeResponse: 'This doesn\'t match your menu. Please explain each charge.',
-        redFlags: [
-          'No prices on menu',
-          'Charges not mentioned upfront',
-          'Pressure to order specific items',
-          'Bill much higher than expected'
-        ],
-        category: 'Dining',
-        riskLevel: 'medium'
       }
     ];
+  };
 
-    // General safety tips
-    const generalSafetyTips: SafetyTip[] = [
+  const getGeneralSafetyTips = (): SafetyTip[] => {
+    return [
       {
         id: 'money-safety',
         category: 'Money & Documents',
@@ -226,9 +215,6 @@ const SafetyGuide = ({ tripData }: SafetyGuideProps) => {
         importance: 'medium'
       }
     ];
-
-    setScamWarnings(commonScams);
-    setSafetyTips(generalSafetyTips);
   };
 
   const getRiskColor = (risk: string) => {
@@ -256,11 +242,71 @@ const SafetyGuide = ({ tripData }: SafetyGuideProps) => {
   return (
     <div className="space-y-6">
       <div className="space-y-4">
-        <h2 className="text-2xl font-bold">Safety & Scam Prevention</h2>
-        <p className="text-muted-foreground">
-          Stay safe and avoid common tourist traps in {destinations[0] || formData.destination || 'your destination'}
-        </p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-2xl font-bold">Safety & Scam Prevention</h2>
+            <p className="text-muted-foreground">
+              Stay safe and avoid common tourist traps in {destinations[0] || formData.destination || 'your destination'}
+            </p>
+          </div>
+          {loading && (
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              <span className="text-sm">Loading safety data...</span>
+            </div>
+          )}
+        </div>
       </div>
+
+      {/* Real-time Travel Advisories */}
+      {safetyData?.travelAdvisories && safetyData.travelAdvisories.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-yellow-600" />
+              Current Travel Advisories
+            </CardTitle>
+            <CardDescription>
+              Official government travel advisories for your destination
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {safetyData.travelAdvisories.map((advisory: any, index: number) => (
+              <div key={index} className="p-4 border rounded-lg">
+                <div className="flex justify-between items-start mb-2">
+                  <h4 className="font-semibold">{advisory.country}</h4>
+                  <Badge variant={advisory.level > 2 ? 'destructive' : advisory.level > 1 ? 'secondary' : 'outline'}>
+                    Level {advisory.level}: {advisory.advisory}
+                  </Badge>
+                </div>
+                <ul className="space-y-1">
+                  {advisory.details?.map((detail: string, idx: number) => (
+                    <li key={idx} className="text-sm text-muted-foreground">• {detail}</li>
+                  ))}
+                </ul>
+                <p className="text-xs text-muted-foreground mt-2">
+                  Source: {advisory.source} | Updated: {new Date(advisory.updated).toLocaleDateString()}
+                </p>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Real-time Safety Alerts */}
+      {safetyData?.realtimeAlerts && safetyData.realtimeAlerts.length > 0 && (
+        <Alert className="border-orange-200 bg-orange-50">
+          <AlertTriangle className="h-4 w-4 text-orange-600" />
+          <AlertDescription className="text-orange-800">
+            <strong>Current Safety Alerts:</strong>
+            {safetyData.realtimeAlerts.map((alert: any, index: number) => (
+              <div key={index} className="mt-1">
+                <strong>{alert.title}:</strong> {alert.description}
+              </div>
+            ))}
+          </AlertDescription>
+        </Alert>
+      )}
 
       {/* Emergency Alert */}
       <Alert className="border-red-200 bg-red-50">
@@ -268,6 +314,9 @@ const SafetyGuide = ({ tripData }: SafetyGuideProps) => {
         <AlertDescription className="text-red-800">
           <strong>In case of emergency:</strong> Contact local emergency services first, then your embassy. 
           Keep emergency numbers saved in your phone and written down separately.
+          {safetyData?.emergencyNumbers && (
+            <span> Emergency: {safetyData.emergencyNumbers.emergency}</span>
+          )}
         </AlertDescription>
       </Alert>
 
@@ -331,6 +380,103 @@ const SafetyGuide = ({ tripData }: SafetyGuideProps) => {
           ))}
         </CardContent>
       </Card>
+
+      {/* Destination-Specific Safety Information */}
+      {safetyData?.safetyConcerns && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Users className="h-5 w-5 text-purple-600" />
+              Specific Safety Considerations
+            </CardTitle>
+            <CardDescription>
+              Important safety information for your destination and profile
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {safetyData.safetyConcerns.women && (
+              <div>
+                <h4 className="font-medium text-purple-700 mb-2">Women's Safety</h4>
+                <ul className="space-y-1">
+                  {safetyData.safetyConcerns.women.map((tip: string, index: number) => (
+                    <li key={index} className="text-sm flex items-start gap-2">
+                      <div className="w-2 h-2 bg-purple-500 rounded-full mt-2 flex-shrink-0"></div>
+                      <span>{tip}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            
+            {safetyData.safetyConcerns.lgbtq && (
+              <div>
+                <h4 className="font-medium text-rainbow-700 mb-2">LGBTQ+ Safety</h4>
+                <ul className="space-y-1">
+                  {safetyData.safetyConcerns.lgbtq.map((tip: string, index: number) => (
+                    <li key={index} className="text-sm flex items-start gap-2">
+                      <div className="w-2 h-2 bg-pink-500 rounded-full mt-2 flex-shrink-0"></div>
+                      <span>{tip}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Crime Data and Safe Zones */}
+      {safetyData?.crimeData && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <MapPin className="h-5 w-5 text-blue-600" />
+              Local Crime Information
+            </CardTitle>
+            <CardDescription>
+              Crime statistics and safe areas for your destination
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid md:grid-cols-2 gap-6">
+              <div>
+                <h4 className="font-medium text-green-700 mb-2">Safest Areas</h4>
+                <ul className="space-y-1">
+                  {safetyData.crimeData.safestDistricts?.map((area: string, index: number) => (
+                    <li key={index} className="text-sm flex items-start gap-2">
+                      <div className="w-2 h-2 bg-green-500 rounded-full mt-2 flex-shrink-0"></div>
+                      <span>{area}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              
+              <div>
+                <h4 className="font-medium text-red-700 mb-2">Areas to Avoid</h4>
+                <ul className="space-y-1">
+                  {safetyData.crimeData.riskyAreas?.map((area: string, index: number) => (
+                    <li key={index} className="text-sm flex items-start gap-2">
+                      <div className="w-2 h-2 bg-red-500 rounded-full mt-2 flex-shrink-0"></div>
+                      <span>{area}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+            
+            <div>
+              <h4 className="font-medium text-orange-700 mb-2">Common Crimes in This Area</h4>
+              <div className="flex flex-wrap gap-2">
+                {safetyData.crimeData.commonCrimes?.map((crime: string, index: number) => (
+                  <Badge key={index} variant="outline" className="text-xs">
+                    {crime}
+                  </Badge>
+                ))}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Safety Tips by Category */}
       {categories.map((category) => {
