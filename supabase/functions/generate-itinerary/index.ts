@@ -414,6 +414,107 @@ serve(async (req) => {
       hasExchangeRates: !!realTimeData.exchangeRates
     });
 
+    // Destination cost indexes (relative to base cost of 1.0)
+    const DESTINATION_COST_INDEX: { [key: string]: number } = {
+      // Expensive destinations (1.5x - 2.0x)
+      'Tokyo': 1.8, 'Japan': 1.8, 'Switzerland': 1.9, 'Norway': 1.8, 'Iceland': 1.7,
+      'Singapore': 1.6, 'Paris': 1.5, 'London': 1.6, 'New York': 1.7, 'Dubai': 1.5,
+      'Sydney': 1.6, 'Hong Kong': 1.6, 'Monaco': 2.0, 'Zurich': 1.9, 'Oslo': 1.8,
+      'Copenhagen': 1.7, 'Stockholm': 1.6, 'San Francisco': 1.8, 'Los Angeles': 1.5,
+      
+      // Moderate destinations (0.8x - 1.4x)
+      'Barcelona': 1.2, 'Rome': 1.3, 'Amsterdam': 1.4, 'Berlin': 1.1, 'Prague': 0.9,
+      'Seoul': 1.2, 'Taiwan': 1.0, 'China': 0.8, 'South Korea': 1.2, 'Costa Rica': 1.1,
+      'Chile': 1.0, 'Argentina': 0.9, 'Greece': 1.1, 'Portugal': 0.9, 'Spain': 1.1,
+      'Italy': 1.2, 'Germany': 1.2, 'Austria': 1.3, 'Czech Republic': 0.9, 'Croatia': 1.0,
+      
+      // Budget destinations (0.3x - 0.7x)
+      'Thailand': 0.5, 'Vietnam': 0.4, 'India': 0.3, 'Nepal': 0.4, 'Cambodia': 0.4,
+      'Bangladesh': 0.3, 'Laos': 0.4, 'Bolivia': 0.5, 'Guatemala': 0.5, 'Peru': 0.6,
+      'Mexico': 0.6, 'Egypt': 0.5, 'Morocco': 0.5, 'Indonesia': 0.5, 'Philippines': 0.5,
+      'Turkey': 0.6, 'Poland': 0.7, 'Hungary': 0.7, 'Romania': 0.6, 'Bulgaria': 0.5,
+      'Sri Lanka': 0.4, 'Pakistan': 0.3, 'Myanmar': 0.4, 'Madagascar': 0.5
+    };
+
+    // Calculate dynamic budget breakdown
+    function calculateDynamicBudget(destination: string | null, totalBudget: number, duration: number, groupSize: number): any {
+      if (!destination) destination = 'Unknown';
+      
+      const directMatch = DESTINATION_COST_INDEX[destination];
+      const partialMatch = Object.keys(DESTINATION_COST_INDEX).find(key => 
+        destination.toLowerCase().includes(key.toLowerCase())
+      );
+      const costMultiplier = directMatch || (partialMatch ? DESTINATION_COST_INDEX[partialMatch] : 1.0);
+      
+      const dailyBudget = totalBudget / duration;
+      
+      // Base allocation percentages based on budget range
+      let allocations;
+      if (totalBudget < 1000) {
+        allocations = { accommodation: 0.40, food: 0.30, activities: 0.20, transport: 0.10 };
+      } else if (totalBudget <= 3000) {
+        allocations = { accommodation: 0.35, food: 0.25, activities: 0.30, transport: 0.10 };
+      } else {
+        allocations = { accommodation: 0.30, food: 0.25, activities: 0.35, transport: 0.10 };
+      }
+      
+      // Adjust for trip duration (longer trips need more accommodation allocation)
+      if (duration > 10) {
+        allocations.accommodation += 0.05;
+        allocations.activities -= 0.05;
+      }
+      
+      // Adjust for group size (larger groups can share accommodation costs)
+      if (groupSize > 4) {
+        allocations.accommodation -= 0.05;
+        allocations.activities += 0.05;
+      }
+      
+      // Apply destination cost multiplier
+      const accommodationDaily = Math.round(dailyBudget * allocations.accommodation * costMultiplier);
+      const foodDaily = Math.round(dailyBudget * allocations.food * costMultiplier);
+      const activitiesDaily = Math.round(dailyBudget * allocations.activities * costMultiplier);
+      const transportTotal = Math.round(totalBudget * allocations.transport * costMultiplier);
+      
+      // Emergency fund calculation (5-10% based on destination risk)
+      const riskMultiplier = costMultiplier > 1.5 ? 0.10 : costMultiplier < 0.7 ? 0.05 : 0.08;
+      const emergencyFund = Math.round(totalBudget * riskMultiplier);
+      
+      // Splurge recommendations (10% budget stretch)
+      const splurgeAmount = Math.round(totalBudget * 0.10);
+      
+      return {
+        accommodationDaily,
+        foodDaily,
+        activitiesDaily,
+        transportTotal,
+        emergencyFund,
+        splurgeAmount,
+        costMultiplier,
+        allocations,
+        tripTotal: Math.round(accommodationDaily * duration + foodDaily * duration + activitiesDaily * duration + transportTotal)
+      };
+    }
+
+    const avgBudget = (tripData.budgetMin + tripData.budgetMax) / 2;
+    const budgetCalculation = calculateDynamicBudget(targetDestination, avgBudget, tripDuration, tripData.groupSize);
+
+    // Smart budget optimization recommendations
+    const budgetOptimizationTips = [];
+    if (avgBudget < 1500) {
+      budgetOptimizationTips.push(
+        "Focus on budget accommodations (hostels, guesthouses) to maximize activity funds",
+        "Use local transport and street food to save money",
+        "Look for free walking tours and public spaces"
+      );
+    } else if (avgBudget > 3000) {
+      budgetOptimizationTips.push(
+        "Consider upgrading accommodation for comfort",
+        "Include unique premium experiences",
+        "Budget for occasional fine dining experiences"
+      );
+    }
+
     // Create an enhanced AI prompt with real-time data integration
     const prompt = `Create a comprehensive ${tripDuration}-day travel itinerary using REAL-TIME DATA and deep personalization:
 
@@ -423,6 +524,24 @@ Duration: ${tripDuration} days
 Travelers: ${tripData.groupSize} people
 Budget: $${tripData.budgetMin.toLocaleString()} - $${tripData.budgetMax.toLocaleString()}
 Travel Dates: ${tripData.startDate ? new Date(tripData.startDate).toLocaleDateString() : 'Flexible'} to ${tripData.endDate ? new Date(tripData.endDate).toLocaleDateString() : 'Flexible'}
+
+**DESTINATION COST ANALYSIS FOR ${(targetDestination || 'Unknown Destination').toUpperCase()}**
+Cost Multiplier: ${budgetCalculation.costMultiplier}x (1.0 = global average)
+${budgetCalculation.costMultiplier > 1.5 ? '⚠️ HIGH COST DESTINATION - Budget carefully' : ''}
+${budgetCalculation.costMultiplier < 0.7 ? '💰 BUDGET-FRIENDLY DESTINATION - Great value for money' : ''}
+
+**DYNAMIC BUDGET BREAKDOWN**
+- Accommodation: $${budgetCalculation.accommodationDaily}/day (${Math.round(budgetCalculation.allocations.accommodation * 100)}% of budget)
+- Food & Dining: $${budgetCalculation.foodDaily}/day (${Math.round(budgetCalculation.allocations.food * 100)}% of budget)
+- Activities & Experiences: $${budgetCalculation.activitiesDaily}/day (${Math.round(budgetCalculation.allocations.activities * 100)}% of budget)
+- Transportation: $${budgetCalculation.transportTotal} total (${Math.round(budgetCalculation.allocations.transport * 100)}% of budget)
+- Emergency Fund: $${budgetCalculation.emergencyFund} (recommended safety buffer)
+- Splurge Budget: $${budgetCalculation.splurgeAmount} (10% stretch for special experiences)
+
+**BUDGET OPTIMIZATION STRATEGY**
+${budgetOptimizationTips.map(tip => `- ${tip}`).join('\n')}
+${budgetCalculation.costMultiplier > 1.3 ? '- Consider staying slightly outside city center for better accommodation value\n- Mix expensive experiences with free/low-cost activities' : ''}
+${budgetCalculation.costMultiplier < 0.8 ? '- Take advantage of low costs to upgrade experiences\n- Try multiple local cuisines and premium activities' : ''}
 
 **DESTINATION PREFERENCES**
 ${tripData.destinationType === 'surprise' ? 
@@ -581,14 +700,23 @@ Return a detailed JSON object with:
        ]
      }
    ],
-  "budgetBreakdown": {
-    "accommodation": "$X per night",
-    "meals": "$X per day",
-    "activities": "$X per day",
-    "transportation": "$X total",
-    "dailyTotal": "$X",
-    "tripTotal": "$X"
-  },
+   "budgetBreakdown": {
+     "accommodation": "$${budgetCalculation.accommodationDaily} per day",
+     "meals": "$${budgetCalculation.foodDaily} per day", 
+     "activities": "$${budgetCalculation.activitiesDaily} per day",
+     "transportation": "$${budgetCalculation.transportTotal} total",
+     "emergencyFund": "$${budgetCalculation.emergencyFund}",
+     "splurgeRecommendations": "$${budgetCalculation.splurgeAmount}",
+     "dailyTotal": "$${budgetCalculation.accommodationDaily + budgetCalculation.foodDaily + budgetCalculation.activitiesDaily}",
+     "tripTotal": "$${budgetCalculation.tripTotal}",
+     "costMultiplier": "${budgetCalculation.costMultiplier}x",
+     "budgetOptimization": {
+       "prioritizeActivities": ${avgBudget < 1500 ? '"Choose budget accommodations to maximize activity funds"' : '"Balance comfort with experiences"'},
+       "prioritizeComfort": ${avgBudget > 3000 ? '"Upgrade accommodations and include premium experiences"' : '"Focus on value for money options"'},
+       "localSavings": "Use local transport, eat at local establishments, look for free activities",
+       "splurgeWorthy": "Reserve splurge budget for unique destination-specific experiences"
+     }
+   },
    "insiderTips": [
      {
        "category": "Local Knowledge",
