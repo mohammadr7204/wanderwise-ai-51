@@ -46,3 +46,6 @@ verify_jwt = false
 
 [functions.get-route-optimization]
 verify_jwt = false
+
+[functions.generate-accommodation-recommendations]
+verify_jwt = false
