@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Separator } from '@/components/ui/separator';
+import { Skeleton } from '@/components/ui/skeleton';
 import { 
   Luggage, 
   Shirt, 
@@ -16,8 +17,22 @@ import {
   Download,
   Check,
   X,
-  Package
+  Package,
+  MapPin,
+  Calendar,
+  Users,
+  Thermometer,
+  CloudRain,
+  Shield,
+  Zap,
+  Camera,
+  Plane,
+  Heart,
+  AlertTriangle
 } from 'lucide-react';
+import { WeatherService, WeatherData } from '@/services/weatherService';
+import { DestinationIntelligence } from '@/services/destinationIntelligence';
+import { SmartPackingCalculator, TripContext } from '@/services/smartPackingCalculator';
 
 interface PackingItem {
   id: string;
@@ -27,6 +42,10 @@ interface PackingItem {
   weatherDependent: boolean;
   activitySpecific?: string;
   checked: boolean;
+  quantity?: number;
+  size?: string;
+  reason?: string;
+  shareableInGroup?: boolean;
 }
 
 interface PackingListProps {
@@ -36,86 +55,169 @@ interface PackingListProps {
 const PackingList = ({ tripData }: PackingListProps) => {
   const [packingItems, setPackingItems] = useState<PackingItem[]>([]);
   const [checkedItems, setCheckedItems] = useState<Set<string>>(new Set());
+  const [weatherData, setWeatherData] = useState<WeatherData | null>(null);
+  const [isLoadingWeather, setIsLoadingWeather] = useState(true);
+  const [tripContext, setTripContext] = useState<TripContext | null>(null);
 
   useEffect(() => {
-    generatePackingList();
+    if (tripData) {
+      initializeTrip();
+    }
   }, [tripData]);
 
-  const generatePackingList = () => {
-    const duration = getDuration();
+  const initializeTrip = async () => {
+    setIsLoadingWeather(true);
+    
+    // Set up trip context
+    const context: TripContext = {
+      duration: getDuration(),
+      groupSize: tripData?.formData?.groupSize || 1,
+      accommodationType: tripData?.formData?.accommodationType || 'hotel',
+      transportType: tripData?.formData?.transportType || 'carry-on',
+      laundryAvailable: tripData?.formData?.accommodationType !== 'camping',
+      budget: tripData?.formData?.budgetRange || 'mid-range'
+    };
+    setTripContext(context);
+
+    // Fetch weather data
+    const destination = tripData?.formData?.destination || '';
+    const startDate = tripData?.formData?.startDate;
+    const endDate = tripData?.formData?.endDate;
+    
+    if (destination && startDate && endDate) {
+      try {
+        const weather = await WeatherService.getWeatherForecast(destination, startDate, endDate);
+        setWeatherData(weather);
+      } catch (error) {
+        console.error('Failed to fetch weather:', error);
+      }
+    }
+    
+    setIsLoadingWeather(false);
+    generateSmartPackingList(context);
+  };
+
+  const generateSmartPackingList = (context: TripContext) => {
     const destination = tripData?.formData?.destination || '';
     const activities = tripData?.formData?.interests || [];
-    const climate = getClimateFromDestination(destination);
+    
+    // Get destination intelligence
+    const countryInfo = DestinationIntelligence.getCountryInfo(destination);
+    
+    // Base clothing calculations
+    const clothingQuantities = SmartPackingCalculator.calculateClothingQuantities(
+      context.duration, 
+      context.laundryAvailable
+    );
+    
+    // Toiletry size calculations
+    const toiletryQuantities = SmartPackingCalculator.calculateToiletrySizes(
+      context.duration,
+      context.transportType
+    );
 
     const baseItems: PackingItem[] = [
-      // Clothing
-      { id: 'underwear', name: `Underwear (${duration + 2} pairs)`, category: 'Clothing', essential: true, weatherDependent: false, checked: false },
-      { id: 'socks', name: `Socks (${duration + 2} pairs)`, category: 'Clothing', essential: true, weatherDependent: false, checked: false },
-      { id: 'shirts', name: `T-shirts/Shirts (${Math.ceil(duration / 2)} pieces)`, category: 'Clothing', essential: true, weatherDependent: false, checked: false },
-      { id: 'pants', name: `Pants/Trousers (${Math.ceil(duration / 3)} pairs)`, category: 'Clothing', essential: true, weatherDependent: false, checked: false },
-      { id: 'sleepwear', name: 'Pajamas/Sleepwear', category: 'Clothing', essential: true, weatherDependent: false, checked: false },
+      // Smart clothing quantities
+      ...clothingQuantities.map(item => ({
+        id: item.item.toLowerCase().replace(/[^a-z0-9]/g, '-'),
+        name: `${item.item} (${item.quantity} ${item.quantity === 1 ? 'piece' : 'pieces'})`,
+        category: 'Clothing',
+        essential: true,
+        weatherDependent: false,
+        checked: false,
+        quantity: item.quantity,
+        reason: item.reason,
+        shareableInGroup: item.shareableInGroup
+      })),
       
-      // Documents
+      // Smart toiletry sizes
+      ...toiletryQuantities.map(item => ({
+        id: item.item.toLowerCase().replace(/[^a-z0-9]/g, '-'),
+        name: `${item.item} ${item.size ? `(${item.size})` : ''}`,
+        category: 'Personal Care',
+        essential: true,
+        weatherDependent: false,
+        checked: false,
+        size: item.size,
+        reason: item.reason,
+        shareableInGroup: item.shareableInGroup
+      })),
+      
+      // Essential documents
       { id: 'passport', name: 'Passport', category: 'Documents', essential: true, weatherDependent: false, checked: false },
       { id: 'id', name: 'Driver\'s License/ID', category: 'Documents', essential: true, weatherDependent: false, checked: false },
       { id: 'tickets', name: 'Flight Tickets/Boarding Passes', category: 'Documents', essential: true, weatherDependent: false, checked: false },
       { id: 'insurance', name: 'Travel Insurance Documents', category: 'Documents', essential: true, weatherDependent: false, checked: false },
-      { id: 'itinerary', name: 'Hotel Confirmations', category: 'Documents', essential: true, weatherDependent: false, checked: false },
+      { id: 'accommodations', name: 'Hotel/Accommodation Confirmations', category: 'Documents', essential: true, weatherDependent: false, checked: false },
       
-      // Electronics
+      // Electronics with power adapter specifics
       { id: 'phone', name: 'Smartphone', category: 'Electronics', essential: true, weatherDependent: false, checked: false },
       { id: 'charger', name: 'Phone Charger', category: 'Electronics', essential: true, weatherDependent: false, checked: false },
-      { id: 'adapter', name: 'Power Adapter/Converter', category: 'Electronics', essential: true, weatherDependent: false, checked: false },
+      { 
+        id: 'power-adapter', 
+        name: countryInfo ? `Power Adapter (Type ${countryInfo.powerPlugType.join('/')})` : 'Power Adapter', 
+        category: 'Electronics', 
+        essential: true, 
+        weatherDependent: false, 
+        checked: false,
+        reason: countryInfo ? `Required for ${countryInfo.voltage} outlets` : 'For charging devices'
+      },
       { id: 'powerbank', name: 'Portable Charger', category: 'Electronics', essential: false, weatherDependent: false, checked: false },
       
-      // Personal Care
-      { id: 'toothbrush', name: 'Toothbrush', category: 'Personal Care', essential: true, weatherDependent: false, checked: false },
-      { id: 'toothpaste', name: 'Toothpaste (travel size)', category: 'Personal Care', essential: true, weatherDependent: false, checked: false },
-      { id: 'shampoo', name: 'Shampoo (travel size)', category: 'Personal Care', essential: true, weatherDependent: false, checked: false },
-      { id: 'soap', name: 'Body Wash/Soap', category: 'Personal Care', essential: true, weatherDependent: false, checked: false },
-      { id: 'medications', name: 'Prescription Medications', category: 'Personal Care', essential: true, weatherDependent: false, checked: false },
-      
-      // Weather-specific items
-      ...(climate === 'warm' ? [
-        { id: 'sunscreen', name: 'Sunscreen (SPF 30+)', category: 'Weather Items', essential: true, weatherDependent: true, checked: false },
-        { id: 'hat', name: 'Sun Hat/Cap', category: 'Weather Items', essential: false, weatherDependent: true, checked: false },
-        { id: 'sunglasses', name: 'Sunglasses', category: 'Weather Items', essential: false, weatherDependent: true, checked: false },
-        { id: 'swimwear', name: 'Swimwear', category: 'Weather Items', essential: false, weatherDependent: true, checked: false },
-      ] : []),
-      
-      ...(climate === 'cold' ? [
-        { id: 'jacket', name: 'Warm Jacket/Coat', category: 'Weather Items', essential: true, weatherDependent: true, checked: false },
-        { id: 'scarf', name: 'Scarf', category: 'Weather Items', essential: false, weatherDependent: true, checked: false },
-        { id: 'gloves', name: 'Gloves', category: 'Weather Items', essential: false, weatherDependent: true, checked: false },
-        { id: 'thermals', name: 'Thermal Underwear', category: 'Weather Items', essential: false, weatherDependent: true, checked: false },
-      ] : []),
-      
-      ...(climate === 'rainy' ? [
-        { id: 'raincoat', name: 'Rain Jacket/Poncho', category: 'Weather Items', essential: true, weatherDependent: true, checked: false },
-        { id: 'umbrella', name: 'Compact Umbrella', category: 'Weather Items', essential: false, weatherDependent: true, checked: false },
-        { id: 'waterproof', name: 'Waterproof Shoes', category: 'Weather Items', essential: false, weatherDependent: true, checked: false },
-      ] : []),
+      // Basic health items
+      { id: 'medications', name: 'Prescription Medications', category: 'Health', essential: true, weatherDependent: false, checked: false },
+      { id: 'first-aid', name: 'Basic First Aid Kit', category: 'Health', essential: false, weatherDependent: false, checked: false, shareableInGroup: true }
     ];
 
-    // Add activity-specific items
-    const activityItems: PackingItem[] = [];
-    if (activities.includes('hiking') || activities.includes('adventure')) {
-      activityItems.push(
-        { id: 'hiking-boots', name: 'Hiking Boots', category: 'Activity Gear', essential: false, weatherDependent: false, activitySpecific: 'hiking', checked: false },
-        { id: 'backpack', name: 'Day Backpack', category: 'Activity Gear', essential: false, weatherDependent: false, activitySpecific: 'hiking', checked: false },
-        { id: 'water-bottle', name: 'Water Bottle', category: 'Activity Gear', essential: false, weatherDependent: false, activitySpecific: 'hiking', checked: false }
-      );
-    }
-    
-    if (activities.includes('business')) {
-      activityItems.push(
-        { id: 'business-attire', name: 'Business Suit/Formal Wear', category: 'Activity Gear', essential: true, weatherDependent: false, activitySpecific: 'business', checked: false },
-        { id: 'dress-shoes', name: 'Dress Shoes', category: 'Activity Gear', essential: true, weatherDependent: false, activitySpecific: 'business', checked: false },
-        { id: 'laptop', name: 'Laptop', category: 'Activity Gear', essential: true, weatherDependent: false, activitySpecific: 'business', checked: false }
-      );
+    let allItems = [...baseItems];
+
+    // Add weather-based items if weather data is available
+    if (weatherData?.forecast) {
+      const weatherAnalysis = WeatherService.analyzeWeatherForPacking(weatherData.forecast);
+      const weatherItems = WeatherService.generateWeatherBasedItems(weatherAnalysis);
+      
+      allItems.push(...weatherItems.map(item => ({
+        id: item.id,
+        name: item.name,
+        category: item.category,
+        essential: item.essential,
+        weatherDependent: true,
+        checked: false,
+        reason: item.reason
+      })));
     }
 
-    setPackingItems([...baseItems, ...activityItems]);
+    // Add destination-specific items
+    if (countryInfo) {
+      const destinationItems = DestinationIntelligence.generateDestinationSpecificItems(countryInfo);
+      allItems.push(...destinationItems.map(item => ({
+        id: item.id,
+        name: item.name,
+        category: item.category,
+        essential: item.essential,
+        weatherDependent: false,
+        checked: false,
+        reason: item.reason
+      })));
+    }
+
+    // Add activity-specific items
+    if (activities.length > 0) {
+      const activityRequirements = DestinationIntelligence.getActivityRequirements(activities);
+      activityRequirements.forEach((requirement, index) => {
+        allItems.push({
+          id: `activity-${index}`,
+          name: requirement,
+          category: 'Activity Gear',
+          essential: false,
+          weatherDependent: false,
+          activitySpecific: activities.join(', '),
+          checked: false
+        });
+      });
+    }
+
+    setPackingItems(allItems);
   };
 
   const getDuration = () => {
@@ -125,58 +227,6 @@ const PackingList = ({ tripData }: PackingListProps) => {
       return Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
     }
     return 7;
-  };
-
-  const getClimateFromDestination = (destination: string): string => {
-    const dest = destination.toLowerCase();
-    
-    // Tropical/warm destinations
-    if (dest.includes('tropical') || dest.includes('beach') || dest.includes('hawaii') || 
-        dest.includes('thailand') || dest.includes('bali') || dest.includes('caribbean') ||
-        dest.includes('maldives') || dest.includes('seychelles') || dest.includes('fiji') ||
-        dest.includes('costa rica') || dest.includes('mexico') || dest.includes('bahamas') ||
-        dest.includes('bermuda') || dest.includes('florida') || dest.includes('miami') ||
-        dest.includes('phoenix') || dest.includes('las vegas') || dest.includes('dubai') ||
-        dest.includes('singapore') || dest.includes('malaysia') || dest.includes('indonesia') ||
-        dest.includes('philippines') || dest.includes('india') || dest.includes('sri lanka') ||
-        dest.includes('vietnam') || dest.includes('cambodia') || dest.includes('laos')) {
-      return 'warm';
-    }
-    
-    // Cold destinations
-    if (dest.includes('cold') || dest.includes('winter') || dest.includes('snow') || 
-        dest.includes('iceland') || dest.includes('greenland') || dest.includes('alaska') ||
-        dest.includes('norway') || dest.includes('sweden') || dest.includes('finland') ||
-        dest.includes('denmark') || dest.includes('siberia') || dest.includes('antarctica') ||
-        dest.includes('patagonia') || dest.includes('himalaya') || dest.includes('tibet') ||
-        dest.includes('mongolia') || dest.includes('canada') || dest.includes('russia') ||
-        dest.includes('poland') || dest.includes('estonia') || dest.includes('latvia') ||
-        dest.includes('lithuania') || dest.includes('belarus') || dest.includes('ukraine')) {
-      return 'cold';
-    }
-    
-    // Rainy destinations
-    if (dest.includes('rain') || dest.includes('monsoon') || dest.includes('seattle') ||
-        dest.includes('london') || dest.includes('ireland') || dest.includes('scotland') ||
-        dest.includes('vancouver') || dest.includes('portland') || dest.includes('amsterdam') ||
-        dest.includes('belgium') || dest.includes('bangladesh') || dest.includes('mumbai') ||
-        dest.includes('kolkata') || dest.includes('kerala') || dest.includes('goa') ||
-        dest.includes('sri lanka') || dest.includes('myanmar') || dest.includes('colombia') ||
-        dest.includes('ecuador') || dest.includes('peru') || dest.includes('chile') ||
-        dest.includes('new zealand') || dest.includes('tasmania')) {
-      return 'rainy';
-    }
-    
-    // Mediterranean climate
-    if (dest.includes('mediterranean') || dest.includes('spain') || dest.includes('italy') ||
-        dest.includes('greece') || dest.includes('turkey') || dest.includes('portugal') ||
-        dest.includes('southern france') || dest.includes('california') || dest.includes('australia') ||
-        dest.includes('south africa') || dest.includes('chile') || dest.includes('morocco') ||
-        dest.includes('tunisia') || dest.includes('cyprus') || dest.includes('malta')) {
-      return 'warm';
-    }
-    
-    return 'temperate';
   };
 
   const toggleItem = (itemId: string) => {
@@ -229,7 +279,12 @@ const PackingList = ({ tripData }: PackingListProps) => {
       case 'Electronics': return <Smartphone className="h-4 w-4" />;
       case 'Documents': return <FileText className="h-4 w-4" />;
       case 'Personal Care': return <Droplets className="h-4 w-4" />;
-      case 'Weather Items': return <Sun className="h-4 w-4" />;
+      case 'Health': return <Heart className="h-4 w-4" />;
+      case 'Weather Protection': return <CloudRain className="h-4 w-4" />;
+      case 'Cold Weather': return <Snowflake className="h-4 w-4" />;
+      case 'Sun Protection': return <Sun className="h-4 w-4" />;
+      case 'Heat Management': return <Thermometer className="h-4 w-4" />;
+      case 'Cultural Requirements': return <Heart className="h-4 w-4" />;
       case 'Activity Gear': return <Package className="h-4 w-4" />;
       default: return <Luggage className="h-4 w-4" />;
     }
@@ -237,13 +292,69 @@ const PackingList = ({ tripData }: PackingListProps) => {
 
   const categories = [...new Set(packingItems.map(item => item.category))];
 
+  if (isLoadingWeather) {
+    return (
+      <div className="space-y-6">
+        <div className="space-y-4">
+          <h2 className="text-2xl font-bold">Smart Packing List</h2>
+          <p className="text-muted-foreground">
+            Analyzing weather and destination data...
+          </p>
+        </div>
+        <div className="grid gap-4">
+          {[1, 2, 3].map(i => (
+            <Card key={i}>
+              <CardHeader>
+                <Skeleton className="h-6 w-32" />
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {[1, 2, 3, 4].map(j => (
+                    <Skeleton key={j} className="h-12 w-full" />
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div className="space-y-4">
-        <h2 className="text-2xl font-bold">Smart Packing List</h2>
-        <p className="text-muted-foreground">
-          Optimized for carry-on travel to {tripData?.formData?.destination || 'your destination'}
-        </p>
+        <h2 className="text-2xl font-bold flex items-center gap-2">
+          <Luggage className="h-6 w-6 text-primary" />
+          AI-Powered Packing List
+        </h2>
+        <div className="grid md:grid-cols-3 gap-4 text-sm">
+          <div className="flex items-center gap-2">
+            <MapPin className="h-4 w-4 text-muted-foreground" />
+            <span>{tripData?.formData?.destination || 'Unknown destination'}</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <Calendar className="h-4 w-4 text-muted-foreground" />
+            <span>{getDuration()} days</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <Users className="h-4 w-4 text-muted-foreground" />
+            <span>{tripContext?.groupSize || 1} {tripContext?.groupSize === 1 ? 'traveler' : 'travelers'}</span>
+          </div>
+        </div>
+        {weatherData && (
+          <div className="bg-muted/50 rounded-lg p-4">
+            <h3 className="font-medium mb-2 flex items-center gap-2">
+              <Thermometer className="h-4 w-4" />
+              Weather Forecast
+            </h3>
+            <div className="grid md:grid-cols-3 gap-4 text-sm">
+              <div>Temperature: {Math.min(...weatherData.forecast.map(f => f.temperature.min))}°C to {Math.max(...weatherData.forecast.map(f => f.temperature.max))}°C</div>
+              <div>Rain chance: {Math.max(...weatherData.forecast.map(f => f.precipitation.probability))}%</div>
+              <div>Location: {weatherData.location}</div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Packing Progress */}
@@ -307,7 +418,7 @@ const PackingList = ({ tripData }: PackingListProps) => {
                       >
                         {item.name}
                       </label>
-                      <div className="flex items-center gap-2 mt-1">
+                      <div className="flex items-center gap-2 mt-1 flex-wrap">
                         {item.essential && (
                           <Badge variant="destructive" className="text-xs">
                             Essential
@@ -315,6 +426,7 @@ const PackingList = ({ tripData }: PackingListProps) => {
                         )}
                         {item.weatherDependent && (
                           <Badge variant="outline" className="text-xs">
+                            <CloudRain className="h-3 w-3 mr-1" />
                             Weather
                           </Badge>
                         )}
@@ -322,6 +434,17 @@ const PackingList = ({ tripData }: PackingListProps) => {
                           <Badge variant="secondary" className="text-xs">
                             {item.activitySpecific}
                           </Badge>
+                        )}
+                        {item.shareableInGroup && tripContext && tripContext.groupSize > 1 && (
+                          <Badge variant="outline" className="text-xs">
+                            <Users className="h-3 w-3 mr-1" />
+                            Shareable
+                          </Badge>
+                        )}
+                        {item.reason && (
+                          <span className="text-xs text-muted-foreground italic">
+                            {item.reason}
+                          </span>
                         )}
                       </div>
                     </div>
@@ -338,62 +461,128 @@ const PackingList = ({ tripData }: PackingListProps) => {
         );
       })}
 
-      {/* Carry-on Tips */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Carry-on Optimization Tips</CardTitle>
-          <CardDescription>
-            Pack smart to fit everything in your carry-on
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid md:grid-cols-2 gap-6">
-            <div className="space-y-3">
-              <h4 className="font-medium text-green-700">Packing Hacks</h4>
-              <ul className="space-y-2 text-sm">
-                <li className="flex items-start gap-2">
-                  <div className="w-2 h-2 bg-green-500 rounded-full mt-2 flex-shrink-0"></div>
-                  <span>Roll clothes instead of folding to save 30% space</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <div className="w-2 h-2 bg-green-500 rounded-full mt-2 flex-shrink-0"></div>
-                  <span>Wear your heaviest items (boots, coat) on the plane</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <div className="w-2 h-2 bg-green-500 rounded-full mt-2 flex-shrink-0"></div>
-                  <span>Use packing cubes to compress and organize</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <div className="w-2 h-2 bg-green-500 rounded-full mt-2 flex-shrink-0"></div>
-                  <span>Pack chargers in carry-on (electronics can fail)</span>
-                </li>
-              </ul>
+      {/* Group Optimizations */}
+      {tripContext && tripContext.groupSize > 1 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Users className="h-5 w-5" />
+              Group Travel Optimizations
+            </CardTitle>
+            <CardDescription>
+              Save space and weight by sharing these items among your group
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid md:grid-cols-2 gap-4">
+              {SmartPackingCalculator.calculateGroupOptimizations(tripContext.groupSize).map((opt, index) => (
+                <div key={index} className="p-3 bg-muted/50 rounded-lg">
+                  <div className="font-medium text-sm">{opt.item}</div>
+                  <div className="text-xs text-muted-foreground">
+                    {opt.sharedQuantity} instead of {opt.individualQuantity} • {opt.savings}
+                  </div>
+                </div>
+              ))}
             </div>
-            
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Smart Packing Tips */}
+      <div className="grid md:grid-cols-2 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Package className="h-5 w-5 text-accent" />
+              Space Optimization
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
             <div className="space-y-3">
-              <h4 className="font-medium text-blue-700">TSA Rules</h4>
-              <ul className="space-y-2 text-sm">
-                <li className="flex items-start gap-2">
-                  <div className="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
-                  <span>Liquids: 3-1-1 rule (3.4oz containers, 1 quart bag)</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <div className="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
-                  <span>Electronics larger than phone must be separate</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <div className="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
-                  <span>Medications in original containers</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <div className="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
-                  <span>Keep important docs easily accessible</span>
-                </li>
-              </ul>
+              {SmartPackingCalculator.calculateSpaceOptimization(
+                packingItems.map(i => i.name),
+                tripContext?.transportType || 'carry-on'
+              ).map((tip, index) => (
+                <div key={index} className="space-y-1">
+                  <div className="font-medium text-sm">{tip.technique}</div>
+                  <div className="text-xs text-muted-foreground">{tip.spaceSaved}</div>
+                  <div className="text-xs text-muted-foreground">{tip.items.join(', ')}</div>
+                </div>
+              ))}
             </div>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+
+        {tripContext?.transportType === 'carry-on' && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Plane className="h-5 w-5 text-primary" />
+                TSA/Airport Security
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                {SmartPackingCalculator.generateCarryOnTips('carry-on').map((tip, index) => (
+                  <div key={index} className="flex items-start gap-2">
+                    <AlertTriangle className="h-4 w-4 text-orange-500 mt-0.5 flex-shrink-0" />
+                    <span className="text-sm">{tip}</span>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+      </div>
+
+      {/* Destination Cultural Notes */}
+      {tripContext && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Heart className="h-5 w-5 text-secondary" />
+              Cultural & Health Considerations
+            </CardTitle>
+            <CardDescription>
+              Important information for {tripData?.formData?.destination}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {(() => {
+              const countryInfo = DestinationIntelligence.getCountryInfo(tripData?.formData?.destination || '');
+              if (!countryInfo) return <p className="text-muted-foreground">No specific requirements found.</p>;
+              
+              return (
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div className="space-y-3">
+                    <h4 className="font-medium">Essential Info</h4>
+                    <div className="space-y-2 text-sm">
+                      <div>Power: {countryInfo.powerPlugType.join('/')} plugs, {countryInfo.voltage}</div>
+                      <div>Currency: {countryInfo.currency}</div>
+                      <div>Driving: {countryInfo.drivesSide} side</div>
+                      <div>Languages: {countryInfo.languages.join(', ')}</div>
+                    </div>
+                  </div>
+                  
+                  {countryInfo.culturalNotes.length > 0 && (
+                    <div className="space-y-3">
+                      <h4 className="font-medium">Cultural Notes</h4>
+                      <ul className="space-y-1 text-sm">
+                        {countryInfo.culturalNotes.map((note, index) => (
+                          <li key={index} className="flex items-start gap-2">
+                            <div className="w-2 h-2 bg-secondary rounded-full mt-2 flex-shrink-0"></div>
+                            <span>{note}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 };
