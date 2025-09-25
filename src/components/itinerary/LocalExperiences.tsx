@@ -15,8 +15,10 @@ import {
   DollarSign,
   Languages,
   ShoppingBag,
-  Camera
+  Camera,
+  Loader2
 } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 
 interface LocalExperience {
   id: string;
@@ -28,8 +30,12 @@ interface LocalExperience {
   timeOfDay: string;
   localPhrase?: string;
   tip: string;
-  icon: React.ReactNode;
-  searchUrl: string;
+  icon?: React.ReactNode;
+  searchUrl?: string;
+  url?: string;
+  startTime?: string;
+  endTime?: string;
+  isRecurring?: boolean;
 }
 
 interface LocalExperiencesProps {
@@ -38,24 +44,55 @@ interface LocalExperiencesProps {
 
 const LocalExperiences = ({ tripData }: LocalExperiencesProps) => {
   const [experiences, setExperiences] = useState<LocalExperience[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [totalEventsFound, setTotalEventsFound] = useState(0);
 
   useEffect(() => {
-    generateLocalExperiences();
+    fetchLocalEvents();
   }, [tripData]);
 
-  const generateLocalExperiences = () => {
+  const fetchLocalEvents = async () => {
+    setLoading(true);
     const formData = tripData?.form_data || tripData?.formData || {};
     const destinations = formData.specificDestinations || [];
     const destination = destinations[0] || formData.destination || '';
     const interests = formData.activityTypes || formData.interests || [];
+    const startDate = formData.startDate || new Date().toISOString().split('T')[0];
+    const endDate = formData.endDate || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
 
-    // Generate location-specific experiences
-    const baseExperiences: LocalExperience[] = [
+    try {
+      const { data, error } = await supabase.functions.invoke('get-local-events', {
+        body: {
+          destination,
+          interests,
+          startDate,
+          endDate
+        }
+      });
+
+      if (error) {
+        console.error('Error fetching local events:', error);
+        setExperiences(getFallbackExperiences(destination, interests));
+      } else {
+        setExperiences(data.events || []);
+        setTotalEventsFound(data.totalFound || 0);
+      }
+    } catch (error) {
+      console.error('Error fetching local events:', error);
+      setExperiences(getFallbackExperiences(destination, interests));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getFallbackExperiences = (destination: string, interests: string[]): LocalExperience[] => {
+    // Fallback to static experiences if API fails
+    return [
       {
         id: 'local-coffee',
         category: 'Food & Drink',
         title: 'Morning Coffee with Locals',
-        description: 'Skip the tourist cafes and find where locals actually start their day. Look for places with no English menus and full of people in work clothes.',
+        description: 'Skip the tourist cafes and find where locals actually start their day.',
         location: 'Local neighborhoods',
         priceLevel: '$',
         timeOfDay: 'Morning (7-9 AM)',
@@ -68,121 +105,16 @@ const LocalExperiences = ({ tripData }: LocalExperiencesProps) => {
         id: 'neighborhood-market',
         category: 'Shopping',
         title: 'Neighborhood Market Shopping',
-        description: 'Visit local markets where residents do their daily shopping. Perfect for authentic snacks, spices, and getting a feel for daily life.',
+        description: 'Visit local markets where residents do their daily shopping.',
         location: 'Residential areas',
         priceLevel: '$',
         timeOfDay: 'Morning (8-11 AM)',
         localPhrase: 'What do you recommend?',
-        tip: 'Bring small bills, learn basic numbers in the local language, and smile - it goes a long way.',
+        tip: 'Bring small bills, learn basic numbers in the local language.',
         icon: <ShoppingBag className="h-4 w-4" />,
         searchUrl: `https://www.google.com/maps/search/local+market+${encodeURIComponent(destination)}`
-      },
-      {
-        id: 'local-lunch',
-        category: 'Food & Drink',
-        title: 'Working Person\'s Lunch Spot',
-        description: 'Find where office workers grab lunch. Usually fast, affordable, and authentically local. Look for places packed between 12-1 PM.',
-        location: 'Business districts',
-        priceLevel: '$',
-        timeOfDay: 'Lunch (12-1 PM)',
-        localPhrase: 'What\'s popular today?',
-        tip: 'Order what the person in front of you ordered, or ask the server for their recommendation.',
-        icon: <Utensils className="h-4 w-4" />,
-        searchUrl: `https://www.google.com/maps/search/local+lunch+restaurant+${encodeURIComponent(destination)}`
-      },
-      {
-        id: 'evening-hangout',
-        category: 'Nightlife',
-        title: 'Where Locals Unwind',
-        description: 'Discover the neighborhood bars, pubs, or evening spots where locals go after work. Usually less touristy and more authentic.',
-        location: 'Residential neighborhoods',
-        priceLevel: '$$',
-        timeOfDay: 'Evening (6-8 PM)',
-        localPhrase: 'Is this seat taken?',
-        tip: 'Arrive during happy hour, sit at the bar, and strike up conversations with locals.',
-        icon: <Users className="h-4 w-4" />,
-        searchUrl: `https://www.google.com/maps/search/local+bar+pub+${encodeURIComponent(destination)}`
-      },
-      {
-        id: 'hidden-viewpoint',
-        category: 'Sightseeing',
-        title: 'Secret Viewpoint',
-        description: 'Ask locals for their favorite view of the city - often these are free, less crowded, and offer better photo opportunities than tourist spots.',
-        location: 'Various',
-        priceLevel: 'Free',
-        timeOfDay: 'Sunset/Golden Hour',
-        localPhrase: 'Where do you go for the best view?',
-        tip: 'Bring a small gift or snack to share if you meet other locals there.',
-        icon: <Camera className="h-4 w-4" />,
-        searchUrl: `https://www.google.com/search?q=best+local+viewpoint+${encodeURIComponent(destination)}`
-      },
-      {
-        id: 'cultural-activity',
-        category: 'Culture',
-        title: 'Community Cultural Event',
-        description: 'Look for local festivals, community events, or cultural activities happening during your visit. These offer authentic cultural immersion.',
-        location: 'Community centers',
-        priceLevel: 'Free-$',
-        timeOfDay: 'Varies',
-        localPhrase: 'Can visitors join?',
-        tip: 'Check community boards, local newspapers, or ask your accommodation host about events.',
-        icon: <Music className="h-4 w-4" />,
-        searchUrl: `https://www.google.com/search?q=local+events+${encodeURIComponent(destination)}+this+week`
       }
     ];
-
-    // Add interest-specific experiences
-    const interestExperiences: LocalExperience[] = [];
-    
-    if (interests.includes('food')) {
-      interestExperiences.push({
-        id: 'cooking-local',
-        category: 'Food & Drink',
-        title: 'Local Home Cooking',
-        description: 'Look for informal cooking classes or meals with local families. Apps like EatWith or BonAppetour connect travelers with locals.',
-        location: 'Local homes',
-        priceLevel: '$$',
-        timeOfDay: 'Evening',
-        localPhrase: 'Can you teach me to make this?',
-        tip: 'Book in advance and mention any dietary restrictions.',
-        icon: <Utensils className="h-4 w-4" />,
-        searchUrl: `https://www.eatwith.com/search?location=${encodeURIComponent(destination)}`
-      });
-    }
-
-    if (interests.includes('art') || interests.includes('culture')) {
-      interestExperiences.push({
-        id: 'artist-district',
-        category: 'Culture',
-        title: 'Local Artist Studios',
-        description: 'Visit artist districts or studio spaces where local creators work. Many artists are happy to chat about their work and the local scene.',
-        location: 'Artist districts',
-        priceLevel: 'Free-$',
-        timeOfDay: 'Afternoon',
-        localPhrase: 'Can you tell me about your work?',
-        tip: 'Be respectful of working spaces and consider purchasing small pieces to support local artists.',
-        icon: <Camera className="h-4 w-4" />,
-        searchUrl: `https://www.google.com/maps/search/artist+studios+${encodeURIComponent(destination)}`
-      });
-    }
-
-    if (interests.includes('nature') || interests.includes('adventure')) {
-      interestExperiences.push({
-        id: 'local-nature',
-        category: 'Nature',
-        title: 'Local\'s Favorite Nature Spot',
-        description: 'Ask locals about their favorite hiking trail, park, or natural area that tourists might not know about.',
-        location: 'Natural areas',
-        priceLevel: 'Free',
-        timeOfDay: 'Morning',
-        localPhrase: 'Where do you go to relax in nature?',
-        tip: 'Always inform someone of your plans and check weather conditions.',
-        icon: <MapPin className="h-4 w-4" />,
-        searchUrl: `https://www.google.com/maps/search/local+hiking+trails+${encodeURIComponent(destination)}`
-      });
-    }
-
-    setExperiences([...baseExperiences, ...interestExperiences]);
   };
 
   const getPriceIcon = (priceLevel: string) => {
@@ -203,6 +135,10 @@ const LocalExperiences = ({ tripData }: LocalExperiencesProps) => {
       case 'Sightseeing': return 'bg-green-100 text-green-800';
       case 'Culture': return 'bg-pink-100 text-pink-800';
       case 'Nature': return 'bg-emerald-100 text-emerald-800';
+      case 'Art & Culture': return 'bg-pink-100 text-pink-800';
+      case 'Entertainment': return 'bg-blue-100 text-blue-800';
+      case 'Wellness': return 'bg-green-100 text-green-800';
+      case 'Cultural': return 'bg-pink-100 text-pink-800';
       default: return 'bg-gray-100 text-gray-800';
     }
   };
@@ -298,10 +234,25 @@ const LocalExperiences = ({ tripData }: LocalExperiencesProps) => {
   return (
     <div className="space-y-6">
       <div className="space-y-4">
-        <h2 className="text-2xl font-bold">Local Experiences</h2>
-        <p className="text-muted-foreground">
-          Authentic local life in {destinations[0] || formData.destination || 'your destination'} - where tourists don't go
-        </p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-2xl font-bold">Local Experiences</h2>
+            <p className="text-muted-foreground">
+              Authentic local life in {destinations[0] || formData.destination || 'your destination'} - where tourists don't go
+            </p>
+          </div>
+          {loading && (
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              <span className="text-sm">Finding local events...</span>
+            </div>
+          )}
+          {!loading && totalEventsFound > 0 && (
+            <Badge variant="secondary">
+              {totalEventsFound} live events found
+            </Badge>
+          )}
+        </div>
       </div>
 
       {/* Essential Local Phrases */}
@@ -320,6 +271,49 @@ const LocalExperiences = ({ tripData }: LocalExperiencesProps) => {
         </CardContent>
       </Card>
 
+      {/* Time-Sensitive Opportunities */}
+      {experiences.some(exp => exp.startTime) && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Clock className="h-5 w-5 text-primary" />
+              Happening During Your Visit
+            </CardTitle>
+            <CardDescription>
+              Live events and time-sensitive opportunities matched to your travel dates
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {experiences
+                .filter(exp => exp.startTime)
+                .slice(0, 5)
+                .map((event) => (
+                  <div key={event.id} className="flex items-center justify-between p-3 bg-gradient-to-r from-primary/5 to-primary/10 rounded-lg">
+                    <div>
+                      <h4 className="font-medium">{event.title}</h4>
+                      <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                        <span>{new Date(event.startTime!).toLocaleDateString()}</span>
+                        <span>{new Date(event.startTime!).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                        <span>{event.location}</span>
+                      </div>
+                    </div>
+                    {event.url && (
+                      <Button 
+                        size="sm" 
+                        onClick={() => window.open(event.url, '_blank')}
+                      >
+                        <Calendar className="h-3 w-3 mr-1" />
+                        Details
+                      </Button>
+                    )}
+                  </div>
+                ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Local Experiences by Category */}
       {categories.map((category) => {
         const categoryExperiences = experiences.filter(exp => exp.category === category);
@@ -328,7 +322,7 @@ const LocalExperiences = ({ tripData }: LocalExperiencesProps) => {
           <Card key={category}>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                {categoryExperiences[0]?.icon}
+                {categoryExperiences[0]?.icon || <Music className="h-4 w-4" />}
                 {category}
                 <Badge className={getCategoryColor(category)}>
                   {categoryExperiences.length} experiences
@@ -341,43 +335,71 @@ const LocalExperiences = ({ tripData }: LocalExperiencesProps) => {
                   <div key={experience.id} className="p-4 border rounded-lg hover:bg-muted/50 transition-colors">
                     <div className="flex justify-between items-start mb-3">
                       <div>
-                        <h4 className="font-semibold">{experience.title}</h4>
+                        <div className="flex items-center gap-2">
+                          <h4 className="font-semibold">{experience.title}</h4>
+                          {experience.isRecurring && (
+                            <Badge variant="outline" className="text-xs">
+                              <Calendar className="h-3 w-3 mr-1" />
+                              Regular
+                            </Badge>
+                          )}
+                          {experience.startTime && (
+                            <Badge variant="secondary" className="text-xs">
+                              <Clock className="h-3 w-3 mr-1" />
+                              Live Event
+                            </Badge>
+                          )}
+                        </div>
                         <div className="flex items-center gap-4 text-sm text-muted-foreground mt-1">
                           <span className="flex items-center gap-1">
                             <MapPin className="h-3 w-3" />
                             {experience.location}
                           </span>
-                          <span className="flex items-center gap-1">
-                            <Clock className="h-3 w-3" />
-                            {experience.timeOfDay}
-                          </span>
+                          {experience.startTime ? (
+                            <span className="flex items-center gap-1">
+                              <Clock className="h-3 w-3" />
+                              {new Date(experience.startTime).toLocaleDateString()} at{' '}
+                              {new Date(experience.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            </span>
+                          ) : (
+                            <span className="flex items-center gap-1">
+                              <Clock className="h-3 w-3" />
+                              {experience.timeOfDay}
+                            </span>
+                          )}
                           <span className="flex items-center gap-1">
                             {getPriceIcon(experience.priceLevel)}
                           </span>
                         </div>
                       </div>
-                      <Button variant="outline" size="sm" asChild>
-                        <a href={experience.searchUrl} target="_blank" rel="noopener noreferrer">
-                          <ExternalLink className="h-3 w-3 mr-1" />
-                          Find
-                        </a>
-                      </Button>
+                      <div className="flex gap-2">
+                        {(experience.url || experience.searchUrl) && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => window.open(experience.url || experience.searchUrl, '_blank')}
+                          >
+                            <ExternalLink className="h-3 w-3 mr-1" />
+                            {experience.url ? 'Event Page' : 'Find It'}
+                          </Button>
+                        )}
+                      </div>
                     </div>
                     
-                    <p className="text-sm text-muted-foreground mb-3">
-                      {experience.description}
-                    </p>
+                    <p className="text-sm text-muted-foreground mb-3">{experience.description}</p>
                     
                     {experience.localPhrase && (
-                      <div className="p-2 bg-blue-50 rounded text-sm mb-3">
-                        <span className="font-medium text-blue-800">Try saying: </span>
-                        <span className="text-blue-700">"{experience.localPhrase}"</span>
+                      <div className="bg-primary/5 p-3 rounded mb-3">
+                        <p className="text-sm">
+                          <span className="font-medium">Try saying:</span> "{experience.localPhrase}"
+                        </p>
                       </div>
                     )}
                     
-                    <div className="p-2 bg-green-50 rounded text-sm">
-                      <span className="font-medium text-green-800">Local tip: </span>
-                      <span className="text-green-700">{experience.tip}</span>
+                    <div className="bg-blue-50 p-3 rounded">
+                      <p className="text-sm">
+                        <span className="font-medium text-blue-700">Local Tip:</span> {experience.tip}
+                      </p>
                     </div>
                   </div>
                 ))}

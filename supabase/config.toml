@@ -34,3 +34,6 @@ verify_jwt = true
 
 [functions.get-weather-forecast]
 verify_jwt = false
+
+[functions.get-local-events]
+verify_jwt = false
