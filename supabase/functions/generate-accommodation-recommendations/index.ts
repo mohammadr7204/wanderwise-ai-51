@@ -51,30 +51,60 @@ TRIP DETAILS:
 - Business travel: ${requestData.businessTravel ? 'Yes' : 'No'}
 - Planned activities: ${requestData.activities.join(', ')}
 
-REQUIREMENTS:
-1. Include both hotels AND Airbnb options when relevant
-2. Consider location proximity to planned activities
-3. Match the travel style and accommodation preferences
-4. Factor in family/business needs
-5. Stay within budget while maximizing value
+SMART FILTERING REQUIREMENTS:
+${requestData.familyFriendly ? '- FAMILY: connecting rooms, kids club, pool, cribs available, family restaurants' : ''}
+${requestData.businessTravel ? '- BUSINESS: workspace/desk, fast wifi, business center, meeting rooms, quiet zones' : ''}
+${requestData.travelStyle === 'romantic' ? '- COUPLES: romantic settings, spa, adults-only areas, private dining' : ''}
+${perNightBudget < 100 ? '- BUDGET: hostels, homestays, shared facilities, camping options, budget chains' : ''}
+${perNightBudget > 300 ? '- LUXURY: premium amenities, concierge, fine dining, premium locations' : ''}
 
-For each recommendation, provide:
-- name (realistic hotel/property name)
-- type ("Boutique Hotel", "Luxury Resort", "Modern Apartment", "Historic B&B", etc.)
-- address (specific neighborhood/area in the destination)
-- rating (4.1-4.9 stars, realistic for the price point)
-- priceRange (actual $ amount per night range)
-- amenities (6-8 relevant amenities)
-- whyPerfect (50-60 words explaining why this is perfect for their trip)
-- bookingTip (practical tip for booking or staying here)
-- distanceToActivities (how it relates to their planned activities)
+LOCATION INTELLIGENCE REQUIREMENTS:
+1. Calculate realistic walking/driving times to planned activities
+2. Include neighborhood safety score (1-10) with brief explanation
+3. List 3-4 nearby restaurants/cafes within walking distance
+4. Public transport accessibility score (1-10) with nearest stations
+5. Mention nearby convenience stores, pharmacies, attractions
 
-Make recommendations feel authentic and location-specific. Consider:
-- Local neighborhood character
-- Seasonal factors affecting pricing
-- Cultural preferences in that destination
-- Realistic amenities for the price point
-- Actual travel patterns and logistics
+REALISTIC DETAILS REQUIRED:
+1. Actual current market pricing for these specific dates
+2. Recent guest review highlights (positive/negative)
+3. Real amenities that match the price point and location
+4. Specific room types available for group size
+5. Seasonal considerations affecting availability/pricing
+6. Local booking patterns and tips
+
+For each recommendation, provide this EXACT JSON structure:
+{
+  "name": "realistic hotel/property name",
+  "type": "Boutique Hotel/Luxury Resort/Modern Apartment/etc",
+  "address": "specific street address or detailed area in ${requestData.destination}",
+  "rating": 4.2, // realistic rating 3.8-4.9 based on price
+  "priceRange": "$120-145/night", // actual market rates for dates
+  "amenities": ["Free WiFi", "Pool", "Gym", "Restaurant", "Parking", "Spa"],
+  "whyPerfect": "50-60 words explaining perfect match for their specific trip",
+  "bookingTip": "practical tip for booking or staying here",
+  "distanceToActivities": "specific distances/times to their planned activities",
+  "locationIntelligence": {
+    "safetyScore": 8,
+    "safetyNotes": "well-lit streets, regular police patrols",
+    "transportScore": 9,
+    "transportDetails": "2-min walk to Metro Red Line, bus stops nearby",
+    "nearbyDining": ["Cafe Luna (50m)", "Giuseppe's Pizza (100m)", "Corner Deli (75m)"],
+    "conveniences": ["24h pharmacy across street", "Supermarket 200m", "ATM in lobby"]
+  },
+  "guestInsights": {
+    "recentReviews": "Guests love the rooftop pool and central location. Some mention street noise on weekends.",
+    "seasonalNotes": "High demand in ${new Date(requestData.startDate).toLocaleDateString('en-US', { month: 'long' })} - book early",
+    "roomAvailability": "Standard doubles and family rooms available for your dates"
+  }
+}
+
+Make it feel like real, researched recommendations with authentic local knowledge. Factor in:
+- Current seasonal pricing and demand
+- Real neighborhood characteristics
+- Authentic local dining and transport options
+- Genuine guest experience insights
+- Practical booking considerations
 
 Return ONLY valid JSON array with no additional text:`;
 
