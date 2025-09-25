@@ -78,4 +78,3 @@ export function LoadingSkeleton({
 
   return <div className="space-y-4">{components}</div>
 }
-
