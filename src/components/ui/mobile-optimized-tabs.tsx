@@ -73,8 +73,8 @@ export function MobileTabsList({ children, className }: MobileTabsListProps) {
 
   // Mobile view - dropdown sheet
   const MobileTabs = () => {
-    const activeTabLabel = React.Children.toArray(children).find((child: any) => 
-      React.isValidElement(child) && child.props.value === activeTab
+    const activeTabLabel = React.Children.toArray(children).find((child) => 
+      React.isValidElement(child) && (child.props as any).value === activeTab
     )
 
     return (

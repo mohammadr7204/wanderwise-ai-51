@@ -1417,18 +1417,18 @@ const ItineraryView = () => {
             <PackingList tripData={trip} />
           </TabsContent>
 
-          <MobileTabsContent value="experiences" className="space-y-6">
+          <TabsContent value="experiences" className="space-y-6">
             <LocalExperiences tripData={trip} />
-          </MobileTabsContent>
+          </TabsContent>
 
-          <MobileTabsContent value="safety" className="space-y-6">
+          <TabsContent value="safety" className="space-y-6">
             <SafetyGuide tripData={trip} />
-          </MobileTabsContent>
+          </TabsContent>
 
-          <MobileTabsContent value="emergency" className="space-y-6">
+          <TabsContent value="emergency" className="space-y-6">
             <EmergencyPlan tripData={trip} />
-          </MobileTabsContent>
-        </MobileOptimizedTabs>
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );
