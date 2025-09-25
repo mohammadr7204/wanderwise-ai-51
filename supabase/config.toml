@@ -49,3 +49,6 @@ verify_jwt = false
 
 [functions.generate-accommodation-recommendations]
 verify_jwt = false
+
+[functions.generate-restaurant-recommendations]
+verify_jwt = false
