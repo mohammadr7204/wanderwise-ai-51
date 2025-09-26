@@ -90,9 +90,12 @@ const Dashboard = () => {
     } else if (trip.price_paid && trip.price_paid > 0) {
       // If paid but not completed, redirect to generation status
       navigate(`/trip/${trip.id}/generating`);
-    } else {
-      // If not paid, redirect to payment
+    } else if (trip.status === 'quoted') {
+      // If quoted but not paid, redirect to payment to complete the quote
       navigate(`/trip/${trip.id}/quote`);
+    } else {
+      // If draft or other status, redirect to editing
+      navigate(`/create-trip?edit=${trip.id}`);
     }
   };
 
@@ -131,7 +134,8 @@ const Dashboard = () => {
   const getTripActionLabel = (trip: Trip) => {
     if (trip.status === 'completed') return 'View Itinerary';
     if (trip.price_paid && trip.price_paid > 0) return 'View Progress';
-    return 'Complete Payment';
+    if (trip.status === 'quoted') return 'Complete Payment';
+    return 'Continue Planning';
   };
 
   const getTripActionIcon = (trip: Trip) => {
@@ -163,6 +167,7 @@ const Dashboard = () => {
     switch (status) {
       case 'completed': return 'bg-green-100 text-green-800';
       case 'generating': return 'bg-yellow-100 text-yellow-800';
+      case 'quoted': return 'bg-orange-100 text-orange-800';
       case 'draft': return 'bg-blue-100 text-blue-800';
       default: return 'bg-gray-100 text-gray-800';
     }
