@@ -173,10 +173,17 @@ const ItineraryView = () => {
 
   // Helper functions to extract data from either new or legacy structure
   const getDays = () => {
-    if (!itinerary?.content) return [];
+    if (!itinerary?.content) {
+      console.log('No itinerary content found');
+      return [];
+    }
+    
+    console.log('Full itinerary content:', itinerary.content);
+    console.log('Daily itinerary:', itinerary.content.dailyItinerary);
     
     // Try new structure first
-    if (itinerary.content.dailyItinerary) {
+    if (itinerary.content.dailyItinerary && Array.isArray(itinerary.content.dailyItinerary)) {
+      console.log('Using new dailyItinerary structure, found', itinerary.content.dailyItinerary.length, 'days');
       return itinerary.content.dailyItinerary.map(day => ({
         day: day.day,
         title: day.theme || `Day ${day.day}`,
@@ -186,7 +193,13 @@ const ItineraryView = () => {
     }
     
     // Fallback to legacy structure
-    return itinerary.content.days || [];
+    if (itinerary.content.days && Array.isArray(itinerary.content.days)) {
+      console.log('Using legacy days structure');
+      return itinerary.content.days;
+    }
+    
+    console.log('No valid days data found');
+    return [];
   };
 
   const getActivitiesForDay = (day: DailyItineraryItem) => {
@@ -297,38 +310,127 @@ const ItineraryView = () => {
   };
 
   const getTips = () => {
-    if (!itinerary?.content) return [];
+    if (!itinerary?.content) {
+      console.log('No itinerary content for tips');
+      return [];
+    }
     
-    console.log('Getting tips, content:', itinerary.content);
-    console.log('Insider tips:', itinerary.content.insiderTips);
-    console.log('Local insights:', itinerary.content.localInsights);
-    console.log('Legacy tips:', itinerary.content.tips);
+    const content = itinerary.content as any; // Use any for dynamic property access
+    console.log('Getting tips, content keys:', Object.keys(content));
+    console.log('Insider tips:', content.insiderTips);
+    console.log('Local insights:', content.localInsights);
+    console.log('Cultural insights:', content.culturalInsights);
+    console.log('Travel tips:', content.travelTips);
+    console.log('Legacy tips:', content.tips);
+    
+    let allTips: any[] = [];
     
     // Try new structured insider tips first
-    if (itinerary.content.insiderTips && Array.isArray(itinerary.content.insiderTips)) {
-      console.log('Using structured insiderTips:', itinerary.content.insiderTips);
-      return itinerary.content.insiderTips;
+    if (content.insiderTips && Array.isArray(content.insiderTips)) {
+      console.log('Using structured insiderTips:', content.insiderTips);
+      allTips.push(...content.insiderTips);
+    }
+    
+    // Check for cultural insights
+    if (content.culturalInsights && Array.isArray(content.culturalInsights)) {
+      console.log('Using culturalInsights:', content.culturalInsights);
+      allTips.push(...content.culturalInsights.map((insight: any) => ({ tip: insight, category: 'cultural' })));
+    }
+    
+    // Check for travel tips
+    if (content.travelTips && Array.isArray(content.travelTips)) {
+      console.log('Using travelTips:', content.travelTips);
+      allTips.push(...content.travelTips.map((tip: any) => ({ tip, category: 'travel' })));
     }
     
     // Fallback to localInsights
-    if (itinerary.content.localInsights && Array.isArray(itinerary.content.localInsights)) {
-      console.log('Using localInsights:', itinerary.content.localInsights);
-      return itinerary.content.localInsights.map(insight => ({ tip: insight, isLegacy: true }));
+    if (content.localInsights && Array.isArray(content.localInsights)) {
+      console.log('Using localInsights:', content.localInsights);
+      allTips.push(...content.localInsights.map((insight: any) => ({ tip: insight, category: 'local' })));
     }
     
     // Fallback to legacy structure
-    if (itinerary.content.tips && Array.isArray(itinerary.content.tips)) {
-      console.log('Using legacy tips:', itinerary.content.tips);
-      return itinerary.content.tips.map(tip => ({ tip, isLegacy: true }));
+    if (content.tips && Array.isArray(content.tips)) {
+      console.log('Using legacy tips:', content.tips);
+      allTips.push(...content.tips.map((tip: any) => ({ tip, category: 'general' })));
     }
     
-    console.log('No tips data found');
-    return [];
+    console.log('Final tips count:', allTips.length);
+    return allTips;
   };
 
   const getTotalActivities = () => {
     const days = getDays();
     return days.reduce((acc, day) => acc + (day.activities?.length || 0), 0);
+  };
+
+  const getFlightData = () => {
+    if (!itinerary?.content) {
+      console.log('No itinerary content for flight data');
+      return null;
+    }
+    
+    const content = itinerary.content as any;
+    console.log('Flight analysis:', content.flightAnalysis);
+    console.log('Flight recommendations:', content.flightRecommendations);
+    console.log('Transportation guide:', content.transportationGuide);
+    
+    return content.flightAnalysis || content.flightRecommendations || content.transportationGuide || null;
+  };
+
+  const getPackingList = () => {
+    if (!itinerary?.content) {
+      console.log('No itinerary content for packing list');
+      return [];
+    }
+    
+    const content = itinerary.content as any;
+    console.log('Packing list:', content.packingList);
+    console.log('Smart packing guide:', content.smartPackingGuide);
+    
+    return content.packingList || content.smartPackingGuide || [];
+  };
+
+  const getSafetyData = () => {
+    if (!itinerary?.content) {
+      console.log('No itinerary content for safety data');
+      return null;
+    }
+    
+    const content = itinerary.content as any;
+    console.log('Safety guide:', content.safetyGuide);
+    console.log('Safety information:', content.safetyInformation);
+    console.log('Travel safety:', content.travelSafety);
+    
+    return content.safetyGuide || content.safetyInformation || content.travelSafety || null;
+  };
+
+  const getEmergencyData = () => {
+    if (!itinerary?.content) {
+      console.log('No itinerary content for emergency data');
+      return null;
+    }
+    
+    const content = itinerary.content as any;
+    console.log('Emergency plan:', content.emergencyPlan);
+    console.log('Emergency information:', content.emergencyInformation);
+    console.log('Emergency contacts:', content.emergencyContacts);
+    
+    return content.emergencyPlan || content.emergencyInformation || content.emergencyContacts || null;
+  };
+
+  const getAccommodations = () => {
+    if (!itinerary?.content) {
+      console.log('No itinerary content for accommodations');
+      return [];
+    }
+    
+    const content = itinerary.content as any;
+    console.log('Accommodation recommendations:', content.accommodationRecommendations);
+    console.log('Accommodations:', content.accommodations);
+    console.log('Hotels:', content.hotels);
+    
+    return content.accommodationRecommendations || content.accommodations || content.hotels || [];
   };
 
   useEffect(() => {
@@ -399,6 +501,17 @@ const ItineraryView = () => {
       };
       
       setItinerary(itineraryData);
+
+      // Debug: Log the structure of the loaded itinerary
+      console.log('=== ITINERARY LOADED DEBUG ===');
+      console.log('Full itinerary object:', itineraryData);
+      console.log('Content keys:', Object.keys(itineraryData.content || {}));
+      console.log('Sample of content:', itineraryData.content);
+      console.log('Days data test:', getDays());
+      console.log('Restaurants test:', getRestaurants());
+      console.log('Tips test:', getTips());
+      console.log('Accommodations test:', getAccommodations());
+      console.log('=== END DEBUG ===');
 
       // Save for offline use
       if (isOnline) {
@@ -847,12 +960,12 @@ const ItineraryView = () => {
               <h2 className="text-2xl font-bold">Where to Stay</h2>
               <p className="text-muted-foreground">Carefully selected accommodation options with live booking links</p>
             </div>
-            {itinerary.content?.accommodationRecommendations && itinerary.content.accommodationRecommendations.length > 0 ? (
+            {getAccommodations().length > 0 ? (
               <div className="space-y-6">
                 {/* Primary recommendation first */}
-                {itinerary.content.accommodationRecommendations
-                  .filter(acc => acc.isPrimary)
-                  .map((accommodation, index) => (
+                {getAccommodations()
+                  .filter((acc: any) => acc.isPrimary)
+                  .map((accommodation: any, index: number) => (
                     <Card key={`primary-${index}`} className="border-2 border-primary">
                       <CardHeader>
                         <div className="flex justify-between items-start">
@@ -986,9 +1099,9 @@ const ItineraryView = () => {
                 <div className="space-y-4">
                   <h3 className="text-lg font-semibold">Alternative Options</h3>
                   <div className="grid md:grid-cols-2 gap-6">
-                    {itinerary.content.accommodationRecommendations
-                      .filter(acc => !acc.isPrimary)
-                      .map((accommodation, index) => (
+                    {getAccommodations()
+                      .filter((acc: any) => !acc.isPrimary)
+                      .map((accommodation: any, index: number) => (
                         <Card key={`alt-${index}`}>
                           <CardHeader>
                             <div className="flex justify-between items-start">
