@@ -187,15 +187,26 @@ const GenerationStatus = () => {
     
     try {
       console.log('Starting real AI generation for trip:', tripId);
+      console.log('User authenticated:', !!user?.id);
+      console.log('Trip data:', trip.form_data);
       
       // Calculate trip duration
       const startDate = new Date(trip.form_data.startDate);
       const endDate = new Date(trip.form_data.endDate);
       const tripDuration = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
       
+      console.log('Trip duration calculated:', tripDuration);
+      
       setCurrentStepDescription('Calling AI generation service...');
       
-      // Call the real AI generation function
+      // Call the real AI generation function with detailed logging
+      console.log('Calling supabase.functions.invoke with:', {
+        tripData: trip.form_data,
+        tripDuration,
+        userId: user?.id,
+        tripId: trip.id
+      });
+      
       const { data, error } = await supabase.functions.invoke('generate-itinerary', {
         body: {
           tripData: trip.form_data,
@@ -205,8 +216,15 @@ const GenerationStatus = () => {
         }
       });
 
+      console.log('Function response received:', { data, error });
+
       if (error) {
-        console.error('AI generation error:', error);
+        console.error('AI generation error details:', {
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          code: error.code
+        });
         throw error;
       }
 

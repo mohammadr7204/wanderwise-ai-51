@@ -365,7 +365,16 @@ serve(async (req) => {
   try {
     const { tripData, tripDuration, userId, tripId } = await req.json();
 
+    console.log('Request received with data:', { tripData: !!tripData, tripDuration, userId, tripId });
+    console.log('API keys available:', { 
+      anthropic: !!anthropicApiKey, 
+      google: !!googlePlacesApiKey, 
+      weather: !!openWeatherApiKey,
+      eventbrite: !!eventbriteApiKey 
+    });
+
     if (!anthropicApiKey) {
+      console.error('Anthropic API key not configured');
       throw new Error('Anthropic API key not configured');
     }
 
