@@ -925,8 +925,19 @@ Return ONLY valid JSON. Do not include any text before or after the JSON object.
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error: any) {
-    console.error('Error in generate-itinerary function:', error);
-    return new Response(JSON.stringify({ error: error.message }), {
+    console.error('Error in generate-itinerary function:', {
+      message: error.message,
+      stack: error.stack,
+      details: error.details,
+      hint: error.hint,
+      code: error.code,
+      name: error.name
+    });
+    
+    return new Response(JSON.stringify({ 
+      error: error.message,
+      details: error.details || 'No additional details available'
+    }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });

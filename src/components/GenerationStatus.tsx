@@ -93,12 +93,19 @@ const GenerationStatus = () => {
 
     // Check if itinerary is already complete
     if (trip?.status === 'completed') {
+      console.log('Trip already completed, redirecting to itinerary view');
       navigate(`/trip/${tripId}/itinerary`);
       return;
     }
 
-    // Start real AI generation when trip is loaded
-    if (trip && !isGenerating) {
+    // Start real AI generation when trip is loaded and payment is successful
+    if (trip && !isGenerating && (paymentStatus === 'success' || trip.status === 'quoted')) {
+      console.log('Starting generation with conditions met:', { 
+        tripLoaded: !!trip, 
+        notGenerating: !isGenerating, 
+        paymentSuccess: paymentStatus === 'success',
+        tripQuoted: trip.status === 'quoted'
+      });
       startRealGeneration();
     }
 
@@ -230,6 +237,10 @@ const GenerationStatus = () => {
 
       console.log('AI generation response:', data);
       
+      if (!data || data.error) {
+        throw new Error(data?.error || 'Generation failed with no response');
+      }
+      
       // Track successful generation
       const generationDuration = generationStartTime ? Date.now() - generationStartTime : 0;
       trackItineraryGenerated(trip.id, trip.tier, generationDuration);
@@ -239,16 +250,34 @@ const GenerationStatus = () => {
       setCurrentStep(6);
       setCurrentStepDescription('Generation complete! Redirecting...');
       
+      console.log('Generation successful, redirecting in 2 seconds');
       setTimeout(() => {
+        console.log('Navigating to itinerary view');
         navigate(`/trip/${tripId}/itinerary`);
       }, 2000);
       
     } catch (error: any) {
       console.error('Error in real generation:', error);
+      console.error('Error details:', {
+        message: error?.message,
+        details: error?.details,
+        hint: error?.hint,
+        code: error?.code,
+        stack: error?.stack
+      });
+      
       const errorMessage = error?.message || "Failed to generate itinerary. Please try again.";
       setError(errorMessage);
       setIsGenerating(false);
-      trackError(errorMessage, { context: 'generation', tripId });
+      trackError(errorMessage, { 
+        context: 'generation', 
+        tripId,
+        errorDetails: {
+          message: error?.message,
+          details: error?.details,
+          code: error?.code
+        }
+      });
       
       toast({
         title: "Generation Error",
