@@ -841,7 +841,7 @@ const ItineraryView = () => {
             </TabsTrigger>
           </TabsList>
 
-          <MobileTabsContent value="itinerary" className="space-y-6">
+          <TabsContent value="itinerary" className="space-y-6">
             <div className="grid lg:grid-cols-4 gap-6">
               {/* Day Navigation */}
               <div className="lg:col-span-1">
@@ -945,11 +945,11 @@ const ItineraryView = () => {
                 ))}
               </div>
             </div>
-          </MobileTabsContent>
+          </TabsContent>
 
-          <MobileTabsContent value="routes" className="space-y-6">
+          <TabsContent value="routes" className="space-y-6">
             <RouteOptimizer tripData={trip} />
-          </MobileTabsContent>
+          </TabsContent>
 
           <TabsContent value="flights" className="space-y-6">
             <FlightAnalysis tripData={trip} />
