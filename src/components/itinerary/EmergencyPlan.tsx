@@ -54,12 +54,16 @@ const EmergencyPlan = ({ tripData }: EmergencyPlanProps) => {
   }, [tripData]);
 
   const fetchEmergencyData = async () => {
+    console.log('EmergencyPlan: Starting to fetch emergency data...');
     setLoading(true);
     const formData = tripData?.form_data || tripData?.formData || {};
     const destinations = formData.specificDestinations || [];
     const destination = destinations[0] || formData.destination || '';
+    
+    console.log('EmergencyPlan: Trip data:', { destination, lat: formData.lat, lng: formData.lng });
 
     try {
+      console.log('EmergencyPlan: Calling get-emergency-data function...');
       const { data, error } = await supabase.functions.invoke('get-emergency-data', {
         body: {
           destination,
@@ -69,14 +73,15 @@ const EmergencyPlan = ({ tripData }: EmergencyPlanProps) => {
       });
 
       if (error) {
-        console.error('Error fetching emergency data:', error);
+        console.error('EmergencyPlan: Error fetching emergency data:', error);
         generateFallbackEmergencyPlan(destination);
       } else {
+        console.log('EmergencyPlan: Successfully fetched emergency data:', data);
         setEmergencyData(data);
         generateEmergencyPlan(data, destination);
       }
     } catch (error) {
-      console.error('Error fetching emergency data:', error);
+      console.error('EmergencyPlan: Exception fetching emergency data:', error);
       generateFallbackEmergencyPlan(destination);
     } finally {
       setLoading(false);

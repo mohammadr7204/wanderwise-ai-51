@@ -57,12 +57,16 @@ const SafetyGuide = ({ tripData }: SafetyGuideProps) => {
   }, [tripData]);
 
   const fetchSafetyData = async () => {
+    console.log('SafetyGuide: Starting to fetch safety data...');
     setLoading(true);
     const formData = tripData?.form_data || tripData?.formData || {};
     const destinations = formData.specificDestinations || [];
     const destination = destinations[0] || formData.destination || '';
+    
+    console.log('SafetyGuide: Trip data:', { destination, lat: formData.lat, lng: formData.lng });
 
     try {
+      console.log('SafetyGuide: Calling get-safety-data function...');
       const { data, error } = await supabase.functions.invoke('get-safety-data', {
         body: {
           destination,
@@ -72,14 +76,15 @@ const SafetyGuide = ({ tripData }: SafetyGuideProps) => {
       });
 
       if (error) {
-        console.error('Error fetching safety data:', error);
+        console.error('SafetyGuide: Error fetching safety data:', error);
         generateFallbackContent(destination);
       } else {
+        console.log('SafetyGuide: Successfully fetched safety data:', data);
         setSafetyData(data);
         generateSafetyContent(data, destination);
       }
     } catch (error) {
-      console.error('Error fetching safety data:', error);
+      console.error('SafetyGuide: Exception fetching safety data:', error);
       generateFallbackContent(destination);
     } finally {
       setLoading(false);
