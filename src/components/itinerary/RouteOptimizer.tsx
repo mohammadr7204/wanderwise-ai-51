@@ -77,10 +77,11 @@ interface BreakSuggestion {
 
 interface RouteOptimizerProps {
   tripData: any;
+  itineraryData?: any;
   dayActivities?: Activity[];
 }
 
-const RouteOptimizer = ({ tripData, dayActivities = [] }: RouteOptimizerProps) => {
+const RouteOptimizer = ({ tripData, itineraryData, dayActivities = [] }: RouteOptimizerProps) => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const [activities, setActivities] = useState<Activity[]>(dayActivities);
   const [optimization, setOptimization] = useState<RouteOptimization | null>(null);
@@ -96,22 +97,81 @@ const RouteOptimizer = ({ tripData, dayActivities = [] }: RouteOptimizerProps) =
     if (activities.length === 0) {
       loadActivitiesFromItinerary();
     }
-  }, [tripData]);
+  }, [tripData, itineraryData]);
 
   const loadActivitiesFromItinerary = () => {
     const formData = tripData?.form_data || tripData?.formData || {};
     const destinations = formData.specificDestinations || [];
     const destination = destinations[0] || formData.destination || '';
-    const interests = formData.interests || formData.activityTypes || [];
     
-    // Create activities based on actual trip preferences
+    // Extract actual activities from generated itinerary
     const generatedActivities: Activity[] = [];
     
-    // Add activities based on user interests
-    if (interests.includes('cultural')) {
+    if (itineraryData?.content?.dailyItinerary && Array.isArray(itineraryData.content.dailyItinerary)) {
+      // Process each day's activities from the actual itinerary
+      let activityId = 1;
+      
+      itineraryData.content.dailyItinerary.forEach((day: any) => {
+        // Extract morning activity
+        if (day.morning?.activity) {
+          generatedActivities.push({
+            id: `${activityId++}`,
+            name: day.morning.activity,
+            location: day.morning.venue || 'Location to be determined',
+            openingHours: day.morning.time || '09:00-17:00',
+            estimatedDuration: parseDuration(day.morning.duration) || 120,
+            category: categorizeActivity(day.morning.activity),
+            crowdLevel: inferCrowdLevel(day.morning.activity),
+            energyRequired: inferEnergyLevel(day.morning.activity),
+            weatherDependent: isWeatherDependent(day.morning.activity),
+            priority: 2,
+            notes: day.morning.bookingInfo
+          });
+        }
+        
+        // Extract afternoon activity
+        if (day.afternoon?.activity) {
+          generatedActivities.push({
+            id: `${activityId++}`,
+            name: day.afternoon.activity,
+            location: day.afternoon.venue || 'Location to be determined',
+            openingHours: day.afternoon.time || '12:00-18:00',
+            estimatedDuration: parseDuration(day.afternoon.duration) || 150,
+            category: categorizeActivity(day.afternoon.activity),
+            crowdLevel: inferCrowdLevel(day.afternoon.activity),
+            energyRequired: inferEnergyLevel(day.afternoon.activity),
+            weatherDependent: isWeatherDependent(day.afternoon.activity),
+            priority: 1,
+            notes: day.afternoon.bookingInfo
+          });
+        }
+        
+        // Extract evening activity
+        if (day.evening?.activity) {
+          generatedActivities.push({
+            id: `${activityId++}`,
+            name: day.evening.activity,
+            location: day.evening.venue || 'Location to be determined',
+            openingHours: day.evening.time || '18:00-22:00',
+            estimatedDuration: parseDuration(day.evening.duration) || 120,
+            category: categorizeActivity(day.evening.activity),
+            crowdLevel: inferCrowdLevel(day.evening.activity),
+            energyRequired: inferEnergyLevel(day.evening.activity),
+            weatherDependent: isWeatherDependent(day.evening.activity),
+            priority: 1,
+            notes: day.evening.bookingInfo
+          });
+        }
+      });
+    }
+    
+    // Fallback to generic activities if no itinerary data available
+    if (generatedActivities.length === 0) {
+      const interests = formData.interests || formData.activityTypes || [];
+      
       generatedActivities.push({
         id: '1',
-        name: `${destination} Historical Center`,
+        name: `${destination} Main Attraction`,
         location: 'City Center',
         openingHours: '09:00-17:00',
         estimatedDuration: 120,
@@ -121,95 +181,66 @@ const RouteOptimizer = ({ tripData, dayActivities = [] }: RouteOptimizerProps) =
         weatherDependent: false,
         priority: 1
       });
-      
-      generatedActivities.push({
-        id: '2',
-        name: `${destination} Local Market`,
-        location: 'Market District',
-        openingHours: '08:00-14:00',
-        estimatedDuration: 90,
-        category: 'attraction',
-        crowdLevel: 'high',
-        energyRequired: 'medium',
-        weatherDependent: false,
-        priority: 2
-      });
-    }
-    
-    if (interests.includes('nature') || interests.includes('adventure')) {
-      generatedActivities.push({
-        id: '3',
-        name: `${destination} Nature Trail`,
-        location: 'Natural Area',
-        openingHours: '06:00-18:00',
-        estimatedDuration: 180,
-        category: 'activity',
-        crowdLevel: 'low',
-        energyRequired: 'high',
-        weatherDependent: true,
-        priority: 1
-      });
-      
-      generatedActivities.push({
-        id: '4',
-        name: `${destination} Scenic Viewpoint`,
-        location: 'Elevated Area',
-        openingHours: '06:00-20:00',
-        estimatedDuration: 60,
-        category: 'attraction',
-        crowdLevel: 'medium',
-        energyRequired: 'medium',
-        weatherDependent: true,
-        priority: 1
-      });
-    }
-    
-    if (interests.includes('food') || interests.includes('culinary')) {
-      generatedActivities.push({
-        id: '5',
-        name: `${destination} Food District`,
-        location: 'Culinary Quarter',
-        openingHours: '11:00-22:00',
-        estimatedDuration: 120,
-        category: 'restaurant',
-        crowdLevel: 'high',
-        energyRequired: 'low',
-        weatherDependent: false,
-        priority: 1
-      });
-    }
-    
-    // Default activities if no specific interests
-    if (generatedActivities.length === 0) {
-      generatedActivities.push(
-        {
-          id: '1',
-          name: `${destination} Main Attraction`,
-          location: 'City Center',
-          openingHours: '09:00-17:00',
-          estimatedDuration: 120,
-          category: 'attraction',
-          crowdLevel: 'medium',
-          energyRequired: 'low',
-          weatherDependent: false,
-          priority: 1
-        },
-        {
-          id: '2',
-          name: `${destination} Walking Area`,
-          location: 'Historic District',
-          openingHours: '08:00-20:00',
-          estimatedDuration: 90,
-          category: 'activity',
-          crowdLevel: 'medium',
-          energyRequired: 'medium',
-          weatherDependent: false,
-          priority: 2
-        }
-      );
     }
     
     setActivities(generatedActivities);
+  };
+
+  // Helper functions to infer activity characteristics
+  const parseDuration = (duration?: string): number => {
+    if (!duration) return 120;
+    const match = duration.match(/(\d+)\s*(hour|hr|h)/i);
+    if (match) {
+      return parseInt(match[1]) * 60;
+    }
+    const minMatch = duration.match(/(\d+)\s*(minute|min|m)/i);
+    if (minMatch) {
+      return parseInt(minMatch[1]);
+    }
+    return 120; // default 2 hours
+  };
+
+  const categorizeActivity = (activityName: string): 'attraction' | 'restaurant' | 'activity' | 'transport' => {
+    const lower = activityName.toLowerCase();
+    if (lower.includes('restaurant') || lower.includes('dinner') || lower.includes('lunch') || lower.includes('breakfast') || lower.includes('cafe') || lower.includes('food')) {
+      return 'restaurant';
+    }
+    if (lower.includes('hiking') || lower.includes('tour') || lower.includes('class') || lower.includes('experience') || lower.includes('workshop')) {
+      return 'activity';
+    }
+    if (lower.includes('transfer') || lower.includes('taxi') || lower.includes('bus') || lower.includes('train')) {
+      return 'transport';
+    }
+    return 'attraction';
+  };
+
+  const inferCrowdLevel = (activityName: string): 'low' | 'medium' | 'high' => {
+    const lower = activityName.toLowerCase();
+    if (lower.includes('market') || lower.includes('festival') || lower.includes('popular') || lower.includes('famous')) {
+      return 'high';
+    }
+    if (lower.includes('museum') || lower.includes('gallery') || lower.includes('park')) {
+      return 'medium';
+    }
+    return 'low';
+  };
+
+  const inferEnergyLevel = (activityName: string): 'low' | 'medium' | 'high' => {
+    const lower = activityName.toLowerCase();
+    if (lower.includes('hiking') || lower.includes('trek') || lower.includes('climbing') || lower.includes('adventure') || lower.includes('sport')) {
+      return 'high';
+    }
+    if (lower.includes('walk') || lower.includes('tour') || lower.includes('explore')) {
+      return 'medium';
+    }
+    return 'low';
+  };
+
+  const isWeatherDependent = (activityName: string): boolean => {
+    const lower = activityName.toLowerCase();
+    return lower.includes('outdoor') || lower.includes('beach') || lower.includes('hiking') || 
+           lower.includes('park') || lower.includes('garden') || lower.includes('nature') ||
+           lower.includes('viewpoint') || lower.includes('scenic');
   };
 
   const optimizeRoute = async () => {

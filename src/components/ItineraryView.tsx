@@ -948,7 +948,7 @@ const ItineraryView = () => {
           </TabsContent>
 
           <TabsContent value="routes" className="space-y-6">
-            <RouteOptimizer tripData={trip} />
+            <RouteOptimizer tripData={trip} itineraryData={itinerary} />
           </TabsContent>
 
           <TabsContent value="flights" className="space-y-6">
