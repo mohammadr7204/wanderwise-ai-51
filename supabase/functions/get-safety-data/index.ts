@@ -169,56 +169,70 @@ async function fetchRealtimeAlerts(destination: string): Promise<SafetyAlert[]> 
       return getActiveAlerts(destination)
     }
 
-    // Query Perplexity for real-time safety information
+    // Query Perplexity for real-time safety information with timeout
     const query = `Current safety alerts, demonstrations, weather emergencies, disease outbreaks, or transportation disruptions in ${destination} as of ${new Date().toLocaleDateString()}. Include only active alerts from the past 7 days.`
     
-    const response = await fetch('https://api.perplexity.ai/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${perplexityApiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'llama-3.1-sonar-small-128k-online',
-        messages: [
-          {
-            role: 'system',
-            content: 'You are a travel safety expert. Provide current, factual safety alerts. Return only JSON array of alerts with fields: type, title, description, level (low/medium/high/critical), date, source. If no alerts, return empty array.'
-          },
-          {
-            role: 'user',
-            content: query
-          }
-        ],
-        temperature: 0.2,
-        max_tokens: 1000
-      })
-    })
-
-    if (!response.ok) {
-      console.error('Perplexity API error:', response.status)
-      return getActiveAlerts(destination)
-    }
-
-    const data = await response.json()
-    const content = data.choices?.[0]?.message?.content
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 5000) // 5 second timeout
     
-    if (!content) {
+    try {
+      const response = await fetch('https://api.perplexity.ai/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${perplexityApiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'llama-3.1-sonar-small-128k-online', // Using small model for speed
+          messages: [
+            {
+              role: 'system',
+              content: 'You are a travel safety expert. Provide current, factual safety alerts. Return only JSON array of alerts with fields: type, title, description, level (low/medium/high/critical), date, source. If no alerts, return empty array.'
+            },
+            {
+              role: 'user',
+              content: query
+            }
+          ],
+          temperature: 0.1, // Lower temperature for faster response
+          max_tokens: 500 // Reduced tokens for speed
+        }),
+        signal: controller.signal
+      })
+
+      clearTimeout(timeoutId)
+
+      if (!response.ok) {
+        console.error('Perplexity API error:', response.status)
+        return getActiveAlerts(destination)
+      }
+
+      const data = await response.json()
+      const content = data.choices?.[0]?.message?.content
+      
+      if (!content) {
+        return getActiveAlerts(destination)
+      }
+
+      // Try to parse JSON from the response
+      try {
+        const jsonMatch = content.match(/\[[\s\S]*\]/)
+        if (jsonMatch) {
+          const alerts = JSON.parse(jsonMatch[0])
+          return Array.isArray(alerts) ? alerts : getActiveAlerts(destination)
+        }
+      } catch (parseError) {
+        console.error('Failed to parse alerts:', parseError)
+      }
+
+      return getActiveAlerts(destination)
+    } catch (fetchError) {
+      clearTimeout(timeoutId)
+      if (fetchError instanceof Error && fetchError.name === 'AbortError') {
+        console.log('Perplexity API timeout - using fallback')
+      }
       return getActiveAlerts(destination)
     }
-
-    // Try to parse JSON from the response
-    try {
-      const jsonMatch = content.match(/\[[\s\S]*\]/)
-      if (jsonMatch) {
-        const alerts = JSON.parse(jsonMatch[0])
-        return Array.isArray(alerts) ? alerts : getActiveAlerts(destination)
-      }
-    } catch (parseError) {
-      console.error('Failed to parse alerts:', parseError)
-    }
-
-    return getActiveAlerts(destination)
   } catch (error) {
     console.error('Error fetching real-time alerts:', error)
     return getActiveAlerts(destination)

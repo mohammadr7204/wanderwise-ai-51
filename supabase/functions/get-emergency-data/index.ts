@@ -140,10 +140,16 @@ async function fetchNearestHospitals(destination: string, lat?: number, lng?: nu
   }
 
   try {
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 5000) // 5 second timeout
+    
     // Search for hospitals near the location
     const response = await fetch(
-      `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${lat},${lng}&radius=5000&type=hospital&rankby=prominence&key=${apiKey}`
+      `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${lat},${lng}&radius=5000&type=hospital&rankby=prominence&key=${apiKey}`,
+      { signal: controller.signal }
     )
+    
+    clearTimeout(timeoutId)
     
     if (!response.ok) {
       console.error('Google Places API error:', response.status)
@@ -157,13 +163,19 @@ async function fetchNearestHospitals(destination: string, lat?: number, lng?: nu
       return getMockHospitals(destination)
     }
 
-    // Get details for each hospital including phone numbers
-    const hospitalsWithDetails = await Promise.all(
-      data.results.slice(0, 5).map(async (hospital: any) => {
+    // Get details for top 3 hospitals only (reduced from 5 for speed)
+    const hospitalsWithDetails = await Promise.allSettled(
+      data.results.slice(0, 3).map(async (hospital: any) => {
+        const detailController = new AbortController()
+        const detailTimeoutId = setTimeout(() => detailController.abort(), 3000) // 3 second timeout per detail
+        
         try {
           const detailsResponse = await fetch(
-            `https://maps.googleapis.com/maps/api/place/details/json?place_id=${hospital.place_id}&fields=name,formatted_address,formatted_phone_number,opening_hours&key=${apiKey}`
+            `https://maps.googleapis.com/maps/api/place/details/json?place_id=${hospital.place_id}&fields=name,formatted_address,formatted_phone_number&key=${apiKey}`,
+            { signal: detailController.signal }
           )
+          clearTimeout(detailTimeoutId)
+          
           const details = await detailsResponse.json()
           
           return {
@@ -175,7 +187,7 @@ async function fetchNearestHospitals(destination: string, lat?: number, lng?: nu
             distance: 'Nearby'
           }
         } catch (error) {
-          console.error('Error fetching hospital details:', error)
+          clearTimeout(detailTimeoutId)
           return {
             name: hospital.name,
             address: hospital.vicinity,
@@ -188,7 +200,11 @@ async function fetchNearestHospitals(destination: string, lat?: number, lng?: nu
       })
     )
     
-    return hospitalsWithDetails
+    const hospitals = hospitalsWithDetails
+      .filter(result => result.status === 'fulfilled')
+      .map(result => (result as PromiseFulfilledResult<Hospital>).value)
+    
+    return hospitals.length > 0 ? hospitals : getMockHospitals(destination)
     
   } catch (error) {
     console.error('Error fetching hospitals:', error)
