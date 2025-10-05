@@ -135,29 +135,60 @@ async function fetchEmergencyNumbers(destination: string): Promise<EmergencyCont
 
 async function fetchNearestHospitals(destination: string, lat?: number, lng?: number, apiKey?: string): Promise<Hospital[]> {
   if (!apiKey || !lat || !lng) {
+    console.log('No Google Places API key or coordinates, using mock hospitals')
     return getMockHospitals(destination)
   }
 
   try {
     // Search for hospitals near the location
     const response = await fetch(
-      `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${lat},${lng}&radius=5000&type=hospital&key=${apiKey}`
+      `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${lat},${lng}&radius=5000&type=hospital&rankby=prominence&key=${apiKey}`
     )
     
     if (!response.ok) {
+      console.error('Google Places API error:', response.status)
       return getMockHospitals(destination)
     }
     
     const data = await response.json()
     
-    return data.results?.slice(0, 5).map((hospital: any) => ({
-      name: hospital.name,
-      address: hospital.vicinity,
-      phone: 'Call for information',
-      emergency: true,
-      englishSpeaking: isInternationalLocation(destination),
-      distance: 'Calculating...'
-    })) || getMockHospitals(destination)
+    if (!data.results || data.results.length === 0) {
+      console.log('No hospitals found, using mock data')
+      return getMockHospitals(destination)
+    }
+
+    // Get details for each hospital including phone numbers
+    const hospitalsWithDetails = await Promise.all(
+      data.results.slice(0, 5).map(async (hospital: any) => {
+        try {
+          const detailsResponse = await fetch(
+            `https://maps.googleapis.com/maps/api/place/details/json?place_id=${hospital.place_id}&fields=name,formatted_address,formatted_phone_number,opening_hours&key=${apiKey}`
+          )
+          const details = await detailsResponse.json()
+          
+          return {
+            name: hospital.name,
+            address: hospital.vicinity || details.result?.formatted_address || 'Address not available',
+            phone: details.result?.formatted_phone_number || 'Call local directory',
+            emergency: true,
+            englishSpeaking: isInternationalLocation(destination),
+            distance: 'Nearby'
+          }
+        } catch (error) {
+          console.error('Error fetching hospital details:', error)
+          return {
+            name: hospital.name,
+            address: hospital.vicinity,
+            phone: 'Call local directory',
+            emergency: true,
+            englishSpeaking: isInternationalLocation(destination),
+            distance: 'Nearby'
+          }
+        }
+      })
+    )
+    
+    return hospitalsWithDetails
     
   } catch (error) {
     console.error('Error fetching hospitals:', error)
