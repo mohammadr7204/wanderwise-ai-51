@@ -53,20 +53,21 @@ const SafetyGuide = ({ tripData }: SafetyGuideProps) => {
   const [safetyData, setSafetyData] = useState<any>(null);
 
   useEffect(() => {
-    fetchSafetyData();
-  }, [tripData]);
-
-  const fetchSafetyData = async () => {
-    console.log('SafetyGuide: Starting to fetch safety data...');
-    setLoading(true);
     const formData = tripData?.form_data || tripData?.formData || {};
     const destinations = formData.specificDestinations || [];
     const destination = destinations[0] || formData.destination || '';
     
-    console.log('SafetyGuide: Trip data:', { destination, lat: formData.lat, lng: formData.lng });
+    // Show fallback content immediately
+    generateFallbackContent(destination);
+    
+    // Then fetch real-time data in background
+    fetchSafetyData(destination, formData);
+  }, [tripData]);
+
+  const fetchSafetyData = async (destination: string, formData: any) => {
+    console.log('SafetyGuide: Fetching real-time safety data in background...');
 
     try {
-      console.log('SafetyGuide: Calling get-safety-data function...');
       const { data, error } = await supabase.functions.invoke('get-safety-data', {
         body: {
           destination,
@@ -75,17 +76,14 @@ const SafetyGuide = ({ tripData }: SafetyGuideProps) => {
         }
       });
 
-      if (error) {
-        console.error('SafetyGuide: Error fetching safety data:', error);
-        generateFallbackContent(destination);
-      } else {
-        console.log('SafetyGuide: Successfully fetched safety data:', data);
+      if (!error && data) {
+        console.log('SafetyGuide: Successfully fetched real-time safety data');
         setSafetyData(data);
         generateSafetyContent(data, destination);
       }
     } catch (error) {
-      console.error('SafetyGuide: Exception fetching safety data:', error);
-      generateFallbackContent(destination);
+      console.error('SafetyGuide: Error fetching real-time safety data:', error);
+      // Keep fallback content on error
     } finally {
       setLoading(false);
     }

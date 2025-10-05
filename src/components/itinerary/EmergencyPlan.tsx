@@ -50,20 +50,21 @@ const EmergencyPlan = ({ tripData }: EmergencyPlanProps) => {
   const [emergencyData, setEmergencyData] = useState<any>(null);
 
   useEffect(() => {
-    fetchEmergencyData();
-  }, [tripData]);
-
-  const fetchEmergencyData = async () => {
-    console.log('EmergencyPlan: Starting to fetch emergency data...');
-    setLoading(true);
     const formData = tripData?.form_data || tripData?.formData || {};
     const destinations = formData.specificDestinations || [];
     const destination = destinations[0] || formData.destination || '';
     
-    console.log('EmergencyPlan: Trip data:', { destination, lat: formData.lat, lng: formData.lng });
+    // Show fallback content immediately
+    generateFallbackEmergencyPlan(destination);
+    
+    // Then fetch real-time data in background
+    fetchEmergencyData(destination, formData);
+  }, [tripData]);
+
+  const fetchEmergencyData = async (destination: string, formData: any) => {
+    console.log('EmergencyPlan: Fetching real-time emergency data in background...');
 
     try {
-      console.log('EmergencyPlan: Calling get-emergency-data function...');
       const { data, error } = await supabase.functions.invoke('get-emergency-data', {
         body: {
           destination,
@@ -72,17 +73,14 @@ const EmergencyPlan = ({ tripData }: EmergencyPlanProps) => {
         }
       });
 
-      if (error) {
-        console.error('EmergencyPlan: Error fetching emergency data:', error);
-        generateFallbackEmergencyPlan(destination);
-      } else {
-        console.log('EmergencyPlan: Successfully fetched emergency data:', data);
+      if (!error && data) {
+        console.log('EmergencyPlan: Successfully fetched real-time emergency data');
         setEmergencyData(data);
         generateEmergencyPlan(data, destination);
       }
     } catch (error) {
-      console.error('EmergencyPlan: Exception fetching emergency data:', error);
-      generateFallbackEmergencyPlan(destination);
+      console.error('EmergencyPlan: Error fetching real-time emergency data:', error);
+      // Keep fallback content on error
     } finally {
       setLoading(false);
     }
