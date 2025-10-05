@@ -120,7 +120,18 @@ const FlightAnalysis = ({ tripData }: FlightAnalysisProps) => {
     } catch (error: any) {
       console.error('Failed to load flight data:', error);
       setError(error.message);
-      // Set fallback data
+      
+      // Get data from either form structure for fallback URLs
+      const formData = tripData?.form_data || tripData?.formData || {};
+      const destinations = formData.specificDestinations || [];
+      const origin = formData.startingLocation || 'New York';
+      const destination = destinations[0] || formData.destination || 'Paris';
+      const departureDate = formData.startDate || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+      const returnDate = formData.endDate || new Date(Date.now() + 37 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+      const passengers = formData.groupSize || 1;
+      const flightClass = (formData.flightClass || 'economy').toUpperCase();
+      
+      // Set fallback data with pre-filled booking URLs
       setFlightData({
         success: false,
         priceAnalysis: {
@@ -135,10 +146,10 @@ const FlightAnalysis = ({ tripData }: FlightAnalysisProps) => {
         alternativeAirports: { origin: [], destination: [] },
         flightOptions: [],
         bookingUrls: {
-          googleFlights: '#',
-          kayak: '#',
-          expedia: '#',
-          skyscanner: '#'
+          googleFlights: `https://www.google.com/flights?hl=en#flt=${encodeURIComponent(origin)}.${encodeURIComponent(destination)}.${departureDate}*${encodeURIComponent(destination)}.${encodeURIComponent(origin)}.${returnDate};c:${flightClass};e:1;px:${passengers}`,
+          kayak: `https://www.kayak.com/flights/${encodeURIComponent(origin)}-${encodeURIComponent(destination)}/${departureDate}/${returnDate}?sort=bestflight_a&fs=stops=0&passengers=${passengers}`,
+          expedia: `https://www.expedia.com/Flights-Search?trip=roundtrip&leg1=from:${encodeURIComponent(origin)},to:${encodeURIComponent(destination)},departure:${departureDate}TANYT&leg2=from:${encodeURIComponent(destination)},to:${encodeURIComponent(origin)},departure:${returnDate}TANYT&passengers=adults:${passengers}&options=cabinclass:${flightClass.toLowerCase()}&mode=search`,
+          skyscanner: `https://www.skyscanner.com/transport/flights/${encodeURIComponent(origin.toLowerCase())}/${encodeURIComponent(destination.toLowerCase())}/${departureDate.replace(/-/g, '')}/${returnDate.replace(/-/g, '')}/?adults=${passengers}&cabinclass=${flightClass.toLowerCase()}`
         },
         priceTrends: {
           direction: 'stable',
@@ -152,7 +163,8 @@ const FlightAnalysis = ({ tripData }: FlightAnalysisProps) => {
           popularAirlines: [],
           tips: [
             'Use flight comparison websites for best deals',
-            'Consider flexible dates for cheaper options'
+            'Consider flexible dates for cheaper options',
+            'Book 4-6 weeks in advance for better prices'
           ]
         }
       });
