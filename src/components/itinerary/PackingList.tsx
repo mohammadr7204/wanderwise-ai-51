@@ -98,8 +98,11 @@ const PackingList = ({ tripData }: PackingListProps) => {
   };
 
   const generateSmartPackingList = (context: TripContext) => {
-    const destination = tripData?.formData?.destination || '';
-    const activities = tripData?.formData?.interests || [];
+    const destination = tripData?.formData?.specificDestinations?.[0] || 
+                       tripData?.formData?.destination || 
+                       tripData?.destination || '';
+    const activities = tripData?.formData?.activityTypes || 
+                      tripData?.formData?.interests || [];
     
     // Get destination intelligence
     const countryInfo = DestinationIntelligence.getCountryInfo(destination);
@@ -153,15 +156,6 @@ const PackingList = ({ tripData }: PackingListProps) => {
       // Electronics with power adapter specifics
       { id: 'phone', name: 'Smartphone', category: 'Electronics', essential: true, weatherDependent: false, checked: false },
       { id: 'charger', name: 'Phone Charger', category: 'Electronics', essential: true, weatherDependent: false, checked: false },
-      { 
-        id: 'power-adapter', 
-        name: countryInfo ? `Power Adapter (Type ${countryInfo.powerPlugType.join('/')})` : 'Power Adapter', 
-        category: 'Electronics', 
-        essential: true, 
-        weatherDependent: false, 
-        checked: false,
-        reason: countryInfo ? `Required for ${countryInfo.voltage} outlets` : 'For charging devices'
-      },
       { id: 'powerbank', name: 'Portable Charger', category: 'Electronics', essential: false, weatherDependent: false, checked: false },
       
       // Basic health items
@@ -549,18 +543,32 @@ const PackingList = ({ tripData }: PackingListProps) => {
           </CardHeader>
           <CardContent>
             {(() => {
-              const countryInfo = DestinationIntelligence.getCountryInfo(tripData?.formData?.destination || '');
-              if (!countryInfo) return <p className="text-muted-foreground">No specific requirements found.</p>;
+              const destination = tripData?.formData?.specificDestinations?.[0] || 
+                                tripData?.formData?.destination || 
+                                tripData?.destination || '';
+              const countryInfo = DestinationIntelligence.getCountryInfo(destination);
+              
+              if (!countryInfo) {
+                return (
+                  <div className="text-muted-foreground">
+                    <p>Destination information for "{destination}" will be added soon.</p>
+                    <p className="text-xs mt-2">General travel essentials have been included in your packing list.</p>
+                  </div>
+                );
+              }
               
               return (
                 <div className="grid md:grid-cols-2 gap-4">
                   <div className="space-y-3">
                     <h4 className="font-medium">Essential Info</h4>
                     <div className="space-y-2 text-sm">
-                      <div>Power: {countryInfo.powerPlugType.join('/')} plugs, {countryInfo.voltage}</div>
-                      <div>Currency: {countryInfo.currency}</div>
-                      <div>Driving: {countryInfo.drivesSide} side</div>
-                      <div>Languages: {countryInfo.languages.join(', ')}</div>
+                      <div className="flex items-center gap-2">
+                        <Zap className="h-4 w-4 text-primary" />
+                        <span><strong>Power:</strong> {countryInfo.powerPlugType.join('/')} plugs, {countryInfo.voltage}</span>
+                      </div>
+                      <div><strong>Currency:</strong> {countryInfo.currency}</div>
+                      <div><strong>Driving:</strong> {countryInfo.drivesSide} side</div>
+                      <div><strong>Languages:</strong> {countryInfo.languages.join(', ')}</div>
                     </div>
                   </div>
                   

@@ -174,27 +174,66 @@ export class DestinationIntelligence {
   static getCountryInfo(destination: string): CountryInfo | null {
     const country = destination.toLowerCase();
     
-    // Try to match country name in destination
+    // Try to match country name or city in destination
     for (const [countryKey, info] of Object.entries(this.countryData)) {
       if (country.includes(countryKey)) {
         return info;
       }
     }
-    
-    // Default values for unknown countries
-    return {
-      powerPlugType: ['A', 'B'], // Universal
-      voltage: '110-240V',
-      conservativeDress: false,
-      religiousSites: false,
-      altitudeSickness: false,
-      malariaRisk: false,
-      visaRequired: false,
-      drivesSide: 'right',
-      currency: 'USD',
-      languages: ['English'],
-      culturalNotes: []
+
+    // City-based matching for common destinations
+    const cityToCountry: Record<string, string> = {
+      'paris': 'france',
+      'london': 'united kingdom',
+      'rome': 'italy',
+      'barcelona': 'spain',
+      'amsterdam': 'netherlands',
+      'berlin': 'germany',
+      'vienna': 'austria',
+      'prague': 'czech republic',
+      'budapest': 'hungary',
+      'istanbul': 'turkey',
+      'dubai': 'united arab emirates',
+      'singapore': 'singapore',
+      'hong kong': 'hong kong',
+      'tokyo': 'japan',
+      'bangkok': 'thailand',
+      'new york': 'united states',
+      'los angeles': 'united states',
+      'san francisco': 'united states',
+      'chicago': 'united states',
+      'miami': 'united states',
+      'toronto': 'canada',
+      'vancouver': 'canada',
+      'montreal': 'canada',
+      'sydney': 'australia',
+      'melbourne': 'australia',
+      'auckland': 'new zealand',
+      'mexico city': 'mexico',
+      'rio de janeiro': 'brazil',
+      'buenos aires': 'argentina',
+      'lima': 'peru',
+      'cusco': 'peru',
+      'cairo': 'egypt',
+      'marrakech': 'morocco',
+      'cape town': 'south africa',
+      'nairobi': 'kenya',
+      'mumbai': 'india',
+      'delhi': 'india',
+      'bangalore': 'india',
+      'seoul': 'south korea',
+      'beijing': 'china',
+      'shanghai': 'china'
     };
+
+    for (const [city, countryName] of Object.entries(cityToCountry)) {
+      if (country.includes(city) && this.countryData[countryName]) {
+        return this.countryData[countryName];
+      }
+    }
+    
+    // Return null for unknown destinations so we can fetch dynamically
+    return null;
   }
 
   static getActivityRequirements(activities: string[]): string[] {
