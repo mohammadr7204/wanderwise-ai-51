@@ -253,41 +253,22 @@ const RestaurantRecommendations: React.FC<RestaurantRecommendationsProps> = ({
                       </div>
 
                       <div className="pt-2 space-y-2">
-                        <div className="grid grid-cols-2 gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="w-full"
-                            asChild
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="w-full"
+                          asChild
+                        >
+                          <a
+                            href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(restaurant.address)}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-1"
                           >
-                            <a
-                              href={restaurant.google_maps_url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="flex items-center gap-1"
-                            >
-                              <MapPin className="h-3 w-3" />
-                              Directions
-                            </a>
-                          </Button>
-                          
-                          {restaurant.phoneNumber && (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="w-full"
-                              asChild
-                            >
-                              <a
-                                href={`tel:${restaurant.phoneNumber}`}
-                                className="flex items-center gap-1"
-                              >
-                                <Phone className="h-3 w-3" />
-                                Call
-                              </a>
-                            </Button>
-                          )}
-                        </div>
+                            <MapPin className="h-3 w-3" />
+                            Get Directions
+                          </a>
+                        </Button>
                         
                         <div className="text-xs text-muted-foreground p-2 bg-muted/50 rounded">
                           <span className="font-medium">Why perfect: </span>
