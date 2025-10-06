@@ -788,16 +788,22 @@ Make this the most personalized, data-driven itinerary possible. Every single re
     console.log('Prompt length:', prompt.length);
     
     let response;
+    let controller: AbortController | null = null;
+    let timeoutId: number | null = null;
+    
     try {
       // Add timeout matching function timeout (5 minutes)
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 280000); // 280 second timeout (slightly less than 5 min function timeout)
+      controller = new AbortController();
+      timeoutId = setTimeout(() => controller.abort(), 280000); // 280 second timeout (slightly less than 5 min function timeout)
+      
+      console.log('Starting fetch to Anthropic API...');
+      console.log('API Key present:', !!anthropicApiKey);
+      console.log('API Key length:', anthropicApiKey?.length || 0);
       
       response = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Accept': 'application/json',
           'x-api-key': anthropicApiKey,
           'anthropic-version': '2023-06-01',
         },
@@ -831,15 +837,21 @@ Your responses should reflect deep thinking and analysis:
 Return ONLY valid JSON. Do not include any text before or after the JSON object. Every recommendation must be backed by your research and reasoning about why it's perfect for this specific traveler.`
         }),
       });
-      clearTimeout(timeoutId);
-      console.log('Fetch completed, got response object');
+      
+      if (timeoutId) clearTimeout(timeoutId);
+      console.log('Fetch completed successfully, response status:', response.status);
     } catch (fetchError: any) {
+      if (timeoutId) clearTimeout(timeoutId);
+      console.error('Anthropic API fetch error details:', {
+        name: fetchError.name,
+        message: fetchError.message,
+        stack: fetchError.stack,
+        cause: fetchError.cause
+      });
+      
       if (fetchError.name === 'AbortError') {
-        console.error('Anthropic API call timed out after 280 seconds');
         throw new Error('AI generation timed out. Please try again with a shorter trip duration or simpler preferences.');
       }
-      console.error('Anthropic API fetch error:', fetchError.message);
-      console.error('Full fetch error:', fetchError);
       throw new Error(`Failed to call Anthropic API: ${fetchError.message}`);
     }
 
