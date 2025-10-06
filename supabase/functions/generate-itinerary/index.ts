@@ -784,190 +784,167 @@ Return a detailed JSON object with:
 
 Make this the most personalized, data-driven itinerary possible. Every single recommendation should feel intentional and perfectly matched to this specific traveler's preferences, group size, budget, and travel dates.`;
 
-    console.log('Calling Anthropic API...');
-    console.log('Prompt length:', prompt.length);
+    console.log('Starting chunked AI generation for maximum detail...');
     
-    let response;
-    let controller: AbortController | null = null;
-    let timeoutId: number | null = null;
+    // Split generation into chunks to avoid timeout while maximizing detail
+    const chunkSize = Math.ceil(tripDuration / 2); // Split into 2 chunks for trips up to 14 days
+    const chunks = [];
     
-    try {
-      // Must complete in under 50 seconds (Edge Functions have 60s hard limit)
-      controller = new AbortController();
-      timeoutId = setTimeout(() => controller.abort(), 50000);
-      
-      console.log('Starting fetch to Anthropic API...');
-      console.log('API Key present:', !!anthropicApiKey);
-      console.log('API Key length:', anthropicApiKey?.length || 0);
-      
-      response = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': anthropicApiKey,
-          'anthropic-version': '2023-06-01',
-        },
-        signal: controller.signal,
-        body: JSON.stringify({
-          model: 'claude-sonnet-4-20250514',
-          max_tokens: 5000, // Reduced to fit within 60s edge function limit
-          temperature: 0.3,
-          messages: [
-            {
-              role: 'user',
-              content: prompt
-            }
-          ],
-          system: `You are the world's most advanced AI travel planner with real-time access to current data. You have the thinking capabilities to deeply research and analyze:
-
-1. CURRENT EVENTS: Research what's happening in destinations during travel dates
-2. SEASONAL FACTORS: Consider weather, crowds, pricing variations, and seasonal attractions
-3. CULTURAL INSIGHTS: Local customs, etiquette, holidays, and special events
-4. PRACTICAL LOGISTICS: Transportation, timing, booking requirements, and accessibility
-5. HIDDEN GEMS: Undiscovered spots that match the traveler's interests
-6. VALUE OPTIMIZATION: Best prices, free alternatives, and money-saving strategies
-
-Your responses should reflect deep thinking and analysis:
-- Why is each recommendation ideal for THIS specific trip?
-- What makes this timing/season optimal or challenging?
-- How do local events/weather impact the experience?
-- What insider knowledge elevates the recommendations?
-- Are there authentic local alternatives to common tourist activities?
-
-Return ONLY valid JSON. Do not include any text before or after the JSON object. Every recommendation must be backed by your research and reasoning about why it's perfect for this specific traveler.`
-        }),
-      });
-      
-      if (timeoutId) clearTimeout(timeoutId);
-      console.log('Fetch completed successfully, response status:', response.status);
-    } catch (fetchError: any) {
-      if (timeoutId) clearTimeout(timeoutId);
-      console.error('Anthropic API fetch error details:', {
-        name: fetchError.name,
-        message: fetchError.message,
-        stack: fetchError.stack,
-        cause: fetchError.cause
-      });
-      
-      throw new Error(`Failed to call Anthropic API: ${fetchError.message}`);
+    for (let i = 0; i < tripDuration; i += chunkSize) {
+      const startDay = i + 1;
+      const endDay = Math.min(i + chunkSize, tripDuration);
+      chunks.push({ startDay, endDay });
     }
+    
+    console.log(`Generating itinerary in ${chunks.length} chunks:`, chunks);
+    
+    let combinedItinerary: any = null;
+    
+    // Generate each chunk sequentially
+    for (let chunkIndex = 0; chunkIndex < chunks.length; chunkIndex++) {
+      const chunk = chunks[chunkIndex];
+      console.log(`Generating chunk ${chunkIndex + 1}/${chunks.length}: Days ${chunk.startDay}-${chunk.endDay}`);
+      
+      const chunkPrompt = chunkIndex === 0 ? 
+        // First chunk includes all metadata
+        `${prompt}
 
-    console.log('Anthropic API response status:', response.status);
-    console.log('Anthropic API response headers:', Object.fromEntries(response.headers.entries()));
+Generate a detailed itinerary for DAYS ${chunk.startDay}-${chunk.endDay} of this ${tripDuration}-day trip. ${chunks.length > 1 ? `This is part 1 of ${chunks.length}. Focus on the opening days with arrival logistics and initial experiences.` : ''}
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('Anthropic API error response:', errorText);
-      throw new Error(`Anthropic API error: ${response.status} - ${errorText}`);
-    }
+Return the complete JSON structure but only populate the dailyItinerary array for days ${chunk.startDay}-${chunk.endDay}. For other sections (destination, overview, accommodationGuide, restaurantGuide, budgetBreakdown, insiderTips, packingList, safetyGuide), provide ${chunkIndex === 0 ? 'COMPLETE' : 'minimal'} details.` :
+        // Subsequent chunks focus on daily itinerary only
+        `Continue the ${tripDuration}-day itinerary for ${targetDestination || tripData.specificDestinations[0]}. 
 
-    console.log('Parsing Anthropic response...');
-    const data = await response.json();
-    console.log('Response parsed successfully, content length:', data.content?.[0]?.text?.length || 0);
-    const rawItinerary = data.content[0].text;
+Generate DAYS ${chunk.startDay}-${chunk.endDay} (part ${chunkIndex + 1} of ${chunks.length}).
 
-    console.log(`Generated itinerary for trip ${tripId} (${rawItinerary.length} characters)`);
+Budget context: $${budgetCalculation.accommodationDaily}/day accommodation, $${budgetCalculation.foodDaily}/day food, $${budgetCalculation.activitiesDaily}/day activities.
 
-    // Parse the JSON response from Claude
-    let parsedItinerary;
-    try {
-      // Clean the response in case Claude added any extra text or markdown
-      let cleanJson = rawItinerary;
-      
-      // Remove markdown code blocks if present
-      if (cleanJson.includes('```json')) {
-        cleanJson = cleanJson.replace(/```json\s*/, '');
-        cleanJson = cleanJson.replace(/\s*```\s*$/, '');
-      }
-      
-      // Find the JSON object
-      const jsonStart = cleanJson.indexOf('{');
-      const jsonEnd = cleanJson.lastIndexOf('}') + 1;
-      
-      if (jsonStart === -1 || jsonEnd === 0) {
-        throw new Error('No JSON object found in response');
-      }
-      
-      cleanJson = cleanJson.substring(jsonStart, jsonEnd);
-      
-      // Try to fix incomplete JSON by adding missing closing braces
-      let braceCount = 0;
-      for (let i = 0; i < cleanJson.length; i++) {
-        if (cleanJson[i] === '{') braceCount++;
-        if (cleanJson[i] === '}') braceCount--;
-      }
-      
-      // Add missing closing braces
-      while (braceCount > 0) {
-        cleanJson += '}';
-        braceCount--;
-      }
-      
-      parsedItinerary = JSON.parse(cleanJson);
-    } catch (parseError) {
-      console.error('Failed to parse AI response as JSON:', parseError);
-      console.error('Raw response length:', rawItinerary.length);
-      console.error('Raw response preview:', rawItinerary.substring(0, 500));
-      
-      // Fallback: return the raw text
-      parsedItinerary = {
-        destination: tripData.destinationType === 'specific' ? tripData.specificDestinations[0] : targetDestination || 'AI-selected',
-        rawContent: rawItinerary,
-        error: 'Failed to parse structured response'
-      };
-    }
+Return ONLY the dailyItinerary array for days ${chunk.startDay}-${chunk.endDay}. Make each day incredibly detailed with:
+- 4-6 activities with specific timing, costs, booking info
+- 3 meal recommendations per day with authentic local options
+- Insider tips and local secrets
+- Transportation between activities with estimated times and costs
+- Weather-appropriate adjustments
 
-    // Store the complete itinerary in the database
-    try {
-      console.log(`Attempting to store itinerary for trip ${tripId}`);
-      console.log('Itinerary content preview:', JSON.stringify(parsedItinerary).substring(0, 200) + '...');
-      console.log('Real-time data keys:', Object.keys(realTimeData));
+Return format: { "dailyItinerary": [day ${chunk.startDay} object, day ${chunk.startDay + 1} object, ...] }`;
+
+      let response;
+      let controller: AbortController | null = null;
+      let timeoutId: number | null = null;
       
-      const itineraryResult = await supabase
-        .from('itineraries')
-        .upsert({
-          trip_id: tripId,
-          content: parsedItinerary,
-          generated_at: new Date().toISOString(),
-          real_time_data: realTimeData
+      try {
+        controller = new AbortController();
+        timeoutId = setTimeout(() => controller.abort(), 45000); // 45s per chunk
+        
+        console.log(`Calling Anthropic API for chunk ${chunkIndex + 1}...`);
+        
+        response = await fetch('https://api.anthropic.com/v1/messages', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-api-key': anthropicApiKey,
+            'anthropic-version': '2023-06-01',
+          },
+          signal: controller.signal,
+          body: JSON.stringify({
+            model: 'claude-sonnet-4-20250514',
+            max_tokens: 12000, // Much higher per chunk for maximum detail
+            temperature: 0.3,
+            messages: [
+              {
+                role: 'user',
+                content: chunkPrompt
+              }
+            ],
+          }),
         });
-      
-      if (itineraryResult.error) {
-        console.error('Itinerary insertion error:', itineraryResult.error);
-        throw new Error(`Failed to store itinerary: ${itineraryResult.error.message}`);
+        
+        if (timeoutId) clearTimeout(timeoutId);
+        console.log(`Chunk ${chunkIndex + 1} API response status:`, response.status);
+      } catch (fetchError: any) {
+        if (timeoutId) clearTimeout(timeoutId);
+        console.error(`Chunk ${chunkIndex + 1} API fetch error:`, {
+          name: fetchError.name,
+          message: fetchError.message,
+        });
+        throw new Error(`Failed to generate chunk ${chunkIndex + 1}: ${fetchError.message}`);
       }
-      
-      console.log('Itinerary stored successfully, now updating trip status...');
-      
-      // Update trip status
-      const tripUpdateResult = await supabase
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`Anthropic API error for chunk ${chunkIndex + 1}:`, response.status, errorText);
+        throw new Error(`Anthropic API error: ${response.status} - ${errorText}`);
+      }
+
+      const anthropicResponse = await response.json();
+      console.log(`Chunk ${chunkIndex + 1} response received, parsing...`);
+
+      let chunkText = anthropicResponse.content[0].text;
+      chunkText = chunkText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+
+      let chunkData;
+      try {
+        chunkData = JSON.parse(chunkText);
+        console.log(`Chunk ${chunkIndex + 1} parsed successfully`);
+      } catch (parseError) {
+        console.error(`Failed to parse chunk ${chunkIndex + 1} JSON:`, parseError);
+        throw new Error(`Invalid JSON in chunk ${chunkIndex + 1}`);
+      }
+
+      // Merge chunks
+      if (chunkIndex === 0) {
+        combinedItinerary = chunkData;
+      } else {
+        // Append daily itinerary from this chunk
+        if (chunkData.dailyItinerary && Array.isArray(chunkData.dailyItinerary)) {
+          combinedItinerary.dailyItinerary = [
+            ...(combinedItinerary.dailyItinerary || []),
+            ...chunkData.dailyItinerary
+          ];
+        }
+      }
+    }
+
+    console.log(`All ${chunks.length} chunks generated and combined successfully`);
+
+    const itineraryData = combinedItinerary;
+
+    // Store the generated itinerary
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
+
+    try {
+      const { error: updateError } = await supabaseAdmin
         .from('trips')
-        .update({ status: 'completed' })
+        .update({
+          status: 'completed',
+          itinerary_data: itineraryData,
+          updated_at: new Date().toISOString(),
+        })
         .eq('id', tripId);
-        
-      if (tripUpdateResult.error) {
-        console.error('Trip status update error:', tripUpdateResult.error);
-        throw new Error(`Failed to update trip status: ${tripUpdateResult.error.message}`);
+
+      if (updateError) {
+        console.error('Error updating trip with itinerary:', updateError);
+        throw updateError;
       }
-        
-      console.log(`Itinerary and trip status updated successfully for trip ${tripId}`);
+
+      console.log('Chunked itinerary generation completed successfully');
     } catch (dbError: any) {
-      console.error('Database storage error details:', {
+      console.error('Database storage error:', {
         message: dbError.message,
-        details: dbError.details,
-        hint: dbError.hint,
-        code: dbError.code,
         tripId: tripId
       });
-      throw dbError; // Re-throw to be caught by outer try-catch
+      throw dbError;
     }
 
     return new Response(JSON.stringify({ 
       success: true,
-      itinerary: parsedItinerary,
-      destination: parsedItinerary.destination || targetDestination || (tripData.destinationType === 'specific' ? tripData.specificDestinations[0] : 'AI-selected'),
+      itinerary: itineraryData,
+      destination: itineraryData.destination || targetDestination || (tripData.destinationType === 'specific' ? tripData.specificDestinations[0] : 'AI-selected'),
       duration: tripDuration,
       generatedAt: new Date().toISOString(),
+      chunksGenerated: chunks.length,
       realTimeDataUsed: {
         weather: !!realTimeData.weather,
         attractions: realTimeData.attractions.length,
@@ -981,9 +958,6 @@ Return ONLY valid JSON. Do not include any text before or after the JSON object.
     console.error('Error in generate-itinerary function:', {
       message: error.message,
       stack: error.stack,
-      details: error.details,
-      hint: error.hint,
-      code: error.code,
       name: error.name
     });
     
