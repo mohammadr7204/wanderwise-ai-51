@@ -909,13 +909,9 @@ Return format: { "dailyItinerary": [day ${chunk.startDay} object, day ${chunk.st
 
     const itineraryData = combinedItinerary;
 
-    // Store the generated itinerary
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
-
+    // Store the generated itinerary (reuse existing supabase client)
     try {
-      const { error: updateError } = await supabaseAdmin
+      const { error: updateError } = await supabase
         .from('trips')
         .update({
           status: 'completed',
