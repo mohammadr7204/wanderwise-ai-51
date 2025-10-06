@@ -133,20 +133,36 @@ const BudgetBreakdown = ({ tripData, existingBudget }: BudgetBreakdownProps) => 
       accommodationPercentage = Math.max(0.15, accommodationPercentage - 0.05);
     }
 
-    // Ensure percentages add up to reasonable total (leaving room for transport and emergency)
+    // Calculate transport, emergency, and splurge percentages
     const remainingPercentage = 1 - flightPercentage - accommodationPercentage - foodPercentage - activitiesPercentage;
     const transportPercentage = Math.max(0.05, Math.min(0.12, remainingPercentage * 0.5));
     const emergencyPercentage = Math.max(0.08, Math.min(0.15, remainingPercentage * 0.6));
     const splurgePercentage = Math.max(0.03, remainingPercentage - transportPercentage - emergencyPercentage);
 
+    // CRITICAL: Normalize all percentages to ensure they sum to exactly 100%
+    const totalPercentage = flightPercentage + accommodationPercentage + foodPercentage + 
+                           activitiesPercentage + transportPercentage + emergencyPercentage + splurgePercentage;
+    
+    // Apply normalization factor
+    const normalizationFactor = 1 / totalPercentage;
+    const normalizedFlight = flightPercentage * normalizationFactor;
+    const normalizedAccommodation = accommodationPercentage * normalizationFactor;
+    const normalizedFood = foodPercentage * normalizationFactor;
+    const normalizedActivities = activitiesPercentage * normalizationFactor;
+    const normalizedTransport = transportPercentage * normalizationFactor;
+    const normalizedEmergency = emergencyPercentage * normalizationFactor;
+    const normalizedSplurge = splurgePercentage * normalizationFactor;
+
     console.log('Dynamic budget percentages:', {
-      flight: flightPercentage,
-      accommodation: accommodationPercentage,
-      food: foodPercentage,
-      activities: activitiesPercentage,
-      transport: transportPercentage,
-      emergency: emergencyPercentage,
-      splurge: splurgePercentage
+      flight: normalizedFlight,
+      accommodation: normalizedAccommodation,
+      food: normalizedFood,
+      activities: normalizedActivities,
+      transport: normalizedTransport,
+      emergency: normalizedEmergency,
+      splurge: normalizedSplurge,
+      total: normalizedFlight + normalizedAccommodation + normalizedFood + normalizedActivities + 
+             normalizedTransport + normalizedEmergency + normalizedSplurge
     });
 
     // Set the total budget
@@ -155,8 +171,8 @@ const BudgetBreakdown = ({ tripData, existingBudget }: BudgetBreakdownProps) => 
     const items: BudgetItem[] = [
       {
         category: 'Flights',
-        amount: Math.round(currentTotal * flightPercentage),
-        percentage: Math.round(flightPercentage * 100),
+        amount: Math.round(currentTotal * normalizedFlight),
+        percentage: Math.round(normalizedFlight * 100),
         icon: <Plane className="h-4 w-4" />,
         color: 'bg-blue-500',
         tips: isExpensive ? [
@@ -175,8 +191,8 @@ const BudgetBreakdown = ({ tripData, existingBudget }: BudgetBreakdownProps) => 
       },
       {
         category: 'Accommodation',
-        amount: Math.round(currentTotal * accommodationPercentage),
-        percentage: Math.round(accommodationPercentage * 100),
+        amount: Math.round(currentTotal * normalizedAccommodation),
+        percentage: Math.round(normalizedAccommodation * 100),
         icon: <Home className="h-4 w-4" />,
         color: 'bg-green-500',
         tips: accommodationType === 'luxury-hotel' || accommodationType === 'resort' ? [
@@ -199,8 +215,8 @@ const BudgetBreakdown = ({ tripData, existingBudget }: BudgetBreakdownProps) => 
       },
       {
         category: 'Food & Dining',
-        amount: Math.round(currentTotal * foodPercentage),
-        percentage: Math.round(foodPercentage * 100),
+        amount: Math.round(currentTotal * normalizedFood),
+        percentage: Math.round(normalizedFood * 100),
         icon: <Utensils className="h-4 w-4" />,
         color: 'bg-orange-500',
         tips: isExpensive ? [
@@ -223,8 +239,8 @@ const BudgetBreakdown = ({ tripData, existingBudget }: BudgetBreakdownProps) => 
       },
       {
         category: 'Activities',
-        amount: Math.round(currentTotal * activitiesPercentage),
-        percentage: Math.round(activitiesPercentage * 100),
+        amount: Math.round(currentTotal * normalizedActivities),
+        percentage: Math.round(normalizedActivities * 100),
         icon: <Camera className="h-4 w-4" />,
         color: 'bg-purple-500',
         tips: hasAdventureActivities ? [
@@ -239,8 +255,8 @@ const BudgetBreakdown = ({ tripData, existingBudget }: BudgetBreakdownProps) => 
       },
       {
         category: 'Local Transport',
-        amount: Math.round(currentTotal * transportPercentage),
-        percentage: Math.round(transportPercentage * 100),
+        amount: Math.round(currentTotal * normalizedTransport),
+        percentage: Math.round(normalizedTransport * 100),
         icon: <Bus className="h-4 w-4" />,
         color: 'bg-yellow-500',
         tips: transportPreferences.includes('rental-car') ? [
@@ -259,20 +275,20 @@ const BudgetBreakdown = ({ tripData, existingBudget }: BudgetBreakdownProps) => 
       },
       {
         category: 'Emergency Fund',
-        amount: Math.round(currentTotal * emergencyPercentage),
-        percentage: Math.round(emergencyPercentage * 100),
+        amount: Math.round(currentTotal * normalizedEmergency),
+        percentage: Math.round(normalizedEmergency * 100),
         icon: <Shield className="h-4 w-4" />,
         color: 'bg-red-500',
         tips: [
-          `Keep ${Math.round(emergencyPercentage * 100)}% for unexpected costs`,
+          `Keep ${Math.round(normalizedEmergency * 100)}% for unexpected costs`,
           'Separate from daily spending money',
           'Get comprehensive travel insurance'
         ]
       },
       {
         category: 'Splurge Experience',
-        amount: Math.round(currentTotal * splurgePercentage),
-        percentage: Math.round(splurgePercentage * 100),
+        amount: Math.round(currentTotal * normalizedSplurge),
+        percentage: Math.round(normalizedSplurge * 100),
         icon: <Sparkles className="h-4 w-4" />,
         color: 'bg-pink-500',
         tips: [
