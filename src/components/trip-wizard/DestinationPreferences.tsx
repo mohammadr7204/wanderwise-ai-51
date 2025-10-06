@@ -1,6 +1,5 @@
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -9,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Sparkles, MapPin, Globe, Thermometer, X, Plane, Clock, Star } from 'lucide-react';
 import { useState } from 'react';
 import type { TripFormData } from '@/pages/CreateTrip';
+import { DestinationCombobox } from '@/components/ui/destination-combobox';
 
 interface DestinationPreferencesProps {
   formData: TripFormData;
@@ -92,24 +92,28 @@ export const DestinationPreferences = ({ formData, updateFormData }: Destination
       {/* Specific Destinations Input */}
       {formData.destinationType === 'specific' && (
         <div className="space-y-4">
-          <Label>Add destinations you'd like to visit</Label>
+          <Label>Select destinations you'd like to visit</Label>
           <div className="flex gap-2">
-            <Input
-              placeholder="e.g., Paris, Tokyo, New York"
+            <DestinationCombobox
               value={destinationInput}
-              onChange={(e) => setDestinationInput(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && addDestination()}
+              onValueChange={(value) => {
+                setDestinationInput(value);
+                if (value && !formData.specificDestinations.includes(value)) {
+                  updateFormData({
+                    specificDestinations: [...formData.specificDestinations, value]
+                  });
+                  setDestinationInput('');
+                }
+              }}
+              placeholder="Search for a city or country..."
               className="flex-1"
             />
-            <Button onClick={addDestination} variant="outline">
-              Add
-            </Button>
           </div>
           
           {formData.specificDestinations.length > 0 && (
             <div className="flex flex-wrap gap-2">
               {formData.specificDestinations.map((destination) => (
-                <Badge key={destination} variant="secondary" className="flex items-center gap-1">
+                <Badge key={destination} variant="secondary" className="flex items-center gap-1 py-1.5">
                   {destination}
                   <Button
                     variant="ghost"
