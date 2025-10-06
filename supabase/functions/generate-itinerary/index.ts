@@ -505,14 +505,23 @@ serve(async (req) => {
       };
     }
 
+    console.log('Calculating budget...');
     const avgBudget = (tripData.budgetMin + tripData.budgetMax) / 2;
     const maxBudget = tripData.budgetMax; // Never exceed this
     let budgetCalculation = calculateDynamicBudget(targetDestination, avgBudget, tripDuration, tripData.groupSize);
     
+    console.log('Initial budget calculation:', {
+      tripTotal: budgetCalculation.tripTotal,
+      maxBudget,
+      exceedsLimit: budgetCalculation.tripTotal > maxBudget
+    });
+    
     // CRITICAL: Ensure tripTotal never exceeds user's max budget
     if (budgetCalculation.tripTotal > maxBudget) {
+      console.log('Budget exceeds max, recalculating...');
       // Recalculate with max budget instead to stay within constraints
       budgetCalculation = calculateDynamicBudget(targetDestination, maxBudget * 0.9, tripDuration, tripData.groupSize);
+      console.log('Recalculated budget:', budgetCalculation.tripTotal);
     }
 
     // Smart budget optimization recommendations
@@ -775,25 +784,29 @@ Return a detailed JSON object with:
 
 Make this the most personalized, data-driven itinerary possible. Every single recommendation should feel intentional and perfectly matched to this specific traveler's preferences, group size, budget, and travel dates.`;
 
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${anthropicApiKey}`,
-        'Content-Type': 'application/json',
-        'x-api-key': anthropicApiKey,
-        'anthropic-version': '2023-06-01',
-      },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 20000,
-        temperature: 0.3,
-        messages: [
-          {
-            role: 'user',
-            content: prompt
-          }
-        ],
-        system: `You are the world's most advanced AI travel planner with real-time access to current data. You have the thinking capabilities to deeply research and analyze:
+    console.log('Calling Anthropic API...');
+    
+    let response;
+    try {
+      response = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${anthropicApiKey}`,
+          'Content-Type': 'application/json',
+          'x-api-key': anthropicApiKey,
+          'anthropic-version': '2023-06-01',
+        },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 20000,
+          temperature: 0.3,
+          messages: [
+            {
+              role: 'user',
+              content: prompt
+            }
+          ],
+          system: `You are the world's most advanced AI travel planner with real-time access to current data. You have the thinking capabilities to deeply research and analyze:
 
 1. CURRENT EVENTS: Research what's happening in destinations during travel dates
 2. SEASONAL FACTORS: Consider weather, crowds, pricing variations, and seasonal attractions
@@ -810,11 +823,19 @@ Think step-by-step about each recommendation. Consider multiple factors:
 - Are there authentic local alternatives to common tourist activities?
 
 Return ONLY valid JSON. Do not include any text before or after the JSON object. Every recommendation must be backed by your research and reasoning about why it's perfect for this specific traveler.`
-      }),
-    });
+        }),
+      });
+    } catch (fetchError: any) {
+      console.error('Anthropic API fetch error:', fetchError.message);
+      throw new Error(`Failed to call Anthropic API: ${fetchError.message}`);
+    }
+
+    console.log('Anthropic API response status:', response.status);
 
     if (!response.ok) {
-      throw new Error(`Anthropic API error: ${response.status}`);
+      const errorText = await response.text();
+      console.error('Anthropic API error response:', errorText);
+      throw new Error(`Anthropic API error: ${response.status} - ${errorText}`);
     }
 
     const data = await response.json();
