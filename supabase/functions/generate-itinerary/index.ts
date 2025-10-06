@@ -792,9 +792,9 @@ Make this the most personalized, data-driven itinerary possible. Every single re
     let timeoutId: number | null = null;
     
     try {
-      // Add timeout matching function timeout (5 minutes)
+      // Must complete in under 50 seconds (Edge Functions have 60s hard limit)
       controller = new AbortController();
-      timeoutId = setTimeout(() => controller.abort(), 280000); // 280 second timeout (slightly less than 5 min function timeout)
+      timeoutId = setTimeout(() => controller.abort(), 50000);
       
       console.log('Starting fetch to Anthropic API...');
       console.log('API Key present:', !!anthropicApiKey);
@@ -810,7 +810,7 @@ Make this the most personalized, data-driven itinerary possible. Every single re
         signal: controller.signal,
         body: JSON.stringify({
           model: 'claude-sonnet-4-20250514',
-          max_tokens: 20000, // Increased back to 20000 for maximum context
+          max_tokens: 5000, // Reduced to fit within 60s edge function limit
           temperature: 0.3,
           messages: [
             {
@@ -849,9 +849,6 @@ Return ONLY valid JSON. Do not include any text before or after the JSON object.
         cause: fetchError.cause
       });
       
-      if (fetchError.name === 'AbortError') {
-        throw new Error('AI generation timed out. Please try again with a shorter trip duration or simpler preferences.');
-      }
       throw new Error(`Failed to call Anthropic API: ${fetchError.message}`);
     }
 
