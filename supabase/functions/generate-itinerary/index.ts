@@ -506,7 +506,14 @@ serve(async (req) => {
     }
 
     const avgBudget = (tripData.budgetMin + tripData.budgetMax) / 2;
-    const budgetCalculation = calculateDynamicBudget(targetDestination, avgBudget, tripDuration, tripData.groupSize);
+    const maxBudget = tripData.budgetMax; // Never exceed this
+    let budgetCalculation = calculateDynamicBudget(targetDestination, avgBudget, tripDuration, tripData.groupSize);
+    
+    // CRITICAL: Ensure tripTotal never exceeds user's max budget
+    if (budgetCalculation.tripTotal > maxBudget) {
+      // Recalculate with max budget instead to stay within constraints
+      budgetCalculation = calculateDynamicBudget(targetDestination, maxBudget * 0.9, tripDuration, tripData.groupSize);
+    }
 
     // Smart budget optimization recommendations
     const budgetOptimizationTips = [];
