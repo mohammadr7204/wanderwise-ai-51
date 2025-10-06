@@ -834,7 +834,7 @@ Return format: { "dailyItinerary": [day ${chunk.startDay} object, day ${chunk.st
       
       try {
         controller = new AbortController();
-        timeoutId = setTimeout(() => controller.abort(), 45000); // 45s per chunk
+        timeoutId = setTimeout(() => controller.abort(), 30000); // 30s per chunk
         
         console.log(`Calling Anthropic API for chunk ${chunkIndex + 1}...`);
         
@@ -848,7 +848,7 @@ Return format: { "dailyItinerary": [day ${chunk.startDay} object, day ${chunk.st
           signal: controller.signal,
           body: JSON.stringify({
             model: 'claude-sonnet-4-20250514',
-            max_tokens: 12000, // Much higher per chunk for maximum detail
+            max_tokens: 6000, // Reduced for faster response time
             temperature: 0.3,
             messages: [
               {
