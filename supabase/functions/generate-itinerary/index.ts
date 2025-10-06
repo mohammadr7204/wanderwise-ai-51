@@ -785,6 +785,7 @@ Return a detailed JSON object with:
 Make this the most personalized, data-driven itinerary possible. Every single recommendation should feel intentional and perfectly matched to this specific traveler's preferences, group size, budget, and travel dates.`;
 
     console.log('Calling Anthropic API...');
+    console.log('Prompt length:', prompt.length);
     
     let response;
     try {
@@ -810,27 +811,30 @@ Make this the most personalized, data-driven itinerary possible. Every single re
 
 1. CURRENT EVENTS: Research what's happening in destinations during travel dates
 2. SEASONAL FACTORS: Consider weather, crowds, pricing variations, and seasonal attractions
-3. CULTURAL IMMERSION: Find authentic local experiences beyond tourist traps
-4. BUDGET OPTIMIZATION: Use real pricing data to maximize value within budget constraints
-5. PERSONALIZATION DEPTH: Create itineraries that feel like they were crafted by someone who knows the traveler intimately
-6. PRACTICAL EXCELLENCE: Ensure all recommendations are actionable with real contact info and booking details
+3. CULTURAL INSIGHTS: Local customs, etiquette, holidays, and special events
+4. PRACTICAL LOGISTICS: Transportation, timing, booking requirements, and accessibility
+5. HIDDEN GEMS: Undiscovered spots that match the traveler's interests
+6. VALUE OPTIMIZATION: Best prices, free alternatives, and money-saving strategies
 
-Think step-by-step about each recommendation. Consider multiple factors:
-- How does this activity align with their stated preferences?
-- Is this the right time of year/weather for this activity?
-- Does the price fit their budget range?
-- Is this appropriate for their group size and accessibility needs?
+Your responses should reflect deep thinking and analysis:
+- Why is each recommendation ideal for THIS specific trip?
+- What makes this timing/season optimal or challenging?
+- How do local events/weather impact the experience?
+- What insider knowledge elevates the recommendations?
 - Are there authentic local alternatives to common tourist activities?
 
 Return ONLY valid JSON. Do not include any text before or after the JSON object. Every recommendation must be backed by your research and reasoning about why it's perfect for this specific traveler.`
         }),
       });
+      console.log('Fetch completed, got response object');
     } catch (fetchError: any) {
       console.error('Anthropic API fetch error:', fetchError.message);
+      console.error('Full fetch error:', fetchError);
       throw new Error(`Failed to call Anthropic API: ${fetchError.message}`);
     }
 
     console.log('Anthropic API response status:', response.status);
+    console.log('Anthropic API response headers:', Object.fromEntries(response.headers.entries()));
 
     if (!response.ok) {
       const errorText = await response.text();
@@ -838,7 +842,9 @@ Return ONLY valid JSON. Do not include any text before or after the JSON object.
       throw new Error(`Anthropic API error: ${response.status} - ${errorText}`);
     }
 
+    console.log('Parsing Anthropic response...');
     const data = await response.json();
+    console.log('Response parsed successfully, content length:', data.content?.[0]?.text?.length || 0);
     const rawItinerary = data.content[0].text;
 
     console.log(`Generated itinerary for trip ${tripId} (${rawItinerary.length} characters)`);
