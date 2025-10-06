@@ -19,6 +19,7 @@ enable_sms_confirmations = false
 
 [functions.generate-itinerary]
 verify_jwt = true
+request_timeout_ms = 300000
 
 [functions.check-subscription]
 verify_jwt = true
