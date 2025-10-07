@@ -768,7 +768,7 @@ Return a detailed JSON object with:
 
 Make this the most personalized, data-driven itinerary possible. Every single recommendation should feel intentional and perfectly matched to this specific traveler's preferences, group size, budget, and travel dates.`;
 
-    console.log('Making request to Anthropic API with 8k token limit...');
+    console.log('Making request to Anthropic API with 15k token limit...');
     
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
@@ -780,7 +780,7 @@ Make this the most personalized, data-driven itinerary possible. Every single re
       },
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
-        max_tokens: 8000,
+        max_tokens: 15000,
         temperature: 0.3,
         messages: [
           {
