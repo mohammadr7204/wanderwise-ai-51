@@ -278,56 +278,6 @@ const LocalExperiences = ({ tripData }: LocalExperiencesProps) => {
         { english: "What do you recommend?", local: "Wat raad je aan?", pronunciation: "vaht raht yuh ahn" },
         { english: "The check, please", local: "De rekening, alstublieft", pronunciation: "duh REH-ken-ing AHL-stoo-bleeft" }
       ];
-    } else if (destLower.includes('iceland') || destLower.includes('reykjavik')) {
-      detectedLanguage = 'Icelandic';
-      phrases = [
-        { english: "Hello / Good morning", local: "Halló / Góðan daginn", pronunciation: "HAH-loh / GOH-than DIGH-inn" },
-        { english: "Thank you very much", local: "Takk fyrir", pronunciation: "tahk FEER-ir" },
-        { english: "Excuse me", local: "Afsakið", pronunciation: "AHF-sah-kith" },
-        { english: "Where do locals eat?", local: "Hvar borða heimamenn?", pronunciation: "kvar BOR-tha HAY-mah-men" },
-        { english: "What do you recommend?", local: "Hvað mælir þú með?", pronunciation: "kvath MY-lir thoo meth" },
-        { english: "Could you help me, please?", local: "Gætir þú hjálpað mér?", pronunciation: "GIE-tir thoo HYOWL-path myehr" }
-      ];
-    } else if (destLower.includes('norway') || destLower.includes('oslo') || destLower.includes('bergen')) {
-      detectedLanguage = 'Norwegian';
-      phrases = [
-        { english: "Hello / Good morning", local: "Hei / God morgen", pronunciation: "hay / goo MOR-gen" },
-        { english: "Thank you very much", local: "Tusen takk", pronunciation: "TOO-sen tahk" },
-        { english: "Excuse me", local: "Unnskyld", pronunciation: "UUN-shyld" },
-        { english: "Where do locals eat?", local: "Hvor spiser lokalbefolkningen?", pronunciation: "voor SPEE-ser loh-KAHL-beh-folk-ning-en" },
-        { english: "What do you recommend?", local: "Hva anbefaler du?", pronunciation: "vah ahn-beh-FAH-ler doo" },
-        { english: "The check, please", local: "Kan jeg få regningen?", pronunciation: "kahn yay foh REHG-ning-en" }
-      ];
-    } else if (destLower.includes('sweden') || destLower.includes('stockholm') || destLower.includes('gothenburg')) {
-      detectedLanguage = 'Swedish';
-      phrases = [
-        { english: "Hello / Good morning", local: "Hej / God morgon", pronunciation: "hey / goo MOR-gon" },
-        { english: "Thank you very much", local: "Tack så mycket", pronunciation: "tahk saw MEW-ket" },
-        { english: "Excuse me", local: "Ursäkta", pronunciation: "OOR-shek-tah" },
-        { english: "Where do locals eat?", local: "Var äter lokalbefolkningen?", pronunciation: "vahr EH-ter loh-KAHL-beh-folk-ning-en" },
-        { english: "What do you recommend?", local: "Vad rekommenderar du?", pronunciation: "vahd reh-kom-men-DEH-rar doo" },
-        { english: "The check, please", local: "Kan jag få notan?", pronunciation: "kahn yahg foh NOO-tahn" }
-      ];
-    } else if (destLower.includes('denmark') || destLower.includes('copenhagen')) {
-      detectedLanguage = 'Danish';
-      phrases = [
-        { english: "Hello / Good morning", local: "Hej / God morgen", pronunciation: "high / goh MOR-en" },
-        { english: "Thank you very much", local: "Mange tak", pronunciation: "MAHN-geh tahk" },
-        { english: "Excuse me", local: "Undskyld", pronunciation: "OON-sküld" },
-        { english: "Where do locals eat?", local: "Hvor spiser de lokale?", pronunciation: "vor SPEE-ser dee loh-KAH-leh" },
-        { english: "What do you recommend?", local: "Hvad kan du anbefale?", pronunciation: "vath kahn doo ahn-beh-FAH-leh" },
-        { english: "The check, please", local: "Kan jeg få regningen?", pronunciation: "kahn yie foh RINE-ing-en" }
-      ];
-    } else if (destLower.includes('finland') || destLower.includes('helsinki')) {
-      detectedLanguage = 'Finnish';
-      phrases = [
-        { english: "Hello / Good morning", local: "Hei / Hyvää huomenta", pronunciation: "hay / HU-vah HWO-men-tah" },
-        { english: "Thank you very much", local: "Kiitos paljon", pronunciation: "KEE-tos PAHL-yon" },
-        { english: "Excuse me", local: "Anteeksi", pronunciation: "AHN-tehk-see" },
-        { english: "Where do locals eat?", local: "Missä paikalliset syövät?", pronunciation: "MIS-sah PIE-kahl-lee-set SUE-vat" },
-        { english: "What do you recommend?", local: "Mitä suosittelisit?", pronunciation: "MI-tah soo-SIT-teh-lee-sit" },
-        { english: "The check, please", local: "Saisinko laskun?", pronunciation: "SIGH-sin-koh LAHS-koon" }
-      ];
     } else {
       // Check if destination is English-speaking but might have secondary languages
       if (destLower.includes('canada') && (destLower.includes('quebec') || destLower.includes('montreal'))) {
