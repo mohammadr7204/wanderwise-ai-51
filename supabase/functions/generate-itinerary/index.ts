@@ -524,8 +524,8 @@ serve(async (req) => {
       );
     }
 
-    // Create an enhanced AI prompt with real-time data integration
-    const prompt = `Create a comprehensive ${tripDuration}-day travel itinerary using REAL-TIME DATA and deep personalization:
+    // ========== CALL 1: Core Itinerary (Sonnet 4) ==========
+    const corePrompt = `Create the CORE ITINERARY for a ${tripDuration}-day trip using REAL-TIME DATA:
 
 **TRIP OVERVIEW**
 Title: ${tripData.title}
@@ -534,87 +534,54 @@ Travelers: ${tripData.groupSize} people
 Budget: $${tripData.budgetMin.toLocaleString()} - $${tripData.budgetMax.toLocaleString()}
 Travel Dates: ${tripData.startDate ? new Date(tripData.startDate).toLocaleDateString() : 'Flexible'} to ${tripData.endDate ? new Date(tripData.endDate).toLocaleDateString() : 'Flexible'}
 
-**DESTINATION COST ANALYSIS FOR ${(targetDestination || 'Unknown Destination').toUpperCase()}**
-Cost Multiplier: ${budgetCalculation.costMultiplier}x (1.0 = global average)
-${budgetCalculation.costMultiplier > 1.5 ? '⚠️ HIGH COST DESTINATION - Budget carefully' : ''}
-${budgetCalculation.costMultiplier < 0.7 ? '💰 BUDGET-FRIENDLY DESTINATION - Great value for money' : ''}
-
-**DYNAMIC BUDGET BREAKDOWN**
-- Accommodation: $${budgetCalculation.accommodationDaily}/day (${Math.round(budgetCalculation.allocations.accommodation * 100)}% of budget)
-- Food & Dining: $${budgetCalculation.foodDaily}/day (${Math.round(budgetCalculation.allocations.food * 100)}% of budget)
-- Activities & Experiences: $${budgetCalculation.activitiesDaily}/day (${Math.round(budgetCalculation.allocations.activities * 100)}% of budget)
-- Transportation: $${budgetCalculation.transportTotal} total (${Math.round(budgetCalculation.allocations.transport * 100)}% of budget)
-- Emergency Fund: $${budgetCalculation.emergencyFund} (recommended safety buffer)
-- Splurge Budget: $${budgetCalculation.splurgeAmount} (10% stretch for special experiences)
-
-**BUDGET OPTIMIZATION STRATEGY**
-${budgetOptimizationTips.map(tip => `- ${tip}`).join('\n')}
-${budgetCalculation.costMultiplier > 1.3 ? '- Consider staying slightly outside city center for better accommodation value\n- Mix expensive experiences with free/low-cost activities' : ''}
-${budgetCalculation.costMultiplier < 0.8 ? '- Take advantage of low costs to upgrade experiences\n- Try multiple local cuisines and premium activities' : ''}
-
-**DESTINATION PREFERENCES**
+**DESTINATION**
 ${tripData.destinationType === 'surprise' ? 
-  `SMART-SELECTED DESTINATION: ${targetDestination} - Chosen using advanced algorithms considering seasonality, user preferences, budget, and variety from past suggestions` : 
-  `TARGET DESTINATIONS: ${tripData.specificDestinations.join(', ')}`
+  `SMART-SELECTED: ${targetDestination}` : 
+  `TARGET: ${tripData.specificDestinations.join(', ')}`
 }
 Travel Radius: ${tripData.travelRadius}
-Climate Preferences: ${tripData.climatePreferences.length > 0 ? tripData.climatePreferences.join(', ') : 'No specific preference'}
+Climate Preferences: ${tripData.climatePreferences.join(', ') || 'No preference'}
 
-**PERSONALIZATION DETAILS**
-Preferred Activities: ${tripData.activityTypes.join(', ')}
-Accommodation Style: ${tripData.accommodationType.replace('-', ' ')}
-Desired Amenities: ${tripData.accommodationAmenities.length > 0 ? tripData.accommodationAmenities.join(', ') : 'Standard amenities'}
-Transportation: ${tripData.transportPreferences.join(', ')}
-Dietary Requirements: ${tripData.dietaryRestrictions.length > 0 ? tripData.dietaryRestrictions.join(', ') : 'No restrictions'}
-Food Adventure Level: ${tripData.foodAdventureLevel}/10 (1=familiar foods, 10=try everything)
-Accessibility Needs: ${tripData.accessibilityNeeds || 'None specified'}
+**PREFERENCES**
+Activities: ${tripData.activityTypes.join(', ')}
+Accommodation: ${tripData.accommodationType.replace('-', ' ')}
+Amenities: ${tripData.accommodationAmenities.join(', ') || 'Standard'}
+Transport: ${tripData.transportPreferences.join(', ')}
+Dietary: ${tripData.dietaryRestrictions.join(', ') || 'None'}
+Food Adventure: ${tripData.foodAdventureLevel}/10
+Accessibility: ${tripData.accessibilityNeeds || 'None'}
 Special Requests: ${tripData.specialRequests || 'None'}
 
-**REAL-TIME DATA TO INTEGRATE**
+**REAL-TIME DATA**
 ${realTimeData.weather ? `
-CURRENT WEATHER & FORECAST:
-- Current conditions: ${realTimeData.weather.current.weather[0].description}, ${Math.round(realTimeData.weather.current.main.temp)}°C
-- 5-day forecast: ${realTimeData.weather.forecast.map((f: any) => 
+WEATHER FORECAST:
+Current: ${realTimeData.weather.current.weather[0].description}, ${Math.round(realTimeData.weather.current.main.temp)}°C
+5-day: ${realTimeData.weather.forecast.map((f: any) => 
   `${new Date(f.dt * 1000).toLocaleDateString()}: ${f.weather[0].description}, ${Math.round(f.main.temp)}°C`
 ).join(', ')}` : ''}
 
 ${realTimeData.attractions.length > 0 ? `
-REAL ATTRACTIONS WITH RATINGS:
+ATTRACTIONS WITH RATINGS:
 ${realTimeData.attractions.map((a: any) => 
-  `- ${a.name} (${a.rating}/5 stars) at ${a.address}${a.priceLevel ? ` - Price level: ${a.priceLevel}/4` : ''}`
+  `- ${a.name} (${a.rating}/5) at ${a.address}${a.priceLevel ? ` - Price: ${a.priceLevel}/4` : ''}`
 ).join('\n')}` : ''}
 
 ${realTimeData.restaurants.length > 0 ? `
-REAL RESTAURANTS WITH RATINGS:
+RESTAURANTS WITH RATINGS:
 ${realTimeData.restaurants.map((r: any) => 
-  `- ${r.name} (${r.rating}/5 stars) at ${r.address}${r.priceLevel ? ` - Price level: ${r.priceLevel}/4` : ''}`
+  `- ${r.name} (${r.rating}/5) at ${r.address}${r.priceLevel ? ` - Price: ${r.priceLevel}/4` : ''}`
 ).join('\n')}` : ''}
  
 ${realTimeData.events.length > 0 ? `
-CURRENT LOCAL EVENTS:
+LOCAL EVENTS:
 ${realTimeData.events.map((e: any) => 
   `- ${e.name} on ${new Date(e.startDate).toLocaleDateString()} at ${e.venue}${e.isFree ? ' (FREE)' : ''}`
 ).join('\n')}` : ''}
 
-**RESTAURANT REQUIREMENTS**
-CRITICAL: Provide exactly 3 restaurant options for each meal (breakfast, lunch, dinner) for each day of the trip. This means if it's a 5-day trip, you need 45 total restaurant recommendations (3 breakfast + 3 lunch + 3 dinner × 5 days). Mix the real restaurants from the data above with additional researched options to reach this requirement.
-
-**ADVANCED REQUIREMENTS**
-1. **WEATHER-ADAPTIVE PLANNING**: Use the real weather forecast to suggest appropriate activities for each day
-2. **REAL VENUE INTEGRATION**: Incorporate the actual rated attractions and restaurants from the data above
-3. **EVENT SYNCHRONIZATION**: Include any local events that align with travel dates and interests
-4. **BUDGET PRECISION**: Use real price levels and current exchange rates for accurate budget calculations
-5. **PERSONALIZATION DEPTH**: Every recommendation must clearly connect to the specified preferences
-6. **INSIDER KNOWLEDGE**: Research current local trends, seasonal highlights, and hidden gems
-7. **PRACTICAL LOGISTICS**: Include real operating hours, booking requirements, and transportation times
-8. **BACKUP STRATEGIES**: Provide weather-dependent alternatives and Plan B options
-9. **FUNCTIONAL BOOKING LINKS**: Generate REAL, WORKING booking URLs for all activities, accommodations, and restaurants. Use services like Viator, Booking.com, OpenTable, or create proper Google search URLs with encoded parameters
-
-**OUTPUT STRUCTURE**
-Return a detailed JSON object with:
+**OUTPUT JSON STRUCTURE (CORE ONLY)**
 {
   "destination": "Selected destination with explanation",
-  "destinationReason": "Why this destination perfectly matches the traveler",
+  "destinationReason": "Why this destination matches perfectly",
   "dailyItinerary": [
     {
       "day": 1,
@@ -623,13 +590,13 @@ Return a detailed JSON object with:
       "weather": "Expected weather",
       "morning": {
         "time": "9:00 AM",
-        "activity": "Specific activity name",
-        "venue": "Exact venue name and address",
+        "activity": "Activity name",
+        "venue": "Exact venue and address",
         "duration": "2 hours",
         "cost": "$25",
-        "whyRecommended": "How this connects to their preferences",
-        "bookingInfo": "Website or phone number",
-        "bookingUrl": "https://actual-booking-url.com or search URL",
+        "whyRecommended": "Connection to preferences",
+        "bookingInfo": "Website/phone",
+        "bookingUrl": "https://actual-url.com",
         "weatherBackup": "Alternative if weather changes"
       },
       "afternoon": { /* same structure */ },
@@ -638,139 +605,50 @@ Return a detailed JSON object with:
   ],
   "accommodationRecommendations": [
     {
-      "name": "Primary hotel recommendation",
-      "type": "Matches their accommodation preference",
+      "name": "Primary hotel",
+      "type": "Matches preference",
       "address": "Full address",
       "priceRange": "$150-200/night",
       "amenities": ["wifi", "pool"],
-      "whyPerfect": "Why it matches their style perfectly",
-      "bookingTip": "Best booking platform or time",
-      "bookingUrl": "https://booking.com/search-url or direct hotel website",
+      "whyPerfect": "Why it matches",
+      "bookingTip": "Best platform",
+      "bookingUrl": "https://booking.com/...",
       "rating": "4.5/5",
       "isPrimary": true
     },
-    {
-      "name": "Alternative option 1",
-      "type": "Alternative accommodation type",
-      "address": "Full address",
-      "priceRange": "$120-150/night",
-      "amenities": ["wifi", "gym"],
-      "whyPerfect": "Alternative benefits",
-      "bookingTip": "Booking advice",
-      "bookingUrl": "https://booking.com/search-url or direct hotel website",
-      "rating": "4.3/5",
-      "isPrimary": false
-    },
-    {
-      "name": "Alternative option 2",
-      "type": "Budget/luxury alternative",
-      "address": "Full address",
-      "priceRange": "$200-250/night",
-      "amenities": ["spa", "restaurant"],
-      "whyPerfect": "Different value proposition",
-      "bookingTip": "Booking strategy",
-      "bookingUrl": "https://booking.com/search-url or direct hotel website",
-      "rating": "4.7/5",
-      "isPrimary": false
-    }
+    { /* 2 more alternatives */ }
   ],
-   "restaurantGuide": [
-     {
-       "name": "Restaurant name from real data",
-       "cuisine": "Cuisine type",
-       "priceLevel": "$ to $$$$",
-       "rating": "4.5/5",
-       "address": "Full address",
-       "specialties": ["dish1", "dish2"],
-       "dietaryOptions": "Accommodates their restrictions",
-       "reservationRequired": true,
-       "bestTime": "When to visit",
-       "mealType": "breakfast/lunch/dinner",
-       "bookingUrl": "https://www.opentable.com/search-url or Google search URL"
-     }
-   ],
-   "dailyRestaurantRecommendations": [
-     {
-       "day": 1,
-       "breakfast": [
-         { /* 3 restaurant options with same structure as restaurantGuide */ },
-         { /* restaurant option 2 */ },
-         { /* restaurant option 3 */ }
-       ],
-       "lunch": [
-         { /* 3 restaurant options */ },
-         { /* restaurant option 2 */ },
-         { /* restaurant option 3 */ }
-       ],
-       "dinner": [
-         { /* 3 restaurant options */ },
-         { /* restaurant option 2 */ },
-         { /* restaurant option 3 */ }
-       ]
-     }
-   ],
-   "budgetBreakdown": {
-     "accommodation": "$${budgetCalculation.accommodationDaily} per day",
-     "meals": "$${budgetCalculation.foodDaily} per day", 
-     "activities": "$${budgetCalculation.activitiesDaily} per day",
-     "transportation": "$${budgetCalculation.transportTotal} total",
-     "emergencyFund": "$${budgetCalculation.emergencyFund}",
-     "splurgeRecommendations": "$${budgetCalculation.splurgeAmount}",
-     "dailyTotal": "$${budgetCalculation.accommodationDaily + budgetCalculation.foodDaily + budgetCalculation.activitiesDaily}",
-     "tripTotal": "$${budgetCalculation.tripTotal}",
-     "costMultiplier": "${budgetCalculation.costMultiplier}x",
-     "budgetOptimization": {
-       "prioritizeActivities": ${avgBudget < 1500 ? '"Choose budget accommodations to maximize activity funds"' : '"Balance comfort with experiences"'},
-       "prioritizeComfort": ${avgBudget > 3000 ? '"Upgrade accommodations and include premium experiences"' : '"Focus on value for money options"'},
-       "localSavings": "Use local transport, eat at local establishments, look for free activities",
-       "splurgeWorthy": "Reserve splurge budget for unique destination-specific experiences"
-     }
-   },
-   "insiderTips": [
-     {
-       "category": "Local Knowledge",
-       "tip": "What locals actually do/avoid",
-       "description": "Detailed insider information"
-     },
-     {
-       "category": "Safety Tips",
-       "tip": "Specific safety advice for this destination",
-       "description": "Practical safety recommendations"
-     },
-     {
-       "category": "Fun Enhancers",
-       "tip": "Things that make the trip more enjoyable",
-       "description": "Activities or experiences that add joy"
-     },
-     {
-       "category": "Traveler Secrets",
-       "tip": "What previous travelers wish they knew",
-       "description": "Lessons learned from other visitors"
-     },
-     {
-       "category": "Money Saving",
-       "tip": "How to save money like a local",
-       "description": "Practical cost-cutting advice"
-     },
-     {
-       "category": "Cultural Etiquette",
-       "tip": "Local customs and manners",
-       "description": "How to respect local culture"
-     }
-   ],
-  "packingList": ["Weather-appropriate items based on forecast"],
-  "emergencyInfo": {
-    "localEmergency": "Phone numbers",
-    "nearestHospital": "Address and contact",
-    "embassyInfo": "If international travel"
-  }
+  "dailyRestaurantRecommendations": [
+    {
+      "day": 1,
+      "breakfast": [
+        {
+          "name": "Restaurant name",
+          "cuisine": "Type",
+          "priceLevel": "$$",
+          "rating": "4.5/5",
+          "address": "Full address",
+          "specialties": ["dish1", "dish2"],
+          "dietaryOptions": "Accommodations",
+          "reservationRequired": true,
+          "bestTime": "When to visit",
+          "mealType": "breakfast",
+          "bookingUrl": "https://opentable.com/..."
+        },
+        { /* option 2 */ },
+        { /* option 3 */ }
+      ],
+      "lunch": [ /* 3 options */ ],
+      "dinner": [ /* 3 options */ ]
+    }
+  ]
 }
 
-Make this the most personalized, data-driven itinerary possible. Every single recommendation should feel intentional and perfectly matched to this specific traveler's preferences, group size, budget, and travel dates.`;
+Focus on personalized activities, accommodations, and restaurants. Provide EXACTLY 3 options per meal per day. Use real venues from data above and research additional ones.`;
 
-    console.log('Making request to Anthropic API with 15k token limit...');
+    console.log('[CALL 1] Making core itinerary request to Sonnet 4 (8k tokens)...');
     
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
+    const coreResponse = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${anthropicApiKey}`,
@@ -780,124 +658,247 @@ Make this the most personalized, data-driven itinerary possible. Every single re
       },
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
-        max_tokens: 15000,
+        max_tokens: 8000,
         temperature: 0.3,
         messages: [
           {
             role: 'user',
-            content: prompt
+            content: corePrompt
           }
         ],
-        system: `You are the world's most advanced AI travel planner with real-time access to current data. You have the thinking capabilities to deeply research and analyze:
-
-1. CURRENT EVENTS: Research what's happening in destinations during travel dates
-2. SEASONAL FACTORS: Consider weather, crowds, pricing variations, and seasonal attractions
-3. CULTURAL IMMERSION: Find authentic local experiences beyond tourist traps
-4. BUDGET OPTIMIZATION: Use real pricing data to maximize value within budget constraints
-5. PERSONALIZATION DEPTH: Create itineraries that feel like they were crafted by someone who knows the traveler intimately
-6. PRACTICAL EXCELLENCE: Ensure all recommendations are actionable with real contact info and booking details
-
-Think step-by-step about each recommendation. Consider multiple factors:
-- How does this activity align with their stated preferences?
-- Is this the right time of year/weather for this activity?
-- Does the price fit their budget range?
-- Is this appropriate for their group size and accessibility needs?
-- Are there authentic local alternatives to common tourist activities?
-
-Return ONLY valid JSON with concise but complete information. Do not include any text before or after the JSON object. Every recommendation must be backed by your research and reasoning about why it's perfect for this specific traveler.`
+        system: `You are an expert travel planner. Create personalized, data-driven itineraries using real-time information. Return ONLY valid JSON. Every recommendation must connect to traveler preferences.`
       }),
     });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('Anthropic API error response:', errorText);
-      throw new Error(`Anthropic API request failed: ${response.status} ${errorText}`);
+    if (!coreResponse.ok) {
+      const errorText = await coreResponse.text();
+      console.error('[CALL 1] Anthropic API error:', errorText);
+      throw new Error(`Core itinerary failed: ${coreResponse.status} ${errorText}`);
     }
 
-    const data = await response.json();
-    const rawItinerary = data.content[0].text;
+    const coreData = await coreResponse.json();
+    const rawCoreItinerary = coreData.content[0].text;
 
-    console.log(`Generated itinerary for trip ${tripId} (${rawItinerary.length} characters)`);
+    console.log(`[CALL 1] Core itinerary generated (${rawCoreItinerary.length} characters)`);
 
-    // Parse the JSON response from Claude
-    let parsedItinerary;
+    // ========== CALL 2: Supplementary Data (Haiku for cost savings) ==========
+    const supplementaryPrompt = `Generate SUPPLEMENTARY TRAVEL DATA for this trip:
+
+**TRIP CONTEXT**
+Destination: ${targetDestination || tripData.specificDestinations?.[0] || 'Unknown'}
+Duration: ${tripDuration} days
+Budget: $${tripData.budgetMin}-${tripData.budgetMax}
+Group: ${tripData.groupSize} people
+Climate: ${tripData.climatePreferences.join(', ') || 'Any'}
+Activities: ${tripData.activityTypes.join(', ')}
+
+**BUDGET CONTEXT**
+Cost Multiplier: ${budgetCalculation.costMultiplier}x
+Daily Accommodation: $${budgetCalculation.accommodationDaily}
+Daily Food: $${budgetCalculation.foodDaily}
+Daily Activities: $${budgetCalculation.activitiesDaily}
+Total Transport: $${budgetCalculation.transportTotal}
+Emergency Fund: $${budgetCalculation.emergencyFund}
+
+**OUTPUT JSON STRUCTURE (SUPPLEMENTARY ONLY)**
+{
+  "budgetBreakdown": {
+    "accommodation": "$${budgetCalculation.accommodationDaily} per day",
+    "meals": "$${budgetCalculation.foodDaily} per day",
+    "activities": "$${budgetCalculation.activitiesDaily} per day",
+    "transportation": "$${budgetCalculation.transportTotal} total",
+    "emergencyFund": "$${budgetCalculation.emergencyFund}",
+    "splurgeRecommendations": "$${budgetCalculation.splurgeAmount}",
+    "dailyTotal": "$${budgetCalculation.accommodationDaily + budgetCalculation.foodDaily + budgetCalculation.activitiesDaily}",
+    "tripTotal": "$${budgetCalculation.tripTotal}",
+    "costMultiplier": "${budgetCalculation.costMultiplier}x",
+    "budgetOptimization": {
+      "prioritizeActivities": "Strategy based on budget level",
+      "prioritizeComfort": "Balance advice",
+      "localSavings": "How to save money locally",
+      "splurgeWorthy": "Where to spend extra"
+    }
+  },
+  "packingList": {
+    "clothing": ["item1", "item2"],
+    "electronics": ["item1", "item2"],
+    "toiletries": ["item1", "item2"],
+    "documents": ["item1", "item2"],
+    "miscellaneous": ["item1", "item2"]
+  },
+  "insiderTips": [
+    {
+      "category": "Local Knowledge",
+      "tip": "What locals do/avoid",
+      "description": "Detailed info"
+    },
+    {
+      "category": "Safety Tips",
+      "tip": "Safety advice",
+      "description": "Practical recommendations"
+    },
+    {
+      "category": "Money Saving",
+      "tip": "How to save",
+      "description": "Cost-cutting advice"
+    },
+    {
+      "category": "Cultural Etiquette",
+      "tip": "Local customs",
+      "description": "Respect local culture"
+    }
+  ],
+  "emergencyInfo": {
+    "localEmergency": "Emergency phone numbers",
+    "nearestHospital": "Address and contact",
+    "embassyInfo": "Embassy details if international",
+    "localPolice": "Police contact info"
+  }
+}
+
+Focus on practical, destination-specific information.`;
+
+    console.log('[CALL 2] Making supplementary data request to Haiku (5k tokens)...');
+    
+    const suppResponse = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${anthropicApiKey}`,
+        'Content-Type': 'application/json',
+        'x-api-key': anthropicApiKey,
+        'anthropic-version': '2023-06-01',
+      },
+      body: JSON.stringify({
+        model: 'claude-3-5-haiku-20241022',
+        max_tokens: 5000,
+        temperature: 0.3,
+        messages: [
+          {
+            role: 'user',
+            content: supplementaryPrompt
+          }
+        ],
+        system: `You are a travel logistics expert. Generate budget breakdowns, packing lists, safety info, and insider tips. Return ONLY valid JSON.`
+      }),
+    });
+
+    if (!suppResponse.ok) {
+      const errorText = await suppResponse.text();
+      console.error('[CALL 2] Anthropic API error:', errorText);
+      throw new Error(`Supplementary data failed: ${suppResponse.status} ${errorText}`);
+    }
+
+    const suppData = await suppResponse.json();
+    const rawSuppData = suppData.content[0].text;
+
+    console.log(`[CALL 2] Supplementary data generated (${rawSuppData.length} characters)`);
+
+    // Helper function to clean and parse JSON
+    function parseAIResponse(rawResponse: string, callName: string): any {
+      try {
+        let cleanJson = rawResponse;
+        
+        // Remove markdown code blocks if present
+        if (cleanJson.includes('```json')) {
+          cleanJson = cleanJson.replace(/```json\s*/, '');
+          cleanJson = cleanJson.replace(/\s*```\s*$/, '');
+        }
+        
+        // Find the JSON object
+        const jsonStart = cleanJson.indexOf('{');
+        const jsonEnd = cleanJson.lastIndexOf('}') + 1;
+        
+        if (jsonStart === -1 || jsonEnd === 0) {
+          throw new Error('No JSON object found in response');
+        }
+        
+        cleanJson = cleanJson.substring(jsonStart, jsonEnd);
+        
+        // Try to fix incomplete JSON
+        let braceCount = 0;
+        let bracketCount = 0;
+        let inString = false;
+        let lastChar = '';
+        
+        for (let i = 0; i < cleanJson.length; i++) {
+          const char = cleanJson[i];
+          
+          if (char === '"' && lastChar !== '\\') {
+            inString = !inString;
+          }
+          
+          if (!inString) {
+            if (char === '{') braceCount++;
+            if (char === '}') braceCount--;
+            if (char === '[') bracketCount++;
+            if (char === ']') bracketCount--;
+          }
+          
+          lastChar = char;
+        }
+        
+        cleanJson = cleanJson.trimEnd();
+        if (cleanJson.endsWith(',')) {
+          cleanJson = cleanJson.slice(0, -1);
+        }
+        
+        while (bracketCount > 0) {
+          cleanJson += ']';
+          bracketCount--;
+        }
+        
+        while (braceCount > 0) {
+          cleanJson += '}';
+          braceCount--;
+        }
+        
+        return JSON.parse(cleanJson);
+      } catch (parseError) {
+        console.error(`[${callName}] Failed to parse JSON:`, parseError);
+        console.error(`[${callName}] Raw length:`, rawResponse.length);
+        console.error(`[${callName}] Preview:`, rawResponse.substring(0, 500));
+        throw parseError;
+      }
+    }
+
+    // Parse both responses
+    let parsedCore, parsedSupplementary;
+    
     try {
-      // Clean the response in case Claude added any extra text or markdown
-      let cleanJson = rawItinerary;
-      
-      // Remove markdown code blocks if present
-      if (cleanJson.includes('```json')) {
-        cleanJson = cleanJson.replace(/```json\s*/, '');
-        cleanJson = cleanJson.replace(/\s*```\s*$/, '');
-      }
-      
-      // Find the JSON object
-      const jsonStart = cleanJson.indexOf('{');
-      const jsonEnd = cleanJson.lastIndexOf('}') + 1;
-      
-      if (jsonStart === -1 || jsonEnd === 0) {
-        throw new Error('No JSON object found in response');
-      }
-      
-      cleanJson = cleanJson.substring(jsonStart, jsonEnd);
-      
-      // Try to fix incomplete JSON by handling truncated arrays and objects
-      let braceCount = 0;
-      let bracketCount = 0;
-      let inString = false;
-      let lastChar = '';
-      
-      for (let i = 0; i < cleanJson.length; i++) {
-        const char = cleanJson[i];
-        
-        // Track if we're inside a string
-        if (char === '"' && lastChar !== '\\') {
-          inString = !inString;
-        }
-        
-        if (!inString) {
-          if (char === '{') braceCount++;
-          if (char === '}') braceCount--;
-          if (char === '[') bracketCount++;
-          if (char === ']') bracketCount--;
-        }
-        
-        lastChar = char;
-      }
-      
-      // Clean up any trailing incomplete content (like unclosed strings or incomplete values)
-      cleanJson = cleanJson.trimEnd();
-      
-      // Remove trailing comma if present
-      if (cleanJson.endsWith(',')) {
-        cleanJson = cleanJson.slice(0, -1);
-      }
-      
-      // Close any open arrays first
-      while (bracketCount > 0) {
-        cleanJson += ']';
-        bracketCount--;
-      }
-      
-      // Then close any open objects
-      while (braceCount > 0) {
-        cleanJson += '}';
-        braceCount--;
-      }
-      
-      parsedItinerary = JSON.parse(cleanJson);
-    } catch (parseError) {
-      console.error('Failed to parse AI response as JSON:', parseError);
-      console.error('Raw response length:', rawItinerary.length);
-      console.error('Raw response preview:', rawItinerary.substring(0, 500));
-      
-      // Fallback: return the raw text
-      parsedItinerary = {
+      parsedCore = parseAIResponse(rawCoreItinerary, 'CALL 1');
+      console.log('[CALL 1] Successfully parsed core itinerary');
+    } catch (error) {
+      console.error('[CALL 1] Parse failed, using fallback');
+      parsedCore = {
         destination: tripData.destinationType === 'specific' ? tripData.specificDestinations[0] : targetDestination || 'AI-selected',
-        rawContent: rawItinerary,
-        error: 'Failed to parse structured response'
+        rawContent: rawCoreItinerary,
+        error: 'Failed to parse core response'
       };
     }
+
+    try {
+      parsedSupplementary = parseAIResponse(rawSuppData, 'CALL 2');
+      console.log('[CALL 2] Successfully parsed supplementary data');
+    } catch (error) {
+      console.error('[CALL 2] Parse failed, using defaults');
+      parsedSupplementary = {
+        budgetBreakdown: {},
+        packingList: {},
+        insiderTips: [],
+        emergencyInfo: {}
+      };
+    }
+
+    // Combine both responses into final itinerary
+    const parsedItinerary = {
+      ...parsedCore,
+      budgetBreakdown: parsedSupplementary.budgetBreakdown || {},
+      packingList: parsedSupplementary.packingList || {},
+      insiderTips: parsedSupplementary.insiderTips || [],
+      emergencyInfo: parsedSupplementary.emergencyInfo || {}
+    };
+
+    console.log('Combined itinerary created successfully');
 
     // Store the complete itinerary in the database
     try {
