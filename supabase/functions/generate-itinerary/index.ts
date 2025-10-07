@@ -646,7 +646,7 @@ ${realTimeData.events.map((e: any) =>
 
 Focus on personalized activities, accommodations, and restaurants. Provide EXACTLY 3 options per meal per day. Use real venues from data above and research additional ones.`;
 
-    console.log('[CALL 1] Making core itinerary request to Sonnet 4 (8k tokens)...');
+    console.log('[CALL 1] Making core itinerary request to Sonnet 4 (12k tokens)...');
     
     const coreResponse = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
@@ -658,7 +658,7 @@ Focus on personalized activities, accommodations, and restaurants. Provide EXACT
       },
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
-        max_tokens: 8000,
+        max_tokens: 12000,
         temperature: 0.3,
         messages: [
           {
@@ -758,7 +758,7 @@ Emergency Fund: $${budgetCalculation.emergencyFund}
 
 Focus on practical, destination-specific information.`;
 
-    console.log('[CALL 2] Making supplementary data request to Haiku (5k tokens)...');
+    console.log('[CALL 2] Making supplementary data request to Haiku (8k tokens)...');
     
     const suppResponse = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
@@ -770,7 +770,7 @@ Focus on practical, destination-specific information.`;
       },
       body: JSON.stringify({
         model: 'claude-3-5-haiku-20241022',
-        max_tokens: 5000,
+        max_tokens: 8000,
         temperature: 0.3,
         messages: [
           {
