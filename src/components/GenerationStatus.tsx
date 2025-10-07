@@ -60,7 +60,6 @@ const GenerationStatus = () => {
   const [currentStepDescription, setCurrentStepDescription] = useState('Initializing AI research...');
   const [error, setError] = useState<string | null>(null);
   const [generationStartTime, setGenerationStartTime] = useState<number | null>(null);
-  const [pollingInterval, setPollingInterval] = useState<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     if (tripId && user) {
@@ -153,7 +152,6 @@ const GenerationStatus = () => {
     return () => {
       clearInterval(interval);
       clearInterval(factInterval);
-      if (pollingInterval) clearInterval(pollingInterval);
     };
   }, [trip, isGenerating]);
 
@@ -196,15 +194,26 @@ const GenerationStatus = () => {
     
     try {
       console.log('Starting real AI generation for trip:', tripId);
+      console.log('User authenticated:', !!user?.id);
+      console.log('Trip data:', trip.form_data);
       
       // Calculate trip duration
       const startDate = new Date(trip.form_data.startDate);
       const endDate = new Date(trip.form_data.endDate);
       const tripDuration = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
       
-      setCurrentStepDescription('Starting background generation...');
+      console.log('Trip duration calculated:', tripDuration);
       
-      // Trigger background generation (returns immediately)
+      setCurrentStepDescription('Calling AI generation service...');
+      
+      // Call the real AI generation function with detailed logging
+      console.log('Calling supabase.functions.invoke with:', {
+        tripData: trip.form_data,
+        tripDuration,
+        userId: user?.id,
+        tripId: trip.id
+      });
+      
       const { data, error } = await supabase.functions.invoke('generate-itinerary', {
         body: {
           tripData: trip.form_data,
@@ -214,22 +223,61 @@ const GenerationStatus = () => {
         }
       });
 
+      console.log('Function response received:', { data, error });
+
       if (error) {
+        console.error('AI generation error details:', {
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          code: error.code
+        });
         throw error;
       }
 
-      console.log('Background generation started:', data);
+      console.log('AI generation response:', data);
       
-      // Start polling for updates
-      startPolling();
+      if (!data || data.error) {
+        throw new Error(data?.error || 'Generation failed with no response');
+      }
+      
+      // Track successful generation
+      const generationDuration = generationStartTime ? Date.now() - generationStartTime : 0;
+      trackItineraryGenerated(trip.id, trip.tier, generationDuration);
+      
+      // Complete progress and redirect
+      setProgress(100);
+      setCurrentStep(6);
+      setCurrentStepDescription('Generation complete! Redirecting...');
+      
+      console.log('Generation successful, redirecting in 2 seconds');
+      setTimeout(() => {
+        console.log('Navigating to itinerary view');
+        navigate(`/trip/${tripId}/itinerary`);
+      }, 2000);
       
     } catch (error: any) {
-      console.error('Error starting generation:', error);
+      console.error('Error in real generation:', error);
+      console.error('Error details:', {
+        message: error?.message,
+        details: error?.details,
+        hint: error?.hint,
+        code: error?.code,
+        stack: error?.stack
+      });
       
-      const errorMessage = error?.message || "Failed to start generation. Please try again.";
+      const errorMessage = error?.message || "Failed to generate itinerary. Please try again.";
       setError(errorMessage);
       setIsGenerating(false);
-      trackError(errorMessage, { context: 'generation_start', tripId });
+      trackError(errorMessage, { 
+        context: 'generation', 
+        tripId,
+        errorDetails: {
+          message: error?.message,
+          details: error?.details,
+          code: error?.code
+        }
+      });
       
       toast({
         title: "Generation Error",
@@ -237,62 +285,6 @@ const GenerationStatus = () => {
         variant: "destructive"
       });
     }
-  };
-
-  const startPolling = () => {
-    // Poll every 3 seconds for updates
-    const interval = setInterval(async () => {
-      try {
-        const { data, error } = await supabase
-          .from('trips')
-          .select('status, itinerary_data')
-          .eq('id', tripId)
-          .single();
-
-        if (error) throw error;
-
-        console.log('Polling update:', data.status);
-
-        // Update progress based on chunks completed
-        const itineraryData = data.itinerary_data as any;
-        if (itineraryData?.generationProgress) {
-          const { percentComplete, chunksCompleted, totalChunks } = itineraryData.generationProgress;
-          setProgress(percentComplete);
-          setCurrentStepDescription(
-            `Generating chunk ${chunksCompleted}/${totalChunks}...`
-          );
-        }
-
-        if (data.status === 'completed') {
-          // Generation complete!
-          console.log('Generation completed, stopping polling');
-          if (pollingInterval) clearInterval(pollingInterval);
-          
-          const generationDuration = generationStartTime ? Date.now() - generationStartTime : 0;
-          trackItineraryGenerated(tripId!, trip!.tier, generationDuration);
-          
-          setProgress(100);
-          setCurrentStep(6);
-          setCurrentStepDescription('Generation complete! Redirecting...');
-          
-          setTimeout(() => {
-            navigate(`/trip/${tripId}/itinerary`);
-          }, 2000);
-        } else if (data.status === 'error') {
-          // Generation failed
-          if (pollingInterval) clearInterval(pollingInterval);
-          throw new Error('Generation failed in background');
-        }
-      } catch (error: any) {
-        console.error('Polling error:', error);
-        if (pollingInterval) clearInterval(pollingInterval);
-        
-        setError(error?.message || 'Generation failed');
-        setIsGenerating(false);
-      }
-    }, 3000);
-
-    setPollingInterval(interval);
   };
 
   const retryGeneration = () => {
