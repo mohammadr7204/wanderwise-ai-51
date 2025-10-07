@@ -2,7 +2,7 @@ import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
 
-const anthropicApiKey = Deno.env.get('ANTHROPIC_API_KEY');
+const lovableApiKey = Deno.env.get('LOVABLE_API_KEY');
 const googlePlacesApiKey = Deno.env.get('GOOGLE_PLACES_API_KEY');
 const openWeatherApiKey = Deno.env.get('OPENWEATHER_API_KEY');
 const eventbriteApiKey = Deno.env.get('EVENTBRITE_API_KEY');
@@ -367,15 +367,15 @@ serve(async (req) => {
 
     console.log('Request received with data:', { tripData: !!tripData, tripDuration, userId, tripId });
     console.log('API keys available:', { 
-      anthropic: !!anthropicApiKey, 
+      lovable: !!lovableApiKey, 
       google: !!googlePlacesApiKey, 
       weather: !!openWeatherApiKey,
       eventbrite: !!eventbriteApiKey 
     });
 
-    if (!anthropicApiKey) {
-      console.error('Anthropic API key not configured');
-      throw new Error('Anthropic API key not configured');
+    if (!lovableApiKey) {
+      console.error('Lovable AI API key not configured');
+      throw new Error('Lovable AI API key not configured');
     }
 
     console.log(`Starting AI-powered itinerary generation for trip ${tripId}`);
@@ -768,25 +768,9 @@ Return a detailed JSON object with:
 
 Make this the most personalized, data-driven itinerary possible. Every single recommendation should feel intentional and perfectly matched to this specific traveler's preferences, group size, budget, and travel dates.`;
 
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${anthropicApiKey}`,
-        'Content-Type': 'application/json',
-        'x-api-key': anthropicApiKey,
-        'anthropic-version': '2023-06-01',
-      },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 20000,
-        temperature: 0.3,
-        messages: [
-          {
-            role: 'user',
-            content: prompt
-          }
-        ],
-        system: `You are the world's most advanced AI travel planner with real-time access to current data. You have the thinking capabilities to deeply research and analyze:
+    console.log('Making request to Lovable AI Gateway with Gemini model...');
+    
+    const systemPrompt = `You are the world's most advanced AI travel planner with real-time access to current data. You have the thinking capabilities to deeply research and analyze:
 
 1. CURRENT EVENTS: Research what's happening in destinations during travel dates
 2. SEASONAL FACTORS: Consider weather, crowds, pricing variations, and seasonal attractions
@@ -802,16 +786,45 @@ Think step-by-step about each recommendation. Consider multiple factors:
 - Is this appropriate for their group size and accessibility needs?
 - Are there authentic local alternatives to common tourist activities?
 
-Return ONLY valid JSON. Do not include any text before or after the JSON object. Every recommendation must be backed by your research and reasoning about why it's perfect for this specific traveler.`
+Return ONLY valid JSON. Do not include any text before or after the JSON object. Every recommendation must be backed by your research and reasoning about why it's perfect for this specific traveler.`;
+    
+    const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${lovableApiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'google/gemini-2.5-flash',
+        messages: [
+          {
+            role: 'system',
+            content: systemPrompt
+          },
+          {
+            role: 'user',
+            content: prompt
+          }
+        ],
+        max_tokens: 20000,
       }),
     });
 
     if (!response.ok) {
-      throw new Error(`Anthropic API error: ${response.status}`);
+      const errorText = await response.text();
+      console.error('Lovable AI error response:', errorText);
+      
+      if (response.status === 429) {
+        throw new Error('Rate limit exceeded. Please try again in a moment.');
+      }
+      if (response.status === 402) {
+        throw new Error('Payment required. Please add credits to your Lovable workspace.');
+      }
+      throw new Error(`AI API request failed: ${response.status} ${errorText}`);
     }
 
     const data = await response.json();
-    const rawItinerary = data.content[0].text;
+    const rawItinerary = data.choices[0].message.content;
 
     console.log(`Generated itinerary for trip ${tripId} (${rawItinerary.length} characters)`);
 
