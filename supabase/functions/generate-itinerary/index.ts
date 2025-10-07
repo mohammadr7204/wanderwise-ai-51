@@ -841,14 +841,45 @@ Return ONLY valid JSON with concise but complete information. Do not include any
       
       cleanJson = cleanJson.substring(jsonStart, jsonEnd);
       
-      // Try to fix incomplete JSON by adding missing closing braces
+      // Try to fix incomplete JSON by handling truncated arrays and objects
       let braceCount = 0;
+      let bracketCount = 0;
+      let inString = false;
+      let lastChar = '';
+      
       for (let i = 0; i < cleanJson.length; i++) {
-        if (cleanJson[i] === '{') braceCount++;
-        if (cleanJson[i] === '}') braceCount--;
+        const char = cleanJson[i];
+        
+        // Track if we're inside a string
+        if (char === '"' && lastChar !== '\\') {
+          inString = !inString;
+        }
+        
+        if (!inString) {
+          if (char === '{') braceCount++;
+          if (char === '}') braceCount--;
+          if (char === '[') bracketCount++;
+          if (char === ']') bracketCount--;
+        }
+        
+        lastChar = char;
       }
       
-      // Add missing closing braces
+      // Clean up any trailing incomplete content (like unclosed strings or incomplete values)
+      cleanJson = cleanJson.trimEnd();
+      
+      // Remove trailing comma if present
+      if (cleanJson.endsWith(',')) {
+        cleanJson = cleanJson.slice(0, -1);
+      }
+      
+      // Close any open arrays first
+      while (bracketCount > 0) {
+        cleanJson += ']';
+        bracketCount--;
+      }
+      
+      // Then close any open objects
       while (braceCount > 0) {
         cleanJson += '}';
         braceCount--;
