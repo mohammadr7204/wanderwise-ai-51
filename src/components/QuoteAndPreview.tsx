@@ -6,6 +6,8 @@ import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useStripePayment } from '@/hooks/useStripePayment';
+import { PaymentMethodCard } from '@/components/PaymentMethodCard';
 import { 
   MapPin, 
   Calendar, 
@@ -16,7 +18,8 @@ import {
   ArrowLeft,
   CreditCard,
   Shield,
-  Star
+  Star,
+  Loader2
 } from 'lucide-react';
 import { calculateTripPricing, SERVICE_TIERS, formatPrice, getTripDuration } from '@/utils/pricing';
 import { TripFormData } from '@/pages/CreateTrip';
@@ -35,10 +38,17 @@ const QuoteAndPreview = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { toast } = useToast();
+  const { chargeForItinerary, paymentMethod, getPaymentMethod } = useStripePayment();
   const [trip, setTrip] = useState<Trip | null>(null);
   const [selectedTier, setSelectedTier] = useState<'standard' | 'executive'>('standard');
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
+
+  useEffect(() => {
+    if (user) {
+      getPaymentMethod();
+    }
+  }, [user]);
 
   useEffect(() => {
     if (tripId && user) {
@@ -103,43 +113,36 @@ const QuoteAndPreview = () => {
       });
       return;
     }
+
+    if (!paymentMethod) {
+      toast({
+        title: "Payment Method Required",
+        description: "Please add a payment method before proceeding.",
+        variant: "destructive"
+      });
+      return;
+    }
     
     setProcessing(true);
     
     try {
-      console.log('Starting payment process for:', {
+      console.log('Starting automatic charge for itinerary:', {
         tripId: trip.id,
         userId: user.id,
-        selectedTier,
-        userEmail: user.email
+        selectedTier
       });
 
       const pricing = calculateTripPricing(trip.form_data, selectedTier);
-      const tierName = SERVICE_TIERS.find(t => t.id === selectedTier)?.name;
       
-      if (!tierName) {
-        throw new Error(`Invalid tier selected: ${selectedTier}`);
-      }
-
-      console.log('Calculated pricing:', {
-        basePrice: pricing.basePrice,
-        total: pricing.total,
-        tierName,
-        pricingBreakdown: pricing
-      });
+      console.log('Calculated pricing:', pricing);
       
-      const updateData = {
-        tier: selectedTier,
-        price_paid: Number(pricing.total),
-        status: 'quoted'
-      };
-      
-      console.log('Updating trip with values:', updateData);
-      
-      // Update trip with selected tier and pricing
+      // Update trip with selected tier first
       const { error: updateError } = await supabase
         .from('trips')
-        .update(updateData)
+        .update({
+          tier: selectedTier,
+          status: 'pending_payment'
+        })
         .eq('id', trip.id)
         .eq('user_id', user.id);
 
@@ -148,59 +151,20 @@ const QuoteAndPreview = () => {
         throw new Error(`Failed to update trip: ${updateError.message}`);
       }
 
-      console.log('Trip updated successfully, creating Stripe checkout...');
+      // Charge the saved payment method
+      const paymentResult = await chargeForItinerary(trip.id, pricing.total);
 
-      // Validate required environment - check by calling a function that will validate
-      const checkoutPayload = {
-        tripId: trip.id,
-        amount: pricing.total,
-        tierName: tierName
-      };
-
-      console.log('Calling create-checkout with payload:', checkoutPayload);
-
-      // Create Stripe checkout session with enhanced error handling
-      const { data, error } = await supabase.functions.invoke('create-checkout', {
-        body: checkoutPayload
-      });
-
-      console.log('Stripe checkout response:', { data, error });
-
-      if (error) {
-        console.error('Stripe checkout error:', error);
+      if (paymentResult.success) {
+        toast({
+          title: "Payment Successful!",
+          description: "Your itinerary is being generated...",
+        });
         
-        // Enhanced error messages based on common issues
-        let userMessage = "Failed to create payment session. Please try again.";
-        
-        if (error.message?.includes('STRIPE_SECRET_KEY')) {
-          userMessage = "Payment system configuration error. Please contact support.";
-        } else if (error.message?.includes('authentication')) {
-          userMessage = "Authentication error. Please sign out and sign back in.";
-        } else if (error.message?.includes('Missing required parameters')) {
-          userMessage = "Invalid payment data. Please refresh and try again.";
-        }
-        
-        throw new Error(userMessage);
+        // Navigate to generation status page
+        navigate(`/trip/${trip.id}/generating?payment=success`);
+      } else {
+        throw new Error('Payment failed');
       }
-
-      if (!data?.url) {
-        console.error('No checkout URL returned:', data);
-        throw new Error("Invalid payment session created. Please try again.");
-      }
-
-      console.log('Redirecting to Stripe checkout:', data.url);
-      
-      // Notify user before redirect
-      toast({
-        title: "Redirecting to Payment",
-        description: "Opening Stripe checkout in a new tab...",
-      });
-      
-      // Small delay to show the toast
-      setTimeout(() => {
-        // Redirect to Stripe checkout
-        window.open(data.url, '_blank');
-      }, 500);
       
     } catch (error) {
       console.error('Payment process error:', error);
@@ -213,7 +177,7 @@ const QuoteAndPreview = () => {
         variant: "destructive"
       });
 
-      // Reset trip status if payment setup failed
+      // Reset trip status if payment failed
       try {
         await supabase
           .from('trips')
@@ -521,19 +485,27 @@ const QuoteAndPreview = () => {
               </CardContent>
             </Card>
 
+            {/* Payment Method Card */}
+            <PaymentMethodCard />
+
             {/* Payment Button */}
             <Card>
               <CardContent className="pt-6">
                 <Button 
                   onClick={handlePayment}
-                  disabled={processing}
+                  disabled={processing || !paymentMethod}
                   className="w-full h-12 text-lg"
                   size="lg"
                 >
                   {processing ? (
                     <>
-                      <Clock className="h-4 w-4 mr-2 animate-spin" />
-                      Processing...
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Processing Payment...
+                    </>
+                  ) : !paymentMethod ? (
+                    <>
+                      <CreditCard className="h-4 w-4 mr-2" />
+                      Add Payment Method to Continue
                     </>
                   ) : (
                     <>
@@ -545,7 +517,7 @@ const QuoteAndPreview = () => {
                 
                 <div className="flex items-center justify-center gap-2 mt-4 text-sm text-gray-500">
                   <Shield className="h-4 w-4" />
-                  <span>Secure payment powered by Stripe</span>
+                  <span>Payment will be charged automatically to your saved card</span>
                 </div>
               </CardContent>
             </Card>

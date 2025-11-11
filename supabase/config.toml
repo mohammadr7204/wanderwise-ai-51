@@ -52,3 +52,12 @@ verify_jwt = false
 
 [functions.generate-restaurant-recommendations]
 verify_jwt = false
+
+[functions.add-payment-method]
+verify_jwt = true
+
+[functions.get-payment-method]
+verify_jwt = true
+
+[functions.charge-itinerary]
+verify_jwt = true

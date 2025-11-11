@@ -7,6 +7,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
+import { PaymentMethodCard } from '@/components/PaymentMethodCard';
 import { Compass, Plus, MapPin, Calendar, Users, DollarSign, LogOut, Settings, Crown, Eye, Edit, Trash2, CreditCard, MoreVertical, Globe } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
@@ -306,6 +307,11 @@ const Dashboard = () => {
             </div>
           </CardContent>
         </Card>
+
+        {/* Payment Method Management */}
+        <div className="mb-8">
+          <PaymentMethodCard />
+        </div>
 
         {/* Recent Trips */}
         <div>
