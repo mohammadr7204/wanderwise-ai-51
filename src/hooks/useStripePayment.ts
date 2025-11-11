@@ -17,8 +17,13 @@ export const useStripePayment = () => {
   const addPaymentMethod = async (paymentMethodId: string) => {
     setLoading(true);
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+      
       const { data, error } = await supabase.functions.invoke('add-payment-method', {
-        body: { paymentMethodId }
+        body: { paymentMethodId },
+        headers: {
+          Authorization: `Bearer ${session?.access_token}`
+        }
       });
 
       if (error) throw error;
@@ -38,7 +43,13 @@ export const useStripePayment = () => {
   const getPaymentMethod = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke('get-payment-method');
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      const { data, error } = await supabase.functions.invoke('get-payment-method', {
+        headers: {
+          Authorization: `Bearer ${session?.access_token}`
+        }
+      });
 
       if (error) throw error;
 
@@ -55,8 +66,13 @@ export const useStripePayment = () => {
   const chargeForItinerary = async (tripId: string, amount: number) => {
     setLoading(true);
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+      
       const { data, error } = await supabase.functions.invoke('charge-itinerary', {
-        body: { tripId, amount }
+        body: { tripId, amount },
+        headers: {
+          Authorization: `Bearer ${session?.access_token}`
+        }
       });
 
       if (error) throw error;
