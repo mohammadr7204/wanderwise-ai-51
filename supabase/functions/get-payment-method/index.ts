@@ -39,11 +39,13 @@ serve(async (req) => {
     console.log('Fetching payment method for user:', user.id);
 
     // Get Stripe customer ID
-    const { data: subscriber } = await supabaseClient
+    const { data: subscriber, error: subError } = await supabaseClient
       .from('subscribers')
       .select('stripe_customer_id')
       .eq('user_id', user.id)
-      .single();
+      .maybeSingle();
+
+    console.log('Subscriber lookup:', subscriber, 'error:', subError);
 
     if (!subscriber?.stripe_customer_id) {
       return new Response(

@@ -51,9 +51,16 @@ export const useStripePayment = () => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       
+      if (!session?.access_token) {
+        console.log('No session found for getPaymentMethod');
+        setPaymentMethod(null);
+        setLoading(false);
+        return;
+      }
+      
       const { data, error } = await supabase.functions.invoke('get-payment-method', {
         headers: {
-          Authorization: `Bearer ${session?.access_token}`
+          Authorization: `Bearer ${session.access_token}`
         }
       });
 
