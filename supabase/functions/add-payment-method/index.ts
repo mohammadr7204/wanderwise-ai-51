@@ -63,13 +63,22 @@ serve(async (req) => {
       customerId = customer.id;
 
       // Update subscribers table
-      await supabaseClient
+      const { data: upsertData, error: upsertError } = await supabaseClient
         .from('subscribers')
         .upsert({
           user_id: user.id,
           email: user.email!,
           stripe_customer_id: customerId
-        });
+        }, {
+          onConflict: 'user_id'
+        })
+        .select();
+
+      console.log('Upsert result:', upsertData, 'error:', upsertError);
+      
+      if (upsertError) {
+        console.error('Failed to upsert subscriber:', upsertError);
+      }
     }
 
     // Attach payment method to customer
