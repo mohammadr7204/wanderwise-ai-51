@@ -81,10 +81,15 @@ export const useStripePayment = () => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       
+      if (!session?.access_token) {
+        toast.error('You must be logged in to make a payment');
+        return { success: false };
+      }
+
       const { data, error } = await supabase.functions.invoke('charge-itinerary', {
         body: { tripId, amount },
         headers: {
-          Authorization: `Bearer ${session?.access_token}`
+          Authorization: `Bearer ${session.access_token}`
         }
       });
 
