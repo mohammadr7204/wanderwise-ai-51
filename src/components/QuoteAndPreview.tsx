@@ -136,12 +136,11 @@ const QuoteAndPreview = () => {
       
       console.log('Calculated pricing:', pricing);
       
-      // Update trip with selected tier first
+      // Update trip with selected tier
       const { error: updateError } = await supabase
         .from('trips')
         .update({
-          tier: selectedTier,
-          status: 'pending_payment'
+          tier: selectedTier
         })
         .eq('id', trip.id)
         .eq('user_id', user.id);
