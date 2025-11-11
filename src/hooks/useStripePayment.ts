@@ -19,10 +19,16 @@ export const useStripePayment = () => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       
+      if (!session?.access_token) {
+        throw new Error('No active session');
+      }
+
+      console.log('Adding payment method with token:', session.access_token.substring(0, 20) + '...');
+      
       const { data, error } = await supabase.functions.invoke('add-payment-method', {
         body: { paymentMethodId },
         headers: {
-          Authorization: `Bearer ${session?.access_token}`
+          Authorization: `Bearer ${session.access_token}`
         }
       });
 

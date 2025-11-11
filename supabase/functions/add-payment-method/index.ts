@@ -19,11 +19,14 @@ serve(async (req) => {
 
   try {
     const authHeader = req.headers.get('Authorization');
+    console.log('Auth header received:', authHeader ? authHeader.substring(0, 30) + '...' : 'NONE');
+    
     if (!authHeader) {
       throw new Error('No authorization header');
     }
 
     const token = authHeader.replace('Bearer ', '');
+    console.log('Token extracted, length:', token.length);
     
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
@@ -35,6 +38,8 @@ serve(async (req) => {
       console.error('Auth error:', userError);
       throw new Error('Unauthorized');
     }
+
+    console.log('User authenticated:', user.id);
 
     const { paymentMethodId } = await req.json();
 
