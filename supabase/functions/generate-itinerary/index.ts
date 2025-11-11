@@ -618,33 +618,33 @@ ${realTimeData.events.map((e: any) =>
     },
     { /* 2 more alternatives */ }
   ],
-  "dailyRestaurantRecommendations": [
-    {
-      "day": 1,
-      "breakfast": [
-        {
-          "name": "Restaurant name",
-          "cuisine": "Type",
-          "priceLevel": "$$",
-          "rating": "4.5/5",
-          "address": "Full address",
-          "specialties": ["dish1", "dish2"],
-          "dietaryOptions": "Accommodations",
-          "reservationRequired": true,
-          "bestTime": "When to visit",
-          "mealType": "breakfast",
-          "bookingUrl": "https://opentable.com/..."
-        },
-        { /* option 2 */ },
-        { /* option 3 */ }
-      ],
-      "lunch": [ /* 3 options */ ],
-      "dinner": [ /* 3 options */ ]
-    }
-  ]
+  "restaurantRecommendations": {
+    "breakfast": [
+      {
+        "name": "Restaurant name",
+        "cuisine": "Type",
+        "priceLevel": "$$",
+        "rating": "4.5/5",
+        "address": "Full address",
+        "specialties": ["dish1", "dish2"],
+        "dietaryOptions": "Accommodations",
+        "reservationRequired": true,
+        "bestTime": "When to visit",
+        "mealType": "breakfast",
+        "bookingUrl": "https://opentable.com/..."
+      }
+      /* Provide EXACTLY ${tripDuration} breakfast options total */
+    ],
+    "lunch": [
+      /* Provide EXACTLY ${tripDuration} lunch options total */
+    ],
+    "dinner": [
+      /* Provide EXACTLY ${tripDuration} dinner options total */
+    ]
+  }
 }
 
-Focus on personalized activities, accommodations, and restaurants. Provide EXACTLY 3 options per meal per day. Use real venues from data above and research additional ones.`;
+IMPORTANT: For restaurantRecommendations, provide EXACTLY ${tripDuration} options for each meal type (breakfast, lunch, dinner). So ${tripDuration} breakfast spots, ${tripDuration} lunch spots, and ${tripDuration} dinner spots total. Use real venues from data above and research additional ones.`;
 
     console.log('[CALL 1] Making core itinerary request to Sonnet 4 (12k tokens)...');
     
