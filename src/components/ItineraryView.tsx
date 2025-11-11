@@ -262,17 +262,36 @@ const ItineraryView = () => {
   const getRestaurants = () => {
     if (!itinerary?.content) return [];
     
-    console.log('Getting restaurants, content:', itinerary.content);
-    console.log('Restaurant guide:', itinerary.content.restaurantGuide);
-    console.log('Daily restaurant recommendations:', itinerary.content.dailyRestaurantRecommendations);
-    console.log('Legacy restaurants:', itinerary.content.restaurants);
+    const content = itinerary.content as any;
+    console.log('Getting restaurants, content keys:', Object.keys(content));
+    console.log('Restaurant recommendations:', content.restaurantRecommendations);
+    console.log('Restaurant guide:', content.restaurantGuide);
+    console.log('Daily restaurant recommendations:', content.dailyRestaurantRecommendations);
+    console.log('Legacy restaurants:', content.restaurants);
     
     let allRestaurants: any[] = [];
     
-    // First check the new dailyRestaurantRecommendations structure (3 per meal per day)
-    if (itinerary.content.dailyRestaurantRecommendations && Array.isArray(itinerary.content.dailyRestaurantRecommendations)) {
+    // First check the new restaurantRecommendations structure from generate-itinerary
+    if (content.restaurantRecommendations) {
+      console.log('Processing restaurant recommendations...');
+      const recs = content.restaurantRecommendations;
+      
+      if (recs.breakfast && Array.isArray(recs.breakfast)) {
+        allRestaurants.push(...recs.breakfast.map((r: any) => ({ ...r, mealType: 'breakfast' })));
+      }
+      if (recs.lunch && Array.isArray(recs.lunch)) {
+        allRestaurants.push(...recs.lunch.map((r: any) => ({ ...r, mealType: 'lunch' })));
+      }
+      if (recs.dinner && Array.isArray(recs.dinner)) {
+        allRestaurants.push(...recs.dinner.map((r: any) => ({ ...r, mealType: 'dinner' })));
+      }
+      console.log('Added restaurants from restaurantRecommendations:', allRestaurants.length);
+    }
+    
+    // Then check dailyRestaurantRecommendations structure (3 per meal per day)
+    if (content.dailyRestaurantRecommendations && Array.isArray(content.dailyRestaurantRecommendations)) {
       console.log('Processing daily restaurant recommendations...');
-      itinerary.content.dailyRestaurantRecommendations.forEach((dayRecs: any) => {
+      content.dailyRestaurantRecommendations.forEach((dayRecs: any) => {
         if (dayRecs.breakfast) allRestaurants.push(...dayRecs.breakfast.map((r: any) => ({ ...r, mealType: 'breakfast' })));
         if (dayRecs.lunch) allRestaurants.push(...dayRecs.lunch.map((r: any) => ({ ...r, mealType: 'lunch' })));
         if (dayRecs.dinner) allRestaurants.push(...dayRecs.dinner.map((r: any) => ({ ...r, mealType: 'dinner' })));
@@ -280,8 +299,8 @@ const ItineraryView = () => {
     }
     
     // Then check the existing restaurantGuide
-    if (itinerary.content.restaurantGuide && Array.isArray(itinerary.content.restaurantGuide)) {
-      const mappedRestaurants = itinerary.content.restaurantGuide.map(restaurant => ({
+    if (content.restaurantGuide && Array.isArray(content.restaurantGuide)) {
+      const mappedRestaurants = content.restaurantGuide.map((restaurant: any) => ({
         name: restaurant.name,
         cuisine: restaurant.cuisine,
         priceRange: restaurant.priceLevel || restaurant.priceRange || 'N/A',
@@ -295,9 +314,9 @@ const ItineraryView = () => {
     }
     
     // Fallback to legacy structure
-    if (itinerary.content.restaurants && Array.isArray(itinerary.content.restaurants)) {
-      console.log('Using legacy restaurants:', itinerary.content.restaurants);
-      allRestaurants.push(...itinerary.content.restaurants.map((r: any) => ({ ...r, mealType: 'general' })));
+    if (content.restaurants && Array.isArray(content.restaurants)) {
+      console.log('Using legacy restaurants:', content.restaurants);
+      allRestaurants.push(...content.restaurants.map((r: any) => ({ ...r, mealType: 'general' })));
     }
     
     // Remove duplicates based on name
